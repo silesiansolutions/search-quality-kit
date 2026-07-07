@@ -115,6 +115,8 @@ The engine owns crawling and reporting; checks remain pure and reusable. See [do
 
 Version tags are published to npm through GitHub Actions using short-lived OIDC credentials. A successful npm publish is followed by an automatically generated GitHub Release. Maintainer instructions are in [docs/releasing.md](docs/releasing.md).
 
+See [CHANGELOG.md](CHANGELOG.md) for release history.
+
 ## Development
 
 ```bash
