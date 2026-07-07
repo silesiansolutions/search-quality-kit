@@ -11,6 +11,7 @@ import type {
   Severity,
 } from "../report/types.js";
 import { runCommand, startCommand, waitForUrl } from "../utils/process.js";
+import { VERSION } from "../version.js";
 export interface VerifyOptions {
   root?: string;
   configPath?: string;
@@ -74,7 +75,7 @@ export async function runVerification(
     );
     const report: SearchQualityReport = {
       tool: "search-quality-kit",
-      version: "0.1.0",
+      version: VERSION,
       generatedAt: new Date().toISOString(),
       mode: crawl.mode,
       target: crawl.target,

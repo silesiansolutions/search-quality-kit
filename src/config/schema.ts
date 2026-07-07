@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VERSION } from "../version.js";
 const command = z.string().min(1).optional();
 export const configSchema = z.object({
   site: z
@@ -27,7 +28,7 @@ export const configSchema = z.object({
         .array(z.string())
         .default(["/admin", "/preview", "/api", "/404", "/404.html"]),
       requestTimeoutMs: z.number().int().positive().default(10000),
-      userAgent: z.string().min(1).default("search-quality-kit/0.1"),
+      userAgent: z.string().min(1).default(`search-quality-kit/${VERSION}`),
     })
     .prefault({}),
   checks: z

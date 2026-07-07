@@ -10,11 +10,12 @@ import { formatJsonReport } from "../report/formatJsonReport.js";
 import { formatMarkdownReport } from "../report/formatMarkdownReport.js";
 import type { SearchQualityReport } from "../report/types.js";
 import { fileExists } from "../utils/files.js";
+import { VERSION } from "../version.js";
 const program = new Command();
 program
   .name("search-quality-kit")
   .description("Catch technical Google Search quality regressions.")
-  .version("0.1.0");
+  .version(VERSION);
 program
   .command("verify", { isDefault: true })
   .description("Build/crawl the configured target and run enabled checks")
