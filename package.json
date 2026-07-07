@@ -1,7 +1,7 @@
 {
   "name": "@silesiansolutions/search-quality-kit",
   "version": "0.1.0",
-  "description": "Framework-agnostic CLI for catching technical Google Search quality regressions before deployment.",
+  "description": "Framework-agnostic CLI for auditing technical Google Search foundations in local builds and CI.",
   "type": "module",
   "bin": {
     "search-quality-kit": "dist/cli/index.js"
@@ -26,6 +26,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "prepack": "npm run build",
     "check": "npm run typecheck && npm run lint && npm test && npm run build"
   },
   "engines": {
@@ -47,7 +48,7 @@
   "bugs": {
     "url": "https://github.com/SilesianSolutions/search-quality-kit/issues"
   },
-  "homepage": "https://github.com/SilesianSolutions/search-quality-kit#readme",
+  "homepage": "https://www.npmjs.com/package/@silesiansolutions/search-quality-kit",
   "publishConfig": {
     "access": "public"
   },

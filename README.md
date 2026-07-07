@@ -1,6 +1,14 @@
 # @silesiansolutions/search-quality-kit
 
-A framework-agnostic CLI that catches practical Google Search quality regressions before deployment. It inspects a built static site or crawls an HTTP target, then produces human-readable, JSON, or Markdown findings with stable exit codes.
+[![npm version](https://img.shields.io/npm/v/@silesiansolutions/search-quality-kit.svg)](https://www.npmjs.com/package/@silesiansolutions/search-quality-kit)
+[![CI](https://github.com/SilesianSolutions/search-quality-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/SilesianSolutions/search-quality-kit/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+A framework-agnostic CLI for auditing technical Google Search foundations in local builds and CI. It catches practical crawlability, indexability, metadata, structured-data, linking, accessibility, and performance regressions before deployment.
+
+- [npm package](https://www.npmjs.com/package/@silesiansolutions/search-quality-kit)
+- [GitHub repository](https://github.com/SilesianSolutions/search-quality-kit)
+- [Check catalog](docs/checks.md)
 
 It checks technical foundations: crawlability, indexability, sitemap and robots rules, metadata, canonicals, JSON-LD, Open Graph, internal links, delivered HTML, basic accessibility, and lightweight performance risks. It does **not** promise rankings, score content quality, call Google APIs, replace Search Console, Rich Results Test, or Lighthouse.
 
@@ -9,6 +17,7 @@ It checks technical foundations: crawlability, indexability, sitemap and robots 
 Requires Node.js 20.11 or newer.
 
 ```bash
+npm install --save-dev @silesiansolutions/search-quality-kit
 npx @silesiansolutions/search-quality-kit init
 # Edit baseUrl and build settings.
 npx @silesiansolutions/search-quality-kit verify --report-only
@@ -101,6 +110,10 @@ Rules are tied to official areas of [Google Search Central](https://developers.g
 4. Add offline fixture-based tests and document whether each rule is a Google requirement, recommendation, or local heuristic.
 
 The engine owns crawling and reporting; checks remain pure and reusable. See [docs/philosophy.md](docs/philosophy.md).
+
+## Releases
+
+Version tags are published to npm through GitHub Actions using short-lived OIDC credentials. A successful npm publish is followed by an automatically generated GitHub Release. Maintainer instructions are in [docs/releasing.md](docs/releasing.md).
 
 ## Development
 
