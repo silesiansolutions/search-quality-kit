@@ -64,7 +64,7 @@ export async function loadConfig(
     );
   return { config: parsed.data, ...(file ? { path: file } : {}) };
 }
-export const CONFIG_FILE_TEMPLATE = `import type { SearchQualityConfigInput } from "search-quality-kit";
+export const CONFIG_FILE_TEMPLATE = `import type { SearchQualityConfigInput } from "@silesiansolutions/search-quality-kit";
 
 export default {
   site: { baseUrl: "https://example.com" },

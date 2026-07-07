@@ -1,5 +1,5 @@
 {
-  "name": "search-quality-kit",
+  "name": "@silesiansolutions/search-quality-kit",
   "version": "0.1.0",
   "description": "Framework-agnostic CLI for catching technical Google Search quality regressions before deployment.",
   "type": "module",

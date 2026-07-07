@@ -1,4 +1,4 @@
-# search-quality-kit
+# @silesiansolutions/search-quality-kit
 
 A framework-agnostic CLI that catches practical Google Search quality regressions before deployment. It inspects a built static site or crawls an HTTP target, then produces human-readable, JSON, or Markdown findings with stable exit codes.
 
@@ -9,26 +9,20 @@ It checks technical foundations: crawlability, indexability, sitemap and robots 
 Requires Node.js 20.11 or newer.
 
 ```bash
-npx search-quality-kit init
+npx @silesiansolutions/search-quality-kit init
 # Edit baseUrl and build settings.
-npx search-quality-kit verify --report-only
-npx search-quality-kit verify
+npx @silesiansolutions/search-quality-kit verify --report-only
+npx @silesiansolutions/search-quality-kit verify
 ```
 
-Until the first npm release, use a checkout or the GitHub source:
-
-```bash
-npx github:SilesianSolutions/search-quality-kit verify --report-only
-```
-
-For a pinned and reproducible CI install, add the package to `devDependencies` after it is published, then run `npx search-quality-kit verify`.
+For reproducible CI, pin `@silesiansolutions/search-quality-kit` in `devDependencies`.
 
 ## Configuration
 
 `search-quality.config.ts`:
 
 ```ts
-import { defineConfig } from "search-quality-kit";
+import { defineConfig } from "@silesiansolutions/search-quality-kit";
 
 export default defineConfig({
   site: {
@@ -88,7 +82,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx search-quality-kit verify
+      - run: npx @silesiansolutions/search-quality-kit verify
 ```
 
 For rollout guidance and report artifacts, see [docs/ci.md](docs/ci.md).

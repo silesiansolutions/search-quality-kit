@@ -2,7 +2,7 @@
 
 ## Add it to another repository
 
-1. Install the package as a dev dependency after an npm release, or invoke the GitHub source while evaluating it.
+1. Install `@silesiansolutions/search-quality-kit` as a dev dependency or run it directly with `npx @silesiansolutions/search-quality-kit`.
 2. Run `search-quality-kit init`.
 3. Replace `https://example.com` with the production `baseUrl`.
 4. Set `build.command`, optional `build.startCommand` plus `site.localUrl`, and `build.distDir`.

@@ -16,7 +16,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx search-quality-kit verify --json --output search-quality-report.json
+      - run: npx @silesiansolutions/search-quality-kit verify --json --output search-quality-report.json
       - uses: actions/upload-artifact@v7
         if: always()
         with:
