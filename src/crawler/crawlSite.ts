@@ -98,7 +98,12 @@ export async function crawlStatic(
       `/${path.relative(dist, file).split(path.sep).join("/")}`,
       base,
     );
-    assets.set(url, { url, file, bytes: (await stat(file)).size });
+    const bytes = (await stat(file)).size;
+    assets.set(url, { url, file, bytes });
+    if (file.endsWith(".html")) {
+      const routeUrl = normalizeUrl(fileUrl(file, dist, base));
+      assets.set(routeUrl, { url: routeUrl, file, bytes });
+    }
   }
   for (const page of pages)
     assets.set(normalizeUrl(page.url), {
