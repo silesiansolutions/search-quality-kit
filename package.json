@@ -51,6 +51,9 @@
   "publishConfig": {
     "access": "public"
   },
+  "overrides": {
+    "esbuild": "0.28.1"
+  },
   "dependencies": {
     "cheerio": "^1.1.0",
     "commander": "^14.0.0",
