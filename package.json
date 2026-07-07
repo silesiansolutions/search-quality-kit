@@ -44,10 +44,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SilesianSolutions/search-quality-kit.git"
+    "url": "git+https://github.com/silesiansolutions/search-quality-kit.git"
   },
   "bugs": {
-    "url": "https://github.com/SilesianSolutions/search-quality-kit/issues"
+    "url": "https://github.com/silesiansolutions/search-quality-kit/issues"
   },
   "homepage": "https://www.npmjs.com/package/@silesiansolutions/search-quality-kit",
   "publishConfig": {

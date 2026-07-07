@@ -7,7 +7,7 @@ Releases are automated by [`.github/workflows/release.yml`](../.github/workflows
 The package must trust this exact publisher:
 
 - Provider: GitHub Actions
-- GitHub organization: `SilesianSolutions`
+- GitHub organization: `silesiansolutions` (the canonical, case-sensitive owner claim)
 - Repository: `search-quality-kit`
 - Workflow filename: `release.yml`
 - Environment: none
