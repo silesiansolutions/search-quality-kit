@@ -61,6 +61,7 @@ The v0.1 behavior was also exercised against two production repositories; see th
 
 ```text
 search-quality-kit verify [--config file] [--report-only] [--json]
+                          [--baseline report.json --fail-on-new]
 search-quality-kit init [--force]
 search-quality-kit list-checks
 search-quality-kit report [report.json] --format markdown
@@ -69,6 +70,7 @@ search-quality-kit report [report.json] --format markdown
 - Normal CI mode exits `1` when a configured failing severity is present.
 - `--report-only` always exits `0` for baselining.
 - `--json` writes machine-readable JSON to stdout.
+- `--baseline <file> --fail-on-new` fails only for findings absent from a prior JSON report.
 - `--format markdown --output report.md` creates a review artifact.
 - CLI/configuration failures exit `2`.
 
@@ -125,6 +127,6 @@ npm run check
 npm pack --dry-run
 ```
 
-Dependencies are deliberately small: Commander for the CLI contract, Cheerio for server-side HTML parsing, fast-xml-parser for XML syntax, Zod for runtime config validation, Jiti for TypeScript/JavaScript config loading, and picocolors for readable terminal output. Browser automation and Google APIs are intentionally outside v1.
+Dependencies are deliberately small: Commander for the CLI contract, Cheerio for server-side HTML parsing, fast-xml-parser for XML syntax, Zod for runtime config validation, Jiti for TypeScript/JavaScript config loading, and picocolors for readable terminal output. Browser automation and Google APIs are intentionally outside the core package.
 
 MIT © Silesian Solutions

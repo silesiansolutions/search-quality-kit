@@ -9,6 +9,11 @@ export function context(
   overrides: Partial<CrawlResult> = {},
   config: SearchQualityConfig = defaultConfig,
 ) {
+  const sitemap = overrides.sitemap ?? {
+    url: "https://example.com/sitemap.xml",
+    status: 200,
+    content: "<urlset></urlset>",
+  };
   const crawl: CrawlResult = {
     mode: "static",
     target: "/tmp/dist",
@@ -20,17 +25,18 @@ export function context(
       content:
         "User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml",
     },
-    sitemap: {
-      url: "https://example.com/sitemap.xml",
-      status: 200,
-      content: "<urlset></urlset>",
-    },
+    sitemap,
+    sitemaps: overrides.sitemaps ?? [sitemap],
+    sitemapUrls: [],
+    sitemapTruncated: false,
     assets: new Map(),
     ...overrides,
   };
   return { config, crawl };
 }
 export const page = (html: string, url = "https://example.com/") => ({
+  initialUrl: url,
+  finalUrl: url,
   url,
   requestUrl: `file:///tmp/index.html`,
   status: 200,

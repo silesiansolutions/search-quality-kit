@@ -23,6 +23,8 @@ export const configSchema = z.object({
     .object({
       entrypoints: z.array(z.string()).min(1).default(["/"]),
       maxPages: z.number().int().positive().max(10000).default(100),
+      maxSitemaps: z.number().int().positive().max(1000).default(50),
+      maxSitemapDepth: z.number().int().nonnegative().max(10).default(3),
       include: z.array(z.string()).default(["/"]),
       exclude: z
         .array(z.string())

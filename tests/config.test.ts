@@ -5,6 +5,8 @@ describe("config", () => {
   it("fills defaults for a partial config", () => {
     const c = configSchema.parse({ site: { baseUrl: "https://example.com" } });
     expect(c.crawl.maxPages).toBe(100);
+    expect(c.crawl.maxSitemaps).toBe(50);
+    expect(c.crawl.maxSitemapDepth).toBe(3);
     expect(c.checks.canonical).toBe(true);
   });
   it("loads TypeScript config", async () => {

@@ -6,6 +6,7 @@ import { isHtmlRedirect, loadHtml } from "../utils/html.js";
 import { normalizeUrl, pathAllowed, sameOrigin } from "../utils/urls.js";
 import { discoverLinks } from "./discoverUrls.js";
 import { fetchText } from "./fetchPage.js";
+import { parseSitemap } from "./sitemaps.js";
 import type {
   AssetArtifact,
   CrawlResult,
@@ -29,6 +30,69 @@ function declaredSitemapPath(value?: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function sitemapPageUrls(sitemaps: TextArtifact[]) {
+  const urls = new Map<string, string>();
+  for (const artifact of sitemaps) {
+    const parsed = parseSitemap(artifact.content);
+    if (parsed?.type !== "urlset") continue;
+    for (const { loc } of parsed.entries) {
+      try {
+        const normalized = normalizeUrl(loc);
+        urls.set(normalized, loc);
+      } catch {
+        // URL validity is reported by the sitemap check.
+      }
+    }
+  }
+  return [...urls.values()];
+}
+
+async function collectSitemaps(
+  initial: TextArtifact,
+  config: SearchQualityConfig,
+  loadChild: (
+    url: string,
+    parentUrl: string,
+    depth: number,
+  ) => Promise<TextArtifact | undefined>,
+) {
+  const sitemaps = [initial];
+  const seen = new Set<string>();
+  try {
+    seen.add(normalizeUrl(initial.url));
+  } catch {
+    seen.add(initial.url);
+  }
+  let truncated = false;
+  for (let index = 0; index < sitemaps.length; index += 1) {
+    const artifact = sitemaps[index]!;
+    const parsed = parseSitemap(artifact.content);
+    if (parsed?.type !== "sitemapindex") continue;
+    const depth = artifact.depth ?? 0;
+    if (depth >= config.crawl.maxSitemapDepth) {
+      if (parsed.entries.length) truncated = true;
+      continue;
+    }
+    for (const { loc } of parsed.entries) {
+      let key: string;
+      try {
+        key = normalizeUrl(loc);
+      } catch {
+        continue;
+      }
+      if (seen.has(key)) continue;
+      if (sitemaps.length >= config.crawl.maxSitemaps) {
+        truncated = true;
+        break;
+      }
+      seen.add(key);
+      const child = await loadChild(loc, artifact.url, depth + 1);
+      if (child) sitemaps.push(child);
+    }
+  }
+  return { sitemaps, truncated };
 }
 async function inferBase(
   dist: string,
@@ -83,6 +147,8 @@ export async function crawlStatic(
     const html = await readFile(file, "utf8");
     if (isHtmlRedirect(html)) continue;
     pages.push({
+      initialUrl: url,
+      finalUrl: url,
       url,
       requestUrl: `file://${file}`,
       status: 200,
@@ -111,6 +177,41 @@ export async function crawlStatic(
       file: page.file,
       bytes: page.bytes,
     });
+  const sitemapUrl = sitemapFile
+    ? fileUrl(sitemapFile, dist, base)
+    : new URL("/sitemap.xml", base).toString();
+  const rootSitemap: TextArtifact = {
+    url: sitemapUrl,
+    status: sitemap === undefined ? 404 : 200,
+    content: sitemap,
+    file: sitemapFile,
+    depth: 0,
+  };
+  const collected = await collectSitemaps(
+    rootSitemap,
+    config,
+    async (url, parentUrl, depth) => {
+      if (!sameOrigin(url, base)) return undefined;
+      const pathname = decodeURIComponent(new URL(url).pathname).replace(
+        /^\/+/,
+        "",
+      );
+      const file = path.resolve(dist, pathname);
+      if (file !== dist && !file.startsWith(`${dist}${path.sep}`))
+        return undefined;
+      const content = files.includes(file)
+        ? await readOptional(file)
+        : undefined;
+      return {
+        url,
+        status: content === undefined ? 404 : 200,
+        content,
+        ...(content === undefined ? {} : { file }),
+        parentUrl,
+        depth,
+      };
+    },
+  );
   return {
     mode: "static",
     target: dist,
@@ -123,12 +224,10 @@ export async function crawlStatic(
       content: robots,
       file: robotsFile,
     },
-    sitemap: {
-      url: new URL("/sitemap.xml", base).toString(),
-      status: sitemap === undefined ? 404 : 200,
-      content: sitemap,
-      file: sitemapFile,
-    },
+    sitemap: rootSitemap,
+    sitemaps: collected.sitemaps,
+    sitemapUrls: sitemapPageUrls(collected.sitemaps),
+    sitemapTruncated: collected.truncated,
   };
 }
 async function artifact(
@@ -144,6 +243,12 @@ async function artifact(
     content: f.content,
   };
 }
+
+function publicResponseUrl(responseUrl: string, target: URL, base: string) {
+  const response = new URL(responseUrl);
+  if (response.origin !== target.origin) return response.toString();
+  return new URL(`${response.pathname}${response.search}`, base).toString();
+}
 export async function crawlHttp(
   targetBase: string,
   config: SearchQualityConfig,
@@ -154,23 +259,30 @@ export async function crawlHttp(
     seen = new Set<string>(),
     pages: PageArtifact[] = [];
   while (queue.length && pages.length < config.crawl.maxPages) {
-    const url = normalizeUrl(queue.shift()!);
+    const initial = new URL(queue.shift()!);
+    initial.hash = "";
+    const initialUrl = initial.toString();
+    const key = normalizeUrl(initialUrl);
     if (
-      seen.has(url) ||
-      !sameOrigin(url, base) ||
-      !pathAllowed(new URL(url).pathname, config)
+      seen.has(key) ||
+      !sameOrigin(initialUrl, base) ||
+      !pathAllowed(initial.pathname, config)
     )
       continue;
-    seen.add(url);
-    const u = new URL(url),
+    seen.add(key);
+    const u = initial,
       requestUrl = new URL(
         `${u.pathname}${u.search}`,
         target.origin,
       ).toString(),
       f = await fetchText(requestUrl, config),
-      html = f.content ?? "";
+      html = f.content ?? "",
+      finalUrl = publicResponseUrl(f.finalUrl, target, base);
+    seen.add(normalizeUrl(finalUrl));
     pages.push({
-      url,
+      initialUrl,
+      finalUrl,
+      url: finalUrl,
       requestUrl,
       status: f.status,
       html,
@@ -180,7 +292,7 @@ export async function crawlHttp(
     if (f.status < 200 || f.status >= 400) continue;
     for (const link of discoverLinks(
       html,
-      url,
+      finalUrl,
       base,
       (p) => !pathAllowed(p, config),
     ))
@@ -201,6 +313,26 @@ export async function crawlHttp(
   );
   if (sitemap.status !== 200 && !declared)
     sitemap = await artifact(target.origin, base, "/sitemap-index.xml", config);
+  sitemap.depth = 0;
+  const collected = await collectSitemaps(
+    sitemap,
+    config,
+    async (url, parentUrl, depth) => {
+      if (!sameOrigin(url, base)) return undefined;
+      const publicUrl = new URL(url);
+      const f = await fetchText(
+        new URL(`${publicUrl.pathname}${publicUrl.search}`, target).toString(),
+        config,
+      );
+      return {
+        url: publicUrl.toString(),
+        status: f.status,
+        content: f.content,
+        parentUrl,
+        depth,
+      };
+    },
+  );
   return {
     mode: "http",
     target: target.origin,
@@ -208,6 +340,9 @@ export async function crawlHttp(
     pages,
     robots,
     sitemap,
+    sitemaps: collected.sitemaps,
+    sitemapUrls: sitemapPageUrls(collected.sitemaps),
+    sitemapTruncated: collected.truncated,
     assets: new Map(pages.map((p) => [normalizeUrl(p.url), { url: p.url }])),
   };
 }

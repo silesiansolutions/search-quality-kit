@@ -1,5 +1,5 @@
 import { loadHtml, normalizedText } from "../utils/html.js";
-import { normalizeUrl, sameOrigin } from "../utils/urls.js";
+import { normalizeUrl, pathAllowed, sameOrigin } from "../utils/urls.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
 const G =
@@ -15,7 +15,20 @@ export const internalLinksCheck: CheckDefinition = {
   run({ crawl, config }) {
     const out = [],
       pages = new Map(crawl.pages.map((p) => [normalizeUrl(p.url), p])),
-      incoming = new Map(crawl.pages.map((p) => [normalizeUrl(p.url), 0]));
+      orphanCandidates = new Map<string, string>();
+    if (crawl.mode === "static")
+      for (const page of crawl.pages)
+        orphanCandidates.set(normalizeUrl(page.url), page.url);
+    else
+      for (const url of crawl.sitemapUrls)
+        if (
+          sameOrigin(url, crawl.publicBaseUrl) &&
+          pathAllowed(new URL(url).pathname, config)
+        )
+          orphanCandidates.set(normalizeUrl(url), url);
+    const incoming = new Map(
+      [...orphanCandidates.keys()].map((url) => [url, 0]),
+    );
     for (const p of crawl.pages) {
       const $ = loadHtml(p.html);
       $("a").each((_, a) => {
@@ -105,24 +118,24 @@ export const internalLinksCheck: CheckDefinition = {
           );
       });
     }
-    if (crawl.mode === "static") {
-      const entries = new Set(
-        config.crawl.entrypoints.map((e) =>
-          normalizeUrl(e, crawl.publicBaseUrl),
+    const entries = new Set(
+      config.crawl.entrypoints.map((e) => normalizeUrl(e, crawl.publicBaseUrl)),
+    );
+    for (const [normalized, count] of incoming) {
+      if (count > 0 || entries.has(normalized)) continue;
+      const url = orphanCandidates.get(normalized)!;
+      out.push(
+        finding(
+          "internal-links",
+          "orphan-page",
+          "warning",
+          crawl.mode === "http"
+            ? `Sitemap page is not reachable from crawled internal links: ${url}.`
+            : `Built page has no incoming link: ${url}.`,
+          "Add a crawlable internal link or exclude the intentionally isolated route with crawl.exclude.",
+          { url, googleDocs: G },
         ),
       );
-      for (const [url, count] of incoming)
-        if (count === 0 && !entries.has(url))
-          out.push(
-            finding(
-              "internal-links",
-              "orphan-page",
-              "warning",
-              `Built page has no incoming link: ${url}.`,
-              "Link to it or exclude it.",
-              { url, googleDocs: G },
-            ),
-          );
     }
     return out;
   },

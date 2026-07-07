@@ -86,8 +86,10 @@ export async function runVerification(
         info: findings.filter((f) => f.severity === "info").length,
       },
       findings,
-      pages: crawl.pages.map(({ url, status, file }) => ({
+      pages: crawl.pages.map(({ url, initialUrl, finalUrl, status, file }) => ({
         url,
+        initialUrl,
+        finalUrl,
         status,
         ...(file ? { file } : {}),
       })),
@@ -102,7 +104,8 @@ export const shouldFail = (
   r: SearchQualityReport,
   c: SearchQualityConfig,
   reportOnly = false,
+  findings: Finding[] = r.findings,
 ) =>
   !reportOnly &&
   !c.ci.warnOnly &&
-  r.findings.some((f) => c.ci.failOn.includes(f.severity));
+  findings.some((f) => c.ci.failOn.includes(f.severity));

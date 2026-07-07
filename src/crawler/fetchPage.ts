@@ -18,9 +18,16 @@ export async function fetchText(url: string, config: SearchQualityConfig) {
       status: response.status,
       content: await response.text(),
       headers: Object.fromEntries(response.headers.entries()),
+      finalUrl: response.url,
+      redirected: response.redirected,
     };
   } catch {
-    return { status: 0, headers: {} as Record<string, string> };
+    return {
+      status: 0,
+      headers: {} as Record<string, string>,
+      finalUrl: url,
+      redirected: false,
+    };
   } finally {
     clearTimeout(timer);
   }
