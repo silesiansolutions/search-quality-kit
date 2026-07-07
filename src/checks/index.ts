@@ -24,19 +24,19 @@ export const checks = [
 ];
 
 export type CheckBasis =
-  "Google technical requirement" | "Google recommendation" | "local heuristic";
+  "Google requirement" | "Google recommendation" | "local heuristic";
 
 const basis: Record<(typeof checks)[number]["name"], CheckBasis[]> = {
   sitemap: ["Google recommendation", "local heuristic"],
-  robots: ["Google technical requirement", "local heuristic"],
-  indexability: ["Google technical requirement"],
+  robots: ["Google requirement", "local heuristic"],
+  indexability: ["Google requirement"],
   metadata: ["Google recommendation", "local heuristic"],
   canonical: ["Google recommendation", "local heuristic"],
   structuredData: ["Google recommendation", "local heuristic"],
   openGraph: ["local heuristic"],
   internalLinks: ["Google recommendation", "local heuristic"],
   renderedHtml: [
-    "Google technical requirement",
+    "Google requirement",
     "Google recommendation",
     "local heuristic",
   ],

@@ -16,7 +16,7 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 | `rules.openGraph`      | `requireImage`                                                                | false                            |
 | `rules.renderedHtml`   | main/H1 policy and minimum visible text                                       | main and H1 required, 80 chars   |
 | `rules.performance`    | HTML, script, and image thresholds                                            | 500 KiB HTML/image, 10 scripts   |
-| `output`               | default format and filenames                                                  | console                          |
+| `output`               | default format (`console`, `json`, `markdown`, `sarif`) and filenames         | console                          |
 | `ci`                   | `failOn`, `warnOnly`                                                          | fail on error                    |
 
 Length and byte thresholds are regression heuristics, not Google ranking limits. Tune them to the project instead of disabling unrelated checks.
@@ -24,6 +24,8 @@ Length and byte thresholds are regression heuristics, not Google ranking limits.
 Paths in `include`, `exclude`, and `entrypoints` are URL paths. Exclusions apply to sitemap scope and crawling. A deliberate `noindex` page should normally be excluded rather than globally weakening the indexability check.
 
 `crawl.maxSitemaps` defaults to 50 and `crawl.maxSitemapDepth` defaults to 3. They bound recursive sitemap-index traversal in both static and HTTP modes. A truncated traversal produces `sitemap/fetch-limit`; raise the limits only when the site intentionally needs a larger sitemap tree.
+
+Baseline behavior is controlled by CLI flags rather than config: use `--baseline <report.json> --fail-on-new`. The gate still reads severity policy from `ci.failOn`, while `ci.warnOnly` and `--report-only` suppress finding-based failure. Report and SARIF output are presentation formats and do not alter finding identity or gate behavior.
 
 ## Framework presets
 

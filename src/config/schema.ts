@@ -97,7 +97,9 @@ export const configSchema = z.object({
     .prefault({}),
   output: z
     .object({
-      format: z.enum(["console", "json", "markdown"]).default("console"),
+      format: z
+        .enum(["console", "json", "markdown", "sarif"])
+        .default("console"),
       jsonFile: z.string().min(1).default("search-quality-report.json"),
       markdownFile: z.string().min(1).default("search-quality-report.md"),
     })

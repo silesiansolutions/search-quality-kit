@@ -1,4 +1,7 @@
 export type Severity = "error" | "warning" | "info";
+export const REPORT_SCHEMA_VERSION = "0.3" as const;
+export type FindingClassification =
+  "Google requirement" | "Google recommendation" | "local heuristic";
 export interface Finding {
   severity: Severity;
   check: string;
@@ -10,6 +13,7 @@ export interface Finding {
   docs: string;
   googleDocs?: string;
   relatedUrls?: string[];
+  classification?: FindingClassification[];
 }
 export interface ReportSummary {
   checkedPages: number;
@@ -18,6 +22,7 @@ export interface ReportSummary {
   info: number;
 }
 export interface SearchQualityReport {
+  schemaVersion: typeof REPORT_SCHEMA_VERSION;
   tool: "search-quality-kit";
   version: string;
   generatedAt: string;
@@ -33,4 +38,21 @@ export interface SearchQualityReport {
     file?: string;
   }>;
   durationMs: number;
+  baseline?: {
+    summary: {
+      totalFindings: number;
+      existingFindings: number;
+      newFindings: number;
+      resolvedFindings: number;
+    };
+    newFindings: Finding[];
+    resolvedFindings: Finding[];
+  };
 }
+
+export type LegacySearchQualityReport = Omit<
+  SearchQualityReport,
+  "schemaVersion" | "baseline"
+> & {
+  schemaVersion?: undefined;
+};
