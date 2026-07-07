@@ -1,6 +1,15 @@
 # Real-world validation
 
-Validation date: 2026-07-07. Both audits used `--report-only`; neither target repository was modified. Reports were written under `/tmp`.
+Validation date: 2026-07-08. Both audits used clean temporary clones; neither target repository was modified. Reports were written under `/tmp`.
+
+## v0.3 CI adoption rerun
+
+The v0.3 candidate was built first, then exercised against clean current clones using each site's committed config and build output. JSON and Markdown were generated separately, and each JSON report was reused with `--baseline ... --fail-on-new` without `--report-only`.
+
+- `SilesianSolutions/silesiansolutions.com` at `133b905`: installed with locked pnpm 11.7.0, built on Node 24.18, then audited 40 pages with 0 errors and 84 warnings. The matching baseline classified all 84 as existing, 0 as new, and 0 as resolved; exit code was `0`.
+- `dawidrylko/dawidrylko.com` at `698fff1`: installed with locked pnpm 10.33.0, built 74 generated routes and 1,234 image variants, then audited 73 content pages with 0 errors and 58 warnings. The matching baseline classified all 58 as existing, 0 as new, and 0 as resolved; exit code was `0`.
+
+Reports are `/tmp/search-quality-silesiansolutions-v03.{json,md}` and `/tmp/search-quality-dawidrylko-v03.{json,md}`; baseline comparison reports use the `-baseline.{json,md}` suffix. Totals match the v0.2 candidate rerun, so the report schema, classification metadata, and portable baseline identity did not introduce finding churn.
 
 The v0.2 candidate was revalidated after implementing recursive sitemap traversal, effective HTTP URLs, HTTP orphan inventory, and responsive-image grouping. The reports are `/tmp/search-quality-silesiansolutions-v02.{json,md}` and `/tmp/search-quality-dawidrylko-v02.{json,md}`.
 

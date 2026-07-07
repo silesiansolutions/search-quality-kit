@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## [0.3.0] - 2026-07-08
+
+- Add portable, schema-validated baselines with total, existing, new, and resolved finding counts; `--fail-on-new` now gates only new findings matching `ci.failOn`.
+- Version the JSON report contract as schema `0.3` while accepting schema-less v0.2 reports as a migration fallback.
+- Keep JSON stdout machine-readable by routing configured build and preview logs to stderr.
+- Expand Markdown artifacts with baseline sections, severity/check-code grouping, remediation, documentation, and finding classification.
+- Add dependency-free SARIF 2.1.0 output for GitHub Code Scanning without fabricated source lines.
+- Add complete GitHub Actions summary/artifact examples for baseline and non-baseline rollout.
+
 ## [0.2.0] - 2026-07-07
 
 - Recursively crawl and validate bounded, deduplicated sitemap indexes in static and HTTP modes, with child-level error locations.
@@ -35,6 +44,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.3.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.1.1...v0.1.2

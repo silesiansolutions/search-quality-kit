@@ -61,18 +61,27 @@ The v0.1 behavior was also exercised against two production repositories; see th
 
 ```text
 search-quality-kit verify [--config file] [--report-only] [--json]
+                          [--output report.json]
                           [--baseline report.json --fail-on-new]
 search-quality-kit init [--force]
 search-quality-kit list-checks
-search-quality-kit report [report.json] --format markdown
+search-quality-kit report [report.json] --format markdown|sarif [--output file]
 ```
 
 - Normal CI mode exits `1` when a configured failing severity is present.
 - `--report-only` always exits `0` for baselining.
-- `--json` writes machine-readable JSON to stdout.
+- `--json` writes machine-readable JSON to stdout; build and preview logs stay on stderr.
 - `--baseline <file> --fail-on-new` fails only for findings absent from a prior JSON report.
 - `--format markdown --output report.md` creates a review artifact.
+- `report report.json --format sarif --output report.sarif` creates a GitHub Code Scanning-compatible artifact.
 - CLI/configuration failures exit `2`.
+
+For a legacy rollout, record the reviewed state and gate only regressions:
+
+```bash
+search-quality-kit verify --report-only --json > search-quality-baseline.json
+search-quality-kit verify --baseline search-quality-baseline.json --fail-on-new
+```
 
 ## GitHub Actions
 

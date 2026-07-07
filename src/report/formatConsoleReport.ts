@@ -14,9 +14,17 @@ export function formatConsoleReport(r: SearchQualityReport) {
     `Target: ${r.target}`,
     `Mode: ${r.mode}`,
     `Checked pages: ${r.summary.checkedPages}`,
+    `Total findings: ${r.findings.length}`,
     `Errors: ${r.summary.errors}`,
     `Warnings: ${r.summary.warnings}`,
     `Info: ${r.summary.info}`,
+    ...(r.baseline
+      ? [
+          `Existing findings: ${r.baseline.summary.existingFindings}`,
+          `New findings: ${r.baseline.summary.newFindings}`,
+          `Resolved findings: ${r.baseline.summary.resolvedFindings}`,
+        ]
+      : []),
     "",
   ];
   const groups = new Map<string, Finding[]>();

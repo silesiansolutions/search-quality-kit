@@ -8,11 +8,29 @@ import { runVerification, shouldFail } from "../engine/verify.js";
 import { formatConsoleReport } from "../report/formatConsoleReport.js";
 import { formatJsonReport } from "../report/formatJsonReport.js";
 import { formatMarkdownReport } from "../report/formatMarkdownReport.js";
-import { newFindings } from "../report/baseline.js";
-import type { SearchQualityReport } from "../report/types.js";
+import { formatSarifReport } from "../report/formatSarifReport.js";
+import {
+  parseBaselineReport,
+  parseSearchQualityReport,
+  withBaselineComparison,
+} from "../report/baseline.js";
+import {
+  REPORT_SCHEMA_VERSION,
+  type SearchQualityReport,
+} from "../report/types.js";
 import { fileExists } from "../utils/files.js";
 import { VERSION } from "../version.js";
 const program = new Command();
+const formats = ["console", "json", "markdown", "sarif"] as const;
+
+function renderReport(report: SearchQualityReport, format: string) {
+  if (!formats.includes(format as (typeof formats)[number]))
+    throw new Error(`Unknown report format: ${format}`);
+  if (format === "json") return formatJsonReport(report);
+  if (format === "markdown") return formatMarkdownReport(report);
+  if (format === "sarif") return formatSarifReport(report);
+  return formatConsoleReport(report);
+}
 program
   .name("search-quality-kit")
   .description("Catch technical Google Search quality regressions.")
@@ -26,36 +44,35 @@ program
   .option("--baseline <file>", "compare findings with a JSON report")
   .option("--fail-on-new", "fail only on findings absent from --baseline")
   .option("--json", "print JSON")
-  .option("--format <format>", "console, json, or markdown")
+  .option("--format <format>", "console, json, markdown, or sarif")
   .option("-o, --output <file>", "write report to a file")
   .option("--skip-build", "skip build.command")
   .action(async (o) => {
     if (o.failOnNew && !o.baseline)
       throw new Error("--fail-on-new requires --baseline <file>");
-    const { report, config } = await runVerification({
+    const baseline = o.baseline
+        ? parseBaselineReport(
+            await readFile(path.resolve(o.root, o.baseline), "utf8"),
+          )
+        : undefined,
+      result = await runVerification({
         root: o.root,
         configPath: o.config,
         skipBuild: o.skipBuild,
       }),
+      config = result.config,
+      report = baseline
+        ? withBaselineComparison(result.report, baseline)
+        : result.report,
       format = o.json ? "json" : (o.format ?? config.output.format);
-    if (!["console", "json", "markdown"].includes(format))
-      throw new Error(`Unknown report format: ${format}`);
-    const rendered =
-      format === "json"
-        ? formatJsonReport(report)
-        : format === "markdown"
-          ? formatMarkdownReport(report)
-          : formatConsoleReport(report);
+    const rendered = renderReport(report, format);
     if (o.output)
       await writeFile(path.resolve(o.root, o.output), `${rendered}\n`, "utf8");
     else process.stdout.write(`${rendered}\n`);
-    const baseline = o.baseline
-      ? (JSON.parse(
-          await readFile(path.resolve(o.root, o.baseline), "utf8"),
-        ) as SearchQualityReport)
-      : undefined;
     const failureCandidates =
-      o.failOnNew && baseline ? newFindings(report, baseline) : report.findings;
+      o.failOnNew && report.baseline
+        ? report.baseline.newFindings
+        : report.findings;
     if (shouldFail(report, config, o.reportOnly, failureCandidates))
       process.exitCode = 1;
   });
@@ -88,18 +105,17 @@ program
   .command("report")
   .description("Reformat a JSON report")
   .argument("[file]", "JSON report file", "search-quality-report.json")
-  .option("--format <format>", "console, json, or markdown", "markdown")
+  .option("--format <format>", "console, json, markdown, or sarif", "markdown")
   .option("-o, --output <file>")
   .action(async (file, o) => {
-    const r = JSON.parse(
+    const r = parseSearchQualityReport(
         await readFile(path.resolve(file), "utf8"),
-      ) as SearchQualityReport,
-      rendered =
-        o.format === "json"
-          ? formatJsonReport(r)
-          : o.format === "console"
-            ? formatConsoleReport(r)
-            : formatMarkdownReport(r);
+      ),
+      report: SearchQualityReport =
+        "schemaVersion" in r && r.schemaVersion === REPORT_SCHEMA_VERSION
+          ? r
+          : { ...r, schemaVersion: REPORT_SCHEMA_VERSION },
+      rendered = renderReport(report, o.format);
     if (o.output)
       await writeFile(path.resolve(o.output), `${rendered}\n`, `utf8`);
     else process.stdout.write(`${rendered}\n`);

@@ -5,9 +5,10 @@ export async function runCommand(command: string, cwd: string) {
     const child = spawn(command, {
       cwd,
       shell: true,
-      stdio: "inherit",
+      stdio: ["inherit", "pipe", "inherit"],
       env: process.env,
     });
+    child.stdout?.pipe(process.stderr);
     child.on("error", reject);
     child.on("exit", (code) =>
       code === 0
@@ -16,8 +17,16 @@ export async function runCommand(command: string, cwd: string) {
     );
   });
 }
-export const startCommand = (command: string, cwd: string) =>
-  spawn(command, { cwd, shell: true, stdio: "inherit", env: process.env });
+export const startCommand = (command: string, cwd: string) => {
+  const child = spawn(command, {
+    cwd,
+    shell: true,
+    stdio: ["inherit", "pipe", "inherit"],
+    env: process.env,
+  });
+  child.stdout?.pipe(process.stderr);
+  return child;
+};
 export async function waitForUrl(
   url: string,
   config: SearchQualityConfig,

@@ -5,3 +5,4 @@ coverage/
 .DS_Store
 search-quality-report.json
 search-quality-report.md
+search-quality-report.sarif

@@ -5,10 +5,11 @@ import { checks } from "../checks/index.js";
 import { loadConfig } from "../config/loadConfig.js";
 import type { SearchQualityConfig } from "../config/schema.js";
 import { crawlHttp, crawlStatic } from "../crawler/crawlSite.js";
-import type {
-  Finding,
-  SearchQualityReport,
-  Severity,
+import {
+  REPORT_SCHEMA_VERSION,
+  type Finding,
+  type SearchQualityReport,
+  type Severity,
 } from "../report/types.js";
 import { runCommand, startCommand, waitForUrl } from "../utils/process.js";
 import { VERSION } from "../version.js";
@@ -71,9 +72,13 @@ export async function runVerification(
       (a, b) =>
         order[a.severity] - order[b.severity] ||
         a.check.localeCompare(b.check) ||
-        (a.url ?? "").localeCompare(b.url ?? ""),
+        a.code.localeCompare(b.code) ||
+        (a.url ?? "").localeCompare(b.url ?? "") ||
+        (a.file ?? "").localeCompare(b.file ?? "") ||
+        a.message.localeCompare(b.message),
     );
     const report: SearchQualityReport = {
+      schemaVersion: REPORT_SCHEMA_VERSION,
       tool: "search-quality-kit",
       version: VERSION,
       generatedAt: new Date().toISOString(),
