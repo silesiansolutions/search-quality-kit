@@ -1,4 +1,5 @@
 import { loadHtml, metaContent } from "../utils/html.js";
+import { normalizeUrl, sameOrigin } from "../utils/urls.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
 export const indexabilityCheck: CheckDefinition = {
@@ -7,6 +8,25 @@ export const indexabilityCheck: CheckDefinition = {
   run({ crawl }) {
     const out = [];
     for (const p of crawl.pages) {
+      if (
+        normalizeUrl(p.initialUrl) !== normalizeUrl(p.finalUrl) &&
+        !sameOrigin(p.finalUrl, crawl.publicBaseUrl)
+      )
+        out.push(
+          finding(
+            "indexability",
+            "redirect-outside-origin",
+            "error",
+            `Internal URL ${p.initialUrl} redirects outside the public origin to ${p.finalUrl}.`,
+            "Keep internal redirects on the configured public origin or update the entrypoint and baseUrl intentionally.",
+            {
+              ...pageOptions(p),
+              relatedUrls: [p.initialUrl, p.finalUrl],
+              googleDocs:
+                "https://developers.google.com/search/docs/crawling-indexing/301-redirects",
+            },
+          ),
+        );
       if (p.status !== 200)
         out.push(
           finding(

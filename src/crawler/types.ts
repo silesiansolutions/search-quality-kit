@@ -1,4 +1,9 @@
 export interface PageArtifact {
+  /** Public URL requested before redirects. */
+  initialUrl: string;
+  /** Public URL returned after redirects. */
+  finalUrl: string;
+  /** Alias for finalUrl kept for check compatibility. */
   url: string;
   requestUrl: string;
   status: number;
@@ -12,6 +17,8 @@ export interface TextArtifact {
   status: number;
   content?: string;
   file?: string;
+  parentUrl?: string;
+  depth?: number;
 }
 export interface AssetArtifact {
   url: string;
@@ -25,5 +32,8 @@ export interface CrawlResult {
   pages: PageArtifact[];
   robots: TextArtifact;
   sitemap: TextArtifact;
+  sitemaps: TextArtifact[];
+  sitemapUrls: string[];
+  sitemapTruncated: boolean;
   assets: Map<string, AssetArtifact>;
 }

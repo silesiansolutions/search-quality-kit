@@ -25,6 +25,12 @@ export interface SearchQualityReport {
   target: string;
   summary: ReportSummary;
   findings: Finding[];
-  pages: Array<{ url: string; status: number; file?: string }>;
+  pages: Array<{
+    url: string;
+    initialUrl?: string;
+    finalUrl?: string;
+    status: number;
+    file?: string;
+  }>;
   durationMs: number;
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatConsoleReport } from "../src/report/formatConsoleReport.js";
 import { formatJsonReport } from "../src/report/formatJsonReport.js";
+import { formatMarkdownReport } from "../src/report/formatMarkdownReport.js";
 import type { SearchQualityReport } from "../src/report/types.js";
 const report: SearchQualityReport = {
   tool: "search-quality-kit",
@@ -31,4 +32,6 @@ describe("report formatters", () => {
   });
   it("renders machine-readable JSON", () =>
     expect(JSON.parse(formatJsonReport(report)).summary.errors).toBe(1));
+  it("renders stable codes in Markdown artifacts", () =>
+    expect(formatMarkdownReport(report)).toContain("`missing`"));
 });
