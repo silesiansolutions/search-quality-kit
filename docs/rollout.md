@@ -130,6 +130,6 @@ Use one small PR per repository: pinned dependency, explicit preset config, revi
 
 For monorepos, use one config, baseline, and report path per site as described in [the multi-site design](design/multi-site.md).
 
-## Candidate scope for v0.5
+## Proposed scope after v0.6
 
-Keep v0.5 focused on structured-data profiles and report integration: site-type profiles for personal, company, blog, and directory sites; stronger validation for `Person`, `Organization`, `Article`, `BreadcrumbList`, `WebSite`, `ItemList`, and `LocalBusiness`; and optional SARIF/GitHub annotation hardening where locations are honest. Search Console belongs in a separate optional package, not core. Google APIs, browser automation, content scoring, and synthetic Core Web Vitals remain out of scope.
+Keep v0.7 focused on multi-site operation: a monorepo runner, aggregated reports, per-site baselines, a documentation site, and better bounded SARIF/annotations where locations are honest. Search Console belongs in a separate optional package/plugin, not core. See the [v0.7 roadmap](design/v0.7-roadmap.md). Google APIs, browser automation, content scoring, and synthetic Core Web Vitals remain out of scope.

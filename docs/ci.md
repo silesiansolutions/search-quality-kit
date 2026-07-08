@@ -4,9 +4,84 @@ The CLI has three exit codes: `0` when the configured gate passes, `1` when find
 
 Pin a released package version in `devDependencies` and start with `--report-only` while the team reviews the first report. Existing repositories should normally adopt the baseline workflow below instead of weakening checks globally.
 
-## GitHub Actions without a baseline
+## Official GitHub Action
 
-This workflow writes JSON during the audit, reformats it as Markdown even when the gate fails, appends the Markdown to the workflow summary, and uploads both files.
+The official composite Action sets up Node, optionally runs explicit install/build commands, invokes the pinned local `search-quality-kit` binary, creates JSON and Markdown reports, and then preserves the CLI exit code. It does not guess a package manager, build command, config, baseline, or deployment behavior.
+
+### Basic workflow
+
+```yaml
+name: Search Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  search-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: SilesianSolutions/search-quality-kit/action@v0
+        with:
+          node-version: "22"
+          package-manager: npm
+          install-command: npm ci
+          build-command: npm run build
+          config: search-quality.config.ts
+          report-only: "false"
+          output-dir: search-quality-reports
+          summary: "true"
+          upload-artifact: "true"
+```
+
+`install-command` and `build-command` default to empty; the Action runs neither unless configured. When `build-command` is set, the Action passes `--skip-build` to the CLI so a `build.command` in config is not executed twice. `package-manager` selects only how the already-installed local binary is invoked: `npx --no-install`, `pnpm exec`, or `yarn exec`.
+
+The default artifact contains `search-quality-report.json` and `search-quality-report.md`. Set `sarif: "true"` to add `search-quality-report.sarif`; uploading SARIF to GitHub Code Scanning remains an explicit workflow decision because it requires repository permissions.
+
+### Baseline and fail-on-new
+
+```yaml
+- uses: SilesianSolutions/search-quality-kit/action@v0
+  with:
+    node-version: "22"
+    install-command: npm ci
+    build-command: npm run build
+    config: search-quality.config.ts
+    baseline: search-quality-baseline.json
+    fail-on-new: "true"
+    summary: "true"
+    upload-artifact: "true"
+```
+
+`fail-on-new: "true"` requires `baseline`. It maps directly to `verify --baseline ... --fail-on-new`; the severities still come from `ci.failOn`.
+
+### Report-only rollout
+
+```yaml
+- uses: SilesianSolutions/search-quality-kit/action@v0
+  with:
+    install-command: npm ci
+    build-command: npm run build
+    config: search-quality.config.ts
+    report-only: "true"
+    summary: "true"
+    upload-artifact: "true"
+```
+
+Report-only suppresses finding-based failure while the team reviews initial debt. Config, baseline, runtime, and plugin errors still exit `2`; a broken audit never becomes a green observation run.
+
+### Pull request summary and artifact
+
+`summary: "true"` appends the bounded Markdown report to `$GITHUB_STEP_SUMMARY`. `upload-artifact: "true"` uses `actions/upload-artifact` after the audit even when findings fail the gate. The Action exports absolute `json-report`, `markdown-report`, and optional `sarif-report` paths for later steps. It does not create PR comments or fabricate source-line annotations.
+
+Complete examples are available at [`examples/ci/github-action-basic.yml`](../examples/ci/github-action-basic.yml) and [`examples/ci/github-action-baseline.yml`](../examples/ci/github-action-baseline.yml).
+
+## Manual CLI workflow
+
+Use the manual form when the repository needs custom job ordering, separate permissions, SARIF upload, or nonstandard report handling. This workflow writes JSON during the audit, reformats it as Markdown even when the gate fails, appends Markdown to the workflow summary, and uploads both files.
 
 ```yaml
 name: Search Quality
@@ -60,7 +135,7 @@ jobs:
 
 Remove `npm run build` and `--skip-build` when `build.command` in `search-quality.config.ts` should own the build. The separate form above avoids building twice in repositories that already have an explicit build step.
 
-## Baseline: fail only on regressions
+## Baseline semantics: fail only on regressions
 
 Create a baseline from a reviewed commit:
 
@@ -123,6 +198,31 @@ Every v0.3 report has `schemaVersion: "0.3"`, plus the existing `tool` and packa
 
 Dynamic fields such as `generatedAt` and `durationMs` remain useful diagnostics but are never part of baseline identity.
 
-## TODO: `init --ci github`
+## Monorepos and several configs
 
-`init --ci github` is intentionally deferred. Safe generation needs explicit decisions about package manager, build ownership, default branch, existing workflow files, and overwrite behavior. A future implementation should generate config and workflow independently, refuse overwrites without `--force`, and avoid guessing commands in existing repositories.
+The Action runs one config per invocation. Use one step per site or a small explicit matrix; keep each config, baseline, output directory, and artifact name unique.
+
+```yaml
+strategy:
+  matrix:
+    include:
+      - site: marketing
+        directory: apps/marketing
+      - site: docs
+        directory: apps/docs
+
+steps:
+  - uses: actions/checkout@v7
+  - uses: SilesianSolutions/search-quality-kit/action@v0
+    with:
+      working-directory: ${{ matrix.directory }}
+      install-command: npm ci
+      build-command: npm run build
+      config: search-quality.config.ts
+      baseline: search-quality-baseline.json
+      fail-on-new: "true"
+      output-dir: search-quality-reports
+      artifact-name: search-quality-${{ matrix.site }}
+```
+
+This is orchestration, not automatic multi-site discovery. Aggregated reports and per-site runner semantics remain proposed v0.7 work.

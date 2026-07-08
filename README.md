@@ -9,6 +9,7 @@ A framework-agnostic CLI for auditing technical Google Search foundations in loc
 - [npm package](https://www.npmjs.com/package/@silesiansolutions/search-quality-kit)
 - [GitHub repository](https://github.com/SilesianSolutions/search-quality-kit)
 - [Check catalog](docs/checks.md)
+- [Custom plugins](docs/plugins.md)
 
 It checks technical foundations: crawlability, indexability, sitemap and robots rules, metadata, canonicals, JSON-LD, Open Graph, internal links, delivered HTML, basic accessibility, and lightweight performance risks. It does **not** promise rankings, score content quality, call Google APIs, replace Search Console, Rich Results Test, or Lighthouse.
 
@@ -96,15 +97,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - uses: SilesianSolutions/search-quality-kit/action@v0
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx @silesiansolutions/search-quality-kit verify
+          install-command: npm ci
+          build-command: npm run build
+          config: search-quality.config.ts
+          upload-artifact: "true"
+          summary: "true"
 ```
 
-For rollout guidance and report artifacts, see [docs/ci.md](docs/ci.md).
+The composite Action calls the repository's pinned local CLI, exposes the CLI options instead of replacing them, and preserves its exit code after writing JSON/Markdown reports. Manual CLI workflows remain supported. See [CI usage](docs/ci.md).
 
 ## Built-in checks
 
@@ -112,14 +115,36 @@ For rollout guidance and report artifacts, see [docs/ci.md](docs/ci.md).
 
 Rules are tied to official areas of [Google Search Central](https://developers.google.com/search/docs/essentials). Project heuristics such as title length, HTML weight, and image size are labeled as heuristics; profile expectations are labeled separately and are not represented as Google requirements or ranking thresholds.
 
-## Add a check
+## Custom checks
 
-1. Implement `CheckDefinition` under `src/checks/`.
-2. Return normalized findings with severity, stable code, remediation, and documentation links.
-3. Register it in `src/checks/index.ts` and add its boolean config key.
-4. Add offline fixture-based tests and document whether each rule is a Google requirement, recommendation, or local heuristic.
+Use `defineCheck` and `definePlugin` to add deterministic project rules without forking core. Plugins receive a frozen, documented page/config snapshot and return normal findings that participate in JSON, Markdown, SARIF, baseline comparison, and `ci.failOn`.
 
-The engine owns crawling and reporting; checks remain pure and reusable. See [docs/philosophy.md](docs/philosophy.md).
+```ts
+import { defineCheck } from "@silesiansolutions/search-quality-kit";
+
+const noPlaceholderCopy = defineCheck({
+  id: "custom.no-placeholder-copy",
+  title: "No placeholder copy",
+  category: "custom",
+  classification: "local-heuristic",
+  defaultSeverity: "warning",
+  run: (ctx) =>
+    ctx.pages.flatMap((page) =>
+      page.visibleText.includes("Lorem ipsum")
+        ? [
+            {
+              code: "custom.no-placeholder-copy",
+              url: page.url,
+              message: "Page contains placeholder copy.",
+              remediation: "Replace placeholder copy before deployment.",
+            },
+          ]
+        : [],
+    ),
+});
+```
+
+See [custom checks and plugins](docs/plugins.md) and the [`examples/plugins/`](examples/plugins/) package-ready example. Contributors adding built-in behavior should still follow [the project philosophy](docs/philosophy.md).
 
 ## Releases
 

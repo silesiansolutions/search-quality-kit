@@ -42,6 +42,11 @@ function findingLines(finding: Finding) {
     `  - **Remediation:** ${text(finding.suggestion)}`,
     `  - **Classification:** ${classification.map(text).join(", ")}`,
     `  - **Impact:** ${finding.impact ?? (finding.severity === "error" ? "technical-error" : "recommendation")}`,
+    ...(finding.source
+      ? [
+          `  - **Source:** ${finding.source.type === "plugin" ? `plugin ${code(finding.source.name)}` : `core ${code(finding.source.name)}`}`,
+        ]
+      : []),
     ...(finding.activeProfile
       ? [`  - **Active profile:** ${code(finding.activeProfile)}`]
       : []),
@@ -155,6 +160,15 @@ export function formatMarkdownReport(report: SearchQualityReport) {
       ...profileCoverage(report),
       ...section("Findings", report.findings),
     );
+  }
+
+  if (report.pluginErrors?.length) {
+    lines.push("## Plugin errors", "");
+    for (const error of report.pluginErrors)
+      lines.push(
+        `- **${code(error.plugin)} / ${code(error.check)}:** ${text(error.message)}`,
+      );
+    lines.push("");
   }
 
   lines.push(`Generated at ${report.generatedAt}.`);

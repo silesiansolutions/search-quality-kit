@@ -8,6 +8,7 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 | `build`                | `command`, `startCommand`, `distDir`, `startupTimeoutMs`                | `dist`, 30 seconds               |
 | `crawl`                | `mode`, entrypoints, page/sitemap limits, `include`, `exclude`, timeout | `auto`, `/`, 100 pages           |
 | `profiles`             | default site type and ordered route overrides                           | `generic`, no route overrides    |
+| `plugins`              | typed custom-check plugins                                              | none                             |
 | `checks`               | one boolean per built-in check                                          | all enabled                      |
 | `rules.title`          | min/max length, duplicate policy                                        | 10–70, no duplicates             |
 | `rules.description`    | min/max, missing and duplicate policy                                   | 50–170, required, no duplicates  |
@@ -29,6 +30,46 @@ Paths in `include`, `exclude`, and `entrypoints` are URL paths. Exclusions apply
 `crawl.maxSitemaps` defaults to 50 and `crawl.maxSitemapDepth` defaults to 3. They bound recursive sitemap-index traversal in both static and HTTP modes. A truncated traversal produces `sitemap/fetch-limit`; raise the limits only when the site intentionally needs a larger sitemap tree.
 
 Baseline behavior is controlled by CLI flags rather than config: use `--baseline <report.json> --fail-on-new`. The gate still reads severity policy from `ci.failOn`, while `ci.warnOnly` and `--report-only` suppress finding-based failure. Report and SARIF output are presentation formats and do not alter finding identity or gate behavior.
+
+## Plugins
+
+Register custom checks through the top-level `plugins` array:
+
+```ts
+import {
+  defineCheck,
+  defineConfig,
+  definePlugin,
+} from "@silesiansolutions/search-quality-kit";
+
+const check = defineCheck({
+  id: "custom.no-placeholder-copy",
+  title: "No placeholder copy",
+  category: "custom",
+  classification: "local-heuristic",
+  defaultSeverity: "warning",
+  run: (ctx) =>
+    ctx.pages.flatMap((page) =>
+      page.visibleText.includes("Lorem ipsum")
+        ? [
+            {
+              code: "custom.no-placeholder-copy",
+              url: page.url,
+              message: "Page contains placeholder copy.",
+              remediation: "Replace placeholder copy before deployment.",
+            },
+          ]
+        : [],
+    ),
+});
+
+export default defineConfig({
+  site: { baseUrl: "https://example.com" },
+  plugins: [definePlugin({ name: "internal-rules", checks: [check] })],
+});
+```
+
+Plugin names use lowercase letters, numbers, and hyphens. Check ids and finding codes must be namespaced with `custom.` or the plugin name. Config loading rejects missing fields and duplicate check ids before crawling. Runtime exceptions and invalid findings are reported separately as plugin errors and exit `2`. See [the full plugin guide](plugins.md).
 
 ## Site and route profiles
 
@@ -106,4 +147,4 @@ Hugo uses the neutral preset with its conventional output override: start from `
 
 ## Validation errors
 
-Configuration failures exit `2` and identify the field plus a fix. `site.baseUrl` is required by the CLI even for a local static build because reports and canonical checks need the production origin. Static mode requires `build.distDir` to exist after any configured build. `build.startCommand` requires `site.localUrl`; `site.localUrl` conflicts with `crawl.mode: "static"`; and excluding `/` is rejected because it removes the whole audit scope.
+Configuration failures exit `2` and identify the field plus a fix. `site.baseUrl` is required by the CLI even for a local static build because reports and canonical checks need the production origin. Static mode requires `build.distDir` to exist after any configured build. `build.startCommand` requires `site.localUrl`; `site.localUrl` conflicts with `crawl.mode: "static"`; excluding `/` is rejected because it removes the whole audit scope; and invalid/duplicate plugin definitions are rejected before the build or crawl starts.

@@ -5,6 +5,8 @@ import {
   structuredDataTypes,
   validRoutePattern,
 } from "./profileDefinitions.js";
+import { validatePluginCollection } from "../plugins/definePlugin.js";
+import type { PluginDefinition } from "../plugins/types.js";
 const command = z.string().min(1).optional();
 const httpUrl = (label: string) =>
   z
@@ -64,6 +66,20 @@ export const configSchema = z.object({
         .default([]),
     })
     .prefault({}),
+  plugins: z
+    .array(z.custom<PluginDefinition>())
+    .default([])
+    .transform((plugins, context) => {
+      try {
+        return validatePluginCollection(plugins);
+      } catch (error) {
+        context.addIssue({
+          code: "custom",
+          message: error instanceof Error ? error.message : String(error),
+        });
+        return z.NEVER;
+      }
+    }),
   checks: z
     .object({
       sitemap: z.boolean().default(true),

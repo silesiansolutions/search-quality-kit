@@ -1,0 +1,91 @@
+name: Search Quality Kit
+description: Run deterministic search-quality checks with JSON, Markdown, and optional SARIF reports.
+
+inputs:
+  node-version:
+    description: Node.js version used by the project and CLI.
+    default: "22"
+  package-manager:
+    description: Package manager used to execute the local CLI (npm, pnpm, or yarn).
+    default: npm
+  install-command:
+    description: Optional explicit dependency installation command. Nothing is installed when empty.
+    default: ""
+  build-command:
+    description: Optional explicit production build command. The CLI receives --skip-build when set.
+    default: ""
+  working-directory:
+    description: Project directory relative to the repository root.
+    default: .
+  config:
+    description: Config path relative to the working directory.
+    default: search-quality.config.ts
+  report-only:
+    description: Always exit successfully for findings (plugin/config/runtime errors still fail).
+    default: "false"
+  baseline:
+    description: Optional JSON baseline path relative to the working directory.
+    default: ""
+  fail-on-new:
+    description: Apply ci.failOn only to findings absent from the baseline.
+    default: "false"
+  output-dir:
+    description: Directory for generated reports.
+    default: search-quality-reports
+  summary:
+    description: Append the Markdown report to GITHUB_STEP_SUMMARY.
+    default: "true"
+  upload-artifact:
+    description: Upload the report directory as a workflow artifact.
+    default: "true"
+  artifact-name:
+    description: Workflow artifact name.
+    default: search-quality-report
+  sarif:
+    description: Generate a SARIF report alongside JSON and Markdown.
+    default: "false"
+
+outputs:
+  json-report:
+    description: Absolute path to the JSON report.
+    value: ${{ steps.audit.outputs.json-report }}
+  markdown-report:
+    description: Absolute path to the Markdown report.
+    value: ${{ steps.audit.outputs.markdown-report }}
+  sarif-report:
+    description: Absolute path to the SARIF report when enabled.
+    value: ${{ steps.audit.outputs.sarif-report }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: ${{ inputs.node-version }}
+        package-manager-cache: false
+
+    - name: Run search-quality-kit
+      id: audit
+      shell: bash
+      env:
+        SQK_PACKAGE_MANAGER: ${{ inputs.package-manager }}
+        SQK_INSTALL_COMMAND: ${{ inputs.install-command }}
+        SQK_BUILD_COMMAND: ${{ inputs.build-command }}
+        SQK_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        SQK_CONFIG: ${{ inputs.config }}
+        SQK_REPORT_ONLY: ${{ inputs.report-only }}
+        SQK_BASELINE: ${{ inputs.baseline }}
+        SQK_FAIL_ON_NEW: ${{ inputs.fail-on-new }}
+        SQK_OUTPUT_DIR: ${{ inputs.output-dir }}
+        SQK_SUMMARY: ${{ inputs.summary }}
+        SQK_SARIF: ${{ inputs.sarif }}
+      run: bash "${{ github.action_path }}/run.sh"
+
+    - name: Upload search-quality reports
+      if: ${{ always() && inputs.upload-artifact == 'true' }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.audit.outputs.artifact-path }}
+        if-no-files-found: warn
