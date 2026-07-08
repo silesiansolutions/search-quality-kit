@@ -102,10 +102,12 @@ The gate applies `ci.failOn` only to new findings. Start with `failOn: ["error"]
 ## Recommended rollout for legacy sites
 
 1. Use the closest preset and run `--report-only` against a clean production-equivalent build.
-2. Fix broken build output, indexability errors, and local/staging leaks first.
-3. Exclude only confirmed intentional noindex/generated routes.
-4. Commit a reviewed baseline even if warnings remain.
-5. Gate new errors for several weeks; then decide whether selected warning classes deserve enforcement.
+2. Add the relevant site profile, route profiles, and policy packs.
+3. Run `search-quality-kit doctor` and fix setup/config errors before crawling.
+4. Fix broken build output, indexability errors, and local/staging leaks first.
+5. Exclude only confirmed intentional noindex/generated routes.
+6. Run report-only, review the Markdown artifact, and commit a reviewed baseline even if warnings remain.
+7. Gate new errors with `--baseline ... --fail-on-new`; then decide whether selected warning classes deserve enforcement.
 
 Gatsby repositories deserve an extra check for stale `public/` artifacts. Clean before building, and verify that the deployment and audit use the same output. The Gatsby preset handles known generated fallback routes but does not hide old pages left in `public/`.
 
@@ -144,6 +146,20 @@ For portfolio adoption, first run `portfolio verify --report-only`, triage opera
 
 The final gate fails for configured severities (or new configured severities in baseline mode) and for operational/plugin/config/baseline failures. Resolved and existing findings do not fail a new-findings gate. Keep `continueOnSiteFailure: true` so maintainers receive a complete portfolio report instead of fixing sites serially.
 
-## Scope after v0.7
+## Reviewed but intentionally out of scope
 
-Keep v0.8 focused on operational hardening driven by real portfolio usage. Trend storage, a standalone docs/demo site, and richer annotations need separate evidence and design. Search Console belongs in an optional package/plugin, not core. Google APIs, browser automation, content scoring, synthetic Core Web Vitals, and SaaS scheduling remain out of scope.
+The current package remains a deterministic technical audit and policy layer.
+These areas were reviewed and intentionally left out of the current scope:
+
+- separate npm packages for policy/plugin packs, which would need a workspace
+  and release strategy;
+- Search Console, URL Inspection, or other Google APIs, which require auth,
+  quotas, and external data;
+- Lighthouse or Core Web Vitals bridges, because this tool does not replace
+  performance lab/field tooling;
+- Playwright or JavaScript rendering, which would change cost, dependencies,
+  and determinism;
+- route-to-source mapping, PR diff mode, and source-line annotations without
+  reliable route/source evidence;
+- a separate showcase repository while the package-aligned showcase remains
+  small, tested, and artifact-based.

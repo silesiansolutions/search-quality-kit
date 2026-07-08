@@ -57,6 +57,32 @@ Site profiles add contextual, warning-level expectations for `personal`, `compan
 See [Getting started](docs/getting-started.md), [configuration](docs/config.md), and the [complete check catalog](docs/checks.md).
 The v0.1 behavior was also exercised against two production repositories; see the [real-world validation report](docs/real-world-validation.md).
 
+## Policy packs
+
+Policy packs are ready-to-use plugin factories for common public-site rollout
+checks:
+
+```ts
+import {
+  defineConfig,
+  policyPacks,
+  presets,
+  profiles,
+} from "@silesiansolutions/search-quality-kit";
+
+export default defineConfig({
+  ...presets.astro(),
+  ...profiles.companySite(),
+  site: { baseUrl: "https://example.com" },
+  plugins: [policyPacks.companySite(), policyPacks.aiVisibilitySafe()],
+});
+```
+
+Available packs are `personalBrand`, `companySite`, `directory`, and
+`aiVisibilitySafe`. They are deterministic plugins: no Google APIs, no browser
+automation, no content scoring, and no private contact-data requirements. See
+[policy packs](docs/policy-packs.md) and [plugin testing](docs/testing-plugins.md).
+
 ## Commands
 
 ```text
@@ -81,6 +107,15 @@ search-quality-kit portfolio baseline --config portfolio.search-quality.config.t
 - `report report.json --format sarif --output report.sarif` creates a GitHub Code Scanning-compatible artifact.
 - `doctor` checks config loading, local setup, baselines, output paths, Node engines, and portfolio manifests without running an audit.
 - CLI/configuration failures exit `2`.
+
+Run `doctor` before the first audit in a repository, after changing baselines or
+portfolio manifests, and before CI debugging:
+
+```bash
+search-quality-kit doctor --config search-quality.config.ts
+search-quality-kit doctor \
+  --portfolio-config portfolio.search-quality.config.ts
+```
 
 ## Portfolio runner
 

@@ -115,6 +115,31 @@ Report-only suppresses finding-based failure while the team reviews initial debt
 
 Complete examples are available at [`examples/ci/github-action-basic.yml`](../examples/ci/github-action-basic.yml) and [`examples/ci/github-action-baseline.yml`](../examples/ci/github-action-baseline.yml).
 
+## Policy packs in CI
+
+Policy packs are normal plugins. Add them to `search-quality.config.ts`; the CLI
+and Action will include their findings in JSON, Markdown, SARIF, baselines, and
+`ci.failOn` automatically.
+
+```ts
+import {
+  defineConfig,
+  policyPacks,
+  presets,
+  profiles,
+} from "@silesiansolutions/search-quality-kit";
+
+export default defineConfig({
+  ...presets.astro(),
+  ...profiles.companySite(),
+  site: { baseUrl: "https://example.com" },
+  plugins: [policyPacks.companySite(), policyPacks.aiVisibilitySafe()],
+});
+```
+
+For existing sites, start with `report-only`, review the policy findings, then
+capture a baseline and gate new findings with `--fail-on-new`.
+
 ## Manual CLI workflow
 
 Use the manual form when the repository needs custom job ordering, separate permissions, SARIF upload, or nonstandard report handling. This workflow writes JSON during the audit, reformats it as Markdown even when the gate fails, appends Markdown to the workflow summary, and uploads both files.
