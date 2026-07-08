@@ -60,6 +60,9 @@ describe("CLI baseline mode", () => {
     expect(
       current.findings.some((finding) => finding.severity === "warning"),
     ).toBe(true);
+    expect(
+      current.findings.every((finding) => finding.classification?.length),
+    ).toBe(true);
   });
 
   afterAll(async () => {
@@ -229,5 +232,59 @@ describe("CLI baseline mode", () => {
     expect(result.status, result.stderr).toBe(0);
     expect(() => JSON.parse(result.stdout)).not.toThrow();
     expect(result.stderr).toContain("build output");
+  });
+
+  it("shows stable classifications in list-checks", () => {
+    const result = run(["list-checks"]);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("CLASSIFICATIONS");
+    expect(result.stdout).toContain("google-requirement");
+    expect(result.stdout).toContain("cross-channel-metadata");
+    expect(result.stdout).toContain("accessibility-basic");
+  });
+
+  it("explains a missing static output directory", async () => {
+    await writeFile(
+      path.join(root, "missing-dist.config.json"),
+      JSON.stringify({
+        site: { baseUrl: "https://example.com" },
+        build: { distDir: "not-built" },
+        crawl: { mode: "static" },
+      }),
+    );
+    const result = run([
+      "verify",
+      "--root",
+      root,
+      "--config",
+      "missing-dist.config.json",
+    ]);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("build.distDir does not exist");
+    expect(result.stderr).toContain("Build the site first");
+  });
+
+  it("adds field context when build.command fails", async () => {
+    await writeFile(
+      path.join(root, "failing-build.config.json"),
+      JSON.stringify({
+        site: { baseUrl: "https://example.com" },
+        build: {
+          command: `${JSON.stringify(process.execPath)} -e "process.exit(7)"`,
+          distDir: "dist",
+        },
+        crawl: { mode: "static" },
+      }),
+    );
+    const result = run([
+      "verify",
+      "--root",
+      root,
+      "--config",
+      "failing-build.config.json",
+    ]);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("build.command failed");
+    expect(result.stderr).toContain("Run it manually");
   });
 });

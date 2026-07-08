@@ -41,4 +41,38 @@ describe("static crawl route inventory", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  it("uses a same-origin extensionless canonical for flat HTML output", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "search-quality-kit-flat-"));
+    const dist = path.join(root, "dist");
+
+    try {
+      await mkdir(dist, { recursive: true });
+      await writeFile(
+        path.join(dist, "index.html"),
+        '<html><head><link rel="canonical" href="https://example.com/"></head><body><a href="/about">About</a></body></html>',
+      );
+      await writeFile(
+        path.join(dist, "about.html"),
+        '<html><head><link rel="canonical" href="https://example.com/about"></head><body>About</body></html>',
+      );
+
+      const config = {
+        ...defaultConfig,
+        site: { ...defaultConfig.site, baseUrl: "https://example.com" },
+      };
+      const crawl = await crawlStatic(root, config);
+      const findings = await internalLinksCheck.run({ config, crawl });
+
+      expect(crawl.pages.map((page) => page.url)).toContain(
+        "https://example.com/about",
+      );
+      expect(crawl.assets.has("https://example.com/about")).toBe(true);
+      expect(findings).not.toContainEqual(
+        expect.objectContaining({ code: "missing-static-route" }),
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });

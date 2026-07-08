@@ -1,11 +1,17 @@
 import { z } from "zod";
 import { VERSION } from "../version.js";
 const command = z.string().min(1).optional();
+const httpUrl = (label: string) =>
+  z
+    .url({ error: `Expected an absolute http(s) ${label} URL.` })
+    .refine((value) => /^https?:\/\//.test(value), {
+      error: `Expected an absolute http(s) ${label} URL.`,
+    });
 export const configSchema = z.object({
   site: z
     .object({
-      baseUrl: z.url().optional(),
-      localUrl: z.url().optional(),
+      baseUrl: httpUrl("production").optional(),
+      localUrl: httpUrl("local preview").optional(),
       stagingHosts: z
         .array(z.string())
         .default(["staging", "preview", "localhost", "127.0.0.1"]),
@@ -21,6 +27,7 @@ export const configSchema = z.object({
     .prefault({}),
   crawl: z
     .object({
+      mode: z.enum(["auto", "static", "http"]).default("auto"),
       entrypoints: z.array(z.string()).min(1).default(["/"]),
       maxPages: z.number().int().positive().max(10000).default(100),
       maxSitemaps: z.number().int().positive().max(1000).default(50),

@@ -1,3 +1,4 @@
+# Use for a new site that should fail on all configured error findings.
 name: Search Quality
 
 on:

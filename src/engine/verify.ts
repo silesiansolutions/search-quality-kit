@@ -43,26 +43,43 @@ export async function runVerification(
     { config } = await loadConfig(root, options.configPath);
   let preview: ChildProcess | undefined;
   try {
-    if (config.build.command && !options.skipBuild)
-      await runCommand(config.build.command, root);
+    if (config.build.command && !options.skipBuild) {
+      try {
+        await runCommand(config.build.command, root);
+      } catch (error) {
+        throw new Error(
+          `build.command failed: ${(error as Error).message}. Run it manually to inspect the build, or fix build.command in the config.`,
+        );
+      }
+    }
     if (config.build.startCommand) {
       if (!config.site.localUrl)
         throw new Error("build.startCommand requires site.localUrl");
       preview = startCommand(config.build.startCommand, root);
       await waitForUrl(config.site.localUrl, config, preview);
     }
-    const dist = path.resolve(root, config.build.distDir),
+    const dist = path.resolve(root, config.build.distDir);
+    const baseUrl = config.site.baseUrl;
+    if (!baseUrl)
+      throw new Error(
+        "site.baseUrl is missing. Set it to the production origin in the config.",
+      );
+    let crawl;
+    if (config.crawl.mode === "static") {
+      if (!(await exists(dist)))
+        throw new Error(
+          `build.distDir does not exist: ${dist}. Build the site first or set build.distDir to the generated static output.`,
+        );
+      crawl = await crawlStatic(root, config);
+    } else if (config.crawl.mode === "http") {
+      crawl = await crawlHttp(config.site.localUrl ?? baseUrl, config);
+    } else {
       crawl = config.site.localUrl
         ? await crawlHttp(config.site.localUrl, config)
         : (await exists(dist))
           ? await crawlStatic(root, config)
-          : config.site.baseUrl
-            ? await crawlHttp(config.site.baseUrl, config)
-            : (() => {
-                throw new Error(
-                  "No verification target. Configure a URL or build directory.",
-                );
-              })();
+          : await crawlHttp(baseUrl, config);
+    }
     const findings: Finding[] = [];
     for (const check of checks)
       if (config.checks[check.name])

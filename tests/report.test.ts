@@ -24,7 +24,7 @@ const report: SearchQualityReport = {
       file: "/tmp/dist/index.html",
       docs: "https://example.com/docs",
       googleDocs: "https://developers.google.com/search/docs/example",
-      classification: ["Google recommendation", "local heuristic"],
+      classification: ["google-recommendation", "local-heuristic"],
     },
   ],
   pages: [{ url: "https://example.com/", status: 200 }],
@@ -58,6 +58,10 @@ describe("report formatters", () => {
       "pages",
       "durationMs",
     ]);
+    expect(json.findings[0].classification).toEqual([
+      "google-recommendation",
+      "local-heuristic",
+    ]);
   });
 
   it("groups Markdown findings and includes operational context", () => {
@@ -69,7 +73,7 @@ describe("report formatters", () => {
     expect(output).toContain("**URL / route:** `https://example.com/`");
     expect(output).toContain("**Location:** `/tmp/dist/index.html`");
     expect(output).toContain("**Remediation:** Add one.");
-    expect(output).toContain("Google recommendation, local heuristic");
+    expect(output).toContain("google-recommendation, local-heuristic");
     expect(output).toContain("[Google documentation]");
   });
 

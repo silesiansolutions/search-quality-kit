@@ -6,26 +6,54 @@ import type {
   Severity,
 } from "../report/types.js";
 
-const classifications: Record<string, FindingClassification[]> = {
-  sitemap: ["Google recommendation", "local heuristic"],
-  robots: ["Google requirement", "local heuristic"],
-  indexability: ["Google requirement"],
-  metadata: ["Google recommendation", "local heuristic"],
-  canonical: ["Google recommendation", "local heuristic"],
-  "structured-data": ["Google recommendation", "local heuristic"],
-  "open-graph": ["local heuristic"],
-  "internal-links": ["Google recommendation", "local heuristic"],
-  "rendered-html": [
-    "Google requirement",
-    "Google recommendation",
-    "local heuristic",
+export const checkClassifications: Record<string, FindingClassification[]> = {
+  sitemap: ["google-recommendation", "local-heuristic"],
+  robots: ["google-requirement", "local-heuristic"],
+  indexability: ["google-requirement"],
+  metadata: ["google-recommendation", "local-heuristic"],
+  canonical: ["google-recommendation", "local-heuristic"],
+  structuredData: ["google-recommendation", "local-heuristic"],
+  "structured-data": ["google-recommendation", "local-heuristic"],
+  openGraph: ["cross-channel-metadata", "local-heuristic"],
+  "open-graph": ["cross-channel-metadata", "local-heuristic"],
+  internalLinks: ["google-recommendation", "local-heuristic"],
+  "internal-links": ["google-recommendation", "local-heuristic"],
+  renderedHtml: [
+    "google-requirement",
+    "google-recommendation",
+    "local-heuristic",
   ],
-  accessibility: ["local heuristic"],
-  "performance-hints": ["Google recommendation", "local heuristic"],
+  "rendered-html": [
+    "google-requirement",
+    "google-recommendation",
+    "local-heuristic",
+  ],
+  accessibility: ["accessibility-basic"],
+  performanceHints: ["google-recommendation", "local-heuristic"],
+  "performance-hints": ["google-recommendation", "local-heuristic"],
 };
 
 export const classificationForCheck = (check: string) =>
-  classifications[check] ?? ["local heuristic" as const];
+  checkClassifications[check] ?? ["local-heuristic" as const];
+
+export type CheckBasis =
+  "Google requirement" | "Google recommendation" | "local heuristic";
+
+const legacyBasis: Record<string, CheckBasis> = {
+  "google-requirement": "Google requirement",
+  "google-recommendation": "Google recommendation",
+  "local-heuristic": "local heuristic",
+  "cross-channel-metadata": "local heuristic",
+  "accessibility-basic": "local heuristic",
+};
+
+export const legacyBasisForCheck = (check: string) => [
+  ...new Set(
+    classificationForCheck(check).map(
+      (classification) => legacyBasis[classification] ?? "local heuristic",
+    ),
+  ),
+];
 export interface CheckContext {
   config: SearchQualityConfig;
   crawl: CrawlResult;

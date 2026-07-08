@@ -2,6 +2,8 @@ import type { SearchQualityConfigInput } from "./config/schema.js";
 export const defineConfig = (config: SearchQualityConfigInput) => config;
 export { loadConfig } from "./config/loadConfig.js";
 export { configSchema } from "./config/schema.js";
+export { presets } from "./config/presets.js";
+export type { PresetName } from "./config/presets.js";
 export type {
   SearchQualityConfig,
   SearchQualityConfigInput,

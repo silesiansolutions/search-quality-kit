@@ -1,4 +1,4 @@
-# Use for a legacy site after committing a reviewed JSON baseline.
+# Use when an Astro repository has a committed search-quality config based on presets.astro().
 name: Search Quality
 
 on:
@@ -17,7 +17,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - name: Fail only on new search quality regressions
+      - name: Check Astro output
         run: |
           npx @silesiansolutions/search-quality-kit verify \
             --skip-build \
@@ -25,13 +25,14 @@ jobs:
             --fail-on-new \
             --json \
             --output search-quality-report.json
-      - name: Create Markdown report
+      - name: Add Markdown report to the job summary
         if: always()
-        run: npx @silesiansolutions/search-quality-kit report search-quality-report.json --format markdown --output search-quality-report.md
-      - name: Add report to workflow summary
-        if: always()
-        run: cat search-quality-report.md >> "$GITHUB_STEP_SUMMARY"
-      - name: Upload report artifact
+        run: |
+          npx @silesiansolutions/search-quality-kit report search-quality-report.json \
+            --format markdown \
+            --output search-quality-report.md
+          cat search-quality-report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload report
         if: always()
         uses: actions/upload-artifact@v7
         with:

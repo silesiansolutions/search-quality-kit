@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## [0.4.0] - 2026-07-08
+
+- Add deterministic presets for Astro, Next.js static/hybrid, Gatsby, Vite SPA, and generic static builds.
+- Add `init --preset`, conservative `init --detect`, overwrite protection, and generated-config verification tests.
+- Add explicit static/HTTP crawl selection, actionable configuration errors, rollout examples, and real-repository configs.
+- Standardize finding classifications across `list-checks`, Markdown, and JSON reports.
+- Resolve same-origin extensionless canonicals for flat static HTML output such as SvelteKit adapter-static builds.
+- Document legacy/new-site rollout, monorepo operation, and the proposed v0.5 boundary.
+
 ## [0.3.0] - 2026-07-08
 
 - Add portable, schema-validated baselines with total, existing, new, and resolved finding counts; `--fail-on-new` now gates only new findings matching `ci.failOn`.
@@ -44,6 +53,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.4.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.1.2...v0.1.3

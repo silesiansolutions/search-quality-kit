@@ -91,7 +91,9 @@ The complete baseline workflow is available at [`examples/ci/github-actions-base
 
 ## Markdown pull request artifact
 
-The Markdown report contains the page count and severity totals, then groups findings by severity and `check/code`. Each item includes URL, file location when known, message, remediation, documentation, and its Google requirement / Google recommendation / local heuristic classification. In baseline mode it adds dedicated new, existing, and bounded resolved sections.
+The Markdown report contains the page count and severity totals, then groups findings by severity and `check/code`. Each item includes URL, file location when known, message, remediation, documentation, and stable classifications such as `google-requirement` or `local-heuristic`. In baseline mode it adds dedicated new, existing, and bounded resolved sections.
+
+For Astro, [`examples/ci/github-actions-preset-astro.yml`](../examples/ci/github-actions-preset-astro.yml) shows the complete preset, baseline, job-summary, and artifact flow. The workflow builds once and passes `--skip-build`; presets never trigger a second build themselves.
 
 Use the `report` command to keep the audit output machine-readable while still producing a human review surface:
 

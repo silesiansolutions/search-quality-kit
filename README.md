@@ -18,8 +18,8 @@ Requires Node.js 20.11 or newer.
 
 ```bash
 npm install --save-dev @silesiansolutions/search-quality-kit
-npx @silesiansolutions/search-quality-kit init
-# Edit baseUrl and build settings.
+npx search-quality-kit init --preset astro
+# Replace the TODO baseUrl, then build the site.
 npx @silesiansolutions/search-quality-kit verify --report-only
 npx @silesiansolutions/search-quality-kit verify
 ```
@@ -31,28 +31,19 @@ For reproducible CI, pin `@silesiansolutions/search-quality-kit` in `devDependen
 `search-quality.config.ts`:
 
 ```ts
-import { defineConfig } from "@silesiansolutions/search-quality-kit";
+import { defineConfig, presets } from "@silesiansolutions/search-quality-kit";
 
 export default defineConfig({
+  ...presets.astro(),
   site: {
     baseUrl: "https://example.com",
-    // localUrl: "http://localhost:3000",
   },
-  build: {
-    command: "npm run build",
-    // startCommand: "npm run preview",
-    distDir: "dist",
-  },
-  crawl: {
-    entrypoints: ["/"],
-    maxPages: 100,
-    exclude: ["/admin", "/preview", "/api", "/404", "/404.html"],
-  },
-  ci: { failOn: ["error"] },
 });
 ```
 
-If `localUrl` is set, the CLI crawls HTTP. If it is absent and `distDir` exists, it reads the build without network access. Otherwise, it can crawl `baseUrl`. `command` and `startCommand` are run only when explicitly present in the config.
+Official presets are `astro`, `nextStatic`, `nextHybrid`, `gatsby`, `viteSpa`, and `genericStatic`. They select a safe output directory, crawl mode, and narrow generated-route exclusions. They never run a build or start a server. Add `build.command` or `build.startCommand` only when that automation is intentional.
+
+`init --detect` recognizes unambiguous Astro, Gatsby, Vite SPA, and Next static-export projects. It refuses to guess between Next static and hybrid modes. See the [preset reference](docs/config.md) and [rollout guide](docs/rollout.md).
 
 See [Getting started](docs/getting-started.md), [configuration](docs/config.md), and the [complete check catalog](docs/checks.md).
 The v0.1 behavior was also exercised against two production repositories; see the [real-world validation report](docs/real-world-validation.md).
@@ -63,7 +54,7 @@ The v0.1 behavior was also exercised against two production repositories; see th
 search-quality-kit verify [--config file] [--report-only] [--json]
                           [--output report.json]
                           [--baseline report.json --fail-on-new]
-search-quality-kit init [--force]
+search-quality-kit init [--preset name | --detect] [--force]
 search-quality-kit list-checks
 search-quality-kit report [report.json] --format markdown|sarif [--output file]
 ```

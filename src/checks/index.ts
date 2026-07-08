@@ -9,6 +9,10 @@ import { renderedHtmlCheck } from "./renderedHtml.js";
 import { robotsCheck } from "./robots.js";
 import { sitemapCheck } from "./sitemap.js";
 import { structuredDataCheck } from "./structuredData.js";
+import {
+  classificationForCheck,
+  legacyBasisForCheck,
+} from "./types.js";
 export const checks = [
   sitemapCheck,
   robotsCheck,
@@ -23,26 +27,7 @@ export const checks = [
   performanceHintsCheck,
 ];
 
-export type CheckBasis =
-  "Google requirement" | "Google recommendation" | "local heuristic";
-
-const basis: Record<(typeof checks)[number]["name"], CheckBasis[]> = {
-  sitemap: ["Google recommendation", "local heuristic"],
-  robots: ["Google requirement", "local heuristic"],
-  indexability: ["Google requirement"],
-  metadata: ["Google recommendation", "local heuristic"],
-  canonical: ["Google recommendation", "local heuristic"],
-  structuredData: ["Google recommendation", "local heuristic"],
-  openGraph: ["local heuristic"],
-  internalLinks: ["Google recommendation", "local heuristic"],
-  renderedHtml: [
-    "Google requirement",
-    "Google recommendation",
-    "local heuristic",
-  ],
-  accessibility: ["local heuristic"],
-  performanceHints: ["Google recommendation", "local heuristic"],
-};
+export type { CheckBasis } from "./types.js";
 
 const severities: Record<
   (typeof checks)[number]["name"],
@@ -65,6 +50,8 @@ export const checkCatalog = checks.map((check) => ({
   id: check.name,
   description: check.description,
   severities: severities[check.name],
-  basis: basis[check.name],
+  classification: classificationForCheck(check.name),
+  /** @deprecated Use classification. Retained for public API compatibility. */
+  basis: legacyBasisForCheck(check.name),
 }));
 export type { CheckContext, CheckDefinition } from "./types.js";
