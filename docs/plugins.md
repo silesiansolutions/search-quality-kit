@@ -7,7 +7,9 @@ Plugins should not start browsers, call Google APIs, mutate build output, fetch 
 Use [policy packs](policy-packs.md) before writing a custom plugin when the
 rule is a common personal-site, company-site, directory, or AI-visibility safety
 heuristic. Policy packs are exported plugin factories, so they can be mixed with
-project-specific plugins in the same `plugins` array.
+project-specific plugins in the same `plugins` array. Use the
+[plugin test harness](testing-plugins.md) to test plugins and policy packs from
+small HTML fixtures without a full crawl.
 
 ## Minimal custom check
 
@@ -134,7 +136,31 @@ When uncertain, use `local-heuristic`. A plugin cannot relabel a company prefere
 
 ## Testing locally
 
-Keep fixture HTML in the plugin repository and call each check with a small typed context in unit tests. Then run the real integration against a production-equivalent build:
+Keep fixture HTML in the plugin repository and call each check with a small
+typed context in unit tests. The public helpers are exported from
+`@silesiansolutions/search-quality-kit/test-utils`:
+
+```ts
+import {
+  createPluginTestContext,
+  runPluginForTest,
+} from "@silesiansolutions/search-quality-kit/test-utils";
+
+const ctx = createPluginTestContext({
+  pages: [
+    {
+      url: "https://example.com/",
+      html: "<html><body><main>Lorem ipsum</main></body></html>",
+    },
+  ],
+});
+
+const { findings, errors } = await runPluginForTest(plugin, ctx);
+```
+
+See [testing plugins](testing-plugins.md) for `runCheckForTest`, context
+overrides, and plugin error assertions. Then run the real integration against a
+production-equivalent build:
 
 ```bash
 npm run build

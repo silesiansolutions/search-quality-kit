@@ -3,16 +3,19 @@ import type { CrawlResult } from "../crawler/types.js";
 import type { Finding } from "../report/types.js";
 import { createPluginContext } from "./context.js";
 import { validatePluginFinding } from "./definePlugin.js";
-import type { PluginError } from "./types.js";
+import type {
+  PluginCheckContext,
+  PluginDefinition,
+  PluginError,
+} from "./types.js";
 
-export async function runPluginChecks(
-  config: SearchQualityConfig,
-  crawl: CrawlResult,
+export async function runPluginsInContext(
+  plugins: readonly PluginDefinition[],
+  context: PluginCheckContext,
 ): Promise<{ findings: Finding[]; errors: PluginError[] }> {
-  const context = createPluginContext(config, crawl),
-    findings: Finding[] = [],
+  const findings: Finding[] = [],
     errors: PluginError[] = [];
-  for (const plugin of config.plugins)
+  for (const plugin of plugins)
     for (const check of plugin.checks) {
       try {
         const result = await check.run(context);
@@ -55,4 +58,14 @@ export async function runPluginChecks(
       }
     }
   return { findings, errors };
+}
+
+export async function runPluginChecks(
+  config: SearchQualityConfig,
+  crawl: CrawlResult,
+): Promise<{ findings: Finding[]; errors: PluginError[] }> {
+  return runPluginsInContext(
+    config.plugins,
+    createPluginContext(config, crawl),
+  );
 }
