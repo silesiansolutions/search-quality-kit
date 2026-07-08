@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+- Add reusable policy packs for personal-brand, company-site, directory, and AI-visibility safety checks through the existing plugin API.
+- Add a public plugin test harness at `@silesiansolutions/search-quality-kit/test-utils` for fixture-based plugin and policy-pack tests without a crawler.
+- Add `search-quality-kit doctor` for single-site and portfolio setup diagnostics with human-readable and JSON output.
+- Update the public portfolio showcase to demonstrate policy packs on `dawidrylko.com`, `silesiansolutions.com`, and `cyberkatalog.pl` while remaining report-only.
+- Expand policy-pack, plugin-testing, CI, rollout, and setup-diagnostics documentation.
+
 ## [0.7.0] - 2026-07-08
 
 - Add a typed, path-safe multi-config portfolio runner with deterministic site order, isolated operational errors, per-site baselines, optional per-site SARIF, and one final gate.
@@ -80,6 +88,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[Unreleased]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.7.0...HEAD
 [0.7.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.5.0...v0.6.0

@@ -11,6 +11,16 @@ project-specific plugins in the same `plugins` array. Use the
 [plugin test harness](testing-plugins.md) to test plugins and policy packs from
 small HTML fixtures without a full crawl.
 
+## Choose the right extension point
+
+- Use a policy pack for common rollout checks: placeholder copy, contact/profile
+  links, directory entry/list sanity, and public snippet safety.
+- Write a custom plugin when the rule depends on project policy, brand wording,
+  route ownership, or a reviewed internal convention.
+- Keep heavyweight integrations outside the audit when they need auth, network
+  state, browser rendering, Search Console data, Lighthouse data, or content
+  scoring.
+
 ## Minimal custom check
 
 ```ts
