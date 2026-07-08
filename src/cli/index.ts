@@ -26,6 +26,8 @@ import {
 } from "../report/types.js";
 import { fileExists } from "../utils/files.js";
 import { VERSION } from "../version.js";
+import { runPortfolio } from "../portfolio/runner.js";
+import { formatPortfolioJsonReport } from "../portfolio/report.js";
 const program = new Command();
 const formats = ["console", "json", "markdown", "sarif"] as const;
 
@@ -82,6 +84,63 @@ program
     if (shouldFail(report, config, o.reportOnly, failureCandidates))
       process.exitCode = 1;
     if (report.pluginErrors?.length) process.exitCode = 2;
+  });
+const portfolio = program
+  .command("portfolio")
+  .description("Run isolated site audits and one portfolio gate");
+portfolio
+  .command("verify")
+  .description("Verify every site in a portfolio config")
+  .requiredOption("-c, --config <file>", "portfolio config path")
+  .option("--root <directory>", "portfolio root", process.cwd())
+  .option("--output-dir <directory>", "override the report directory")
+  .option("--report-only", "always exit successfully after writing reports")
+  .option("--fail-on-new", "gate only per-site findings absent from baselines")
+  .option("--skip-build", "skip build.command for every site")
+  .option("--include-findings", "include full site findings in portfolio.json")
+  .option("--sarif", "write a SARIF report for every completed site")
+  .option("--json", "print portfolio JSON to stdout")
+  .action(async (o) => {
+    const result = await runPortfolio({
+      root: o.root,
+      configPath: o.config,
+      outputDir: o.outputDir,
+      reportOnly: o.reportOnly || undefined,
+      failOnNew: o.failOnNew || undefined,
+      skipBuild: o.skipBuild,
+      includeFindings: o.includeFindings,
+      sarif: o.sarif,
+    });
+    process.stdout.write(
+      o.json
+        ? `${formatPortfolioJsonReport(result.report)}\n`
+        : `Portfolio gate: ${result.report.gate.status}. Reports: ${result.outputDirectory}\n`,
+    );
+    process.exitCode = result.exitCode;
+  });
+portfolio
+  .command("baseline")
+  .description("Write one reviewed single-site baseline per configured site")
+  .requiredOption("-c, --config <file>", "portfolio config path")
+  .option("--root <directory>", "portfolio root", process.cwd())
+  .option("--output-dir <directory>", "override the report directory")
+  .option("--skip-build", "skip build.command for every site")
+  .option("--force", "replace existing baseline files")
+  .option("--sarif", "write a SARIF report for every completed site")
+  .action(async (o) => {
+    const result = await runPortfolio({
+      root: o.root,
+      configPath: o.config,
+      outputDir: o.outputDir,
+      skipBuild: o.skipBuild,
+      sarif: o.sarif,
+      writeBaselines: true,
+      forceBaselines: o.force,
+    });
+    process.stdout.write(
+      `Portfolio baselines: ${result.report.gate.status}. Reports: ${result.outputDirectory}\n`,
+    );
+    process.exitCode = result.exitCode;
   });
 program
   .command("init")

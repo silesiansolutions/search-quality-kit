@@ -130,6 +130,20 @@ Use one small PR per repository: pinned dependency, explicit preset config, revi
 
 For monorepos, use one config, baseline, and report path per site as described in [the multi-site design](design/multi-site.md).
 
-## Proposed scope after v0.6
+## Portfolio rollout
 
-Keep v0.7 focused on multi-site operation: a monorepo runner, aggregated reports, per-site baselines, a documentation site, and better bounded SARIF/annotations where locations are honest. Search Console belongs in a separate optional package/plugin, not core. See the [v0.7 roadmap](design/v0.7-roadmap.md). Google APIs, browser automation, content scoring, and synthetic Core Web Vitals remain out of scope.
+Choose the execution model deliberately:
+
+- **Single-site audit:** one deployable and one config; use `verify`.
+- **Monorepo matrix:** sites need parallel runners, separate builds/caches, or independent ownership; use one `verify` job per site.
+- **Portfolio runner:** sites can run sequentially and need one bounded report/gate while retaining isolated configs, baselines, and artifacts.
+- **Public HTTP showcase:** read-only production observation; default to report-only because target state is external to the package release.
+- **Local build showcase:** production-equivalent checkouts/builds; stronger reproducibility, but local source and build inputs must be available.
+
+For portfolio adoption, first run `portfolio verify --report-only`, triage operational errors before findings, and confirm every site's crawl scope. Add reviewed single-site baseline paths only where existing debt requires regression-only gating. Then enable `failOnNew`, keep `failOn: ["error"]`, and remove report-only for internal deterministic targets. Do not automatically regenerate baselines in CI.
+
+The final gate fails for configured severities (or new configured severities in baseline mode) and for operational/plugin/config/baseline failures. Resolved and existing findings do not fail a new-findings gate. Keep `continueOnSiteFailure: true` so maintainers receive a complete portfolio report instead of fixing sites serially.
+
+## Scope after v0.7
+
+Keep v0.8 focused on operational hardening driven by real portfolio usage. Trend storage, a standalone docs/demo site, and richer annotations need separate evidence and design. Search Console belongs in an optional package/plugin, not core. Google APIs, browser automation, content scoring, synthetic Core Web Vitals, and SaaS scheduling remain out of scope.

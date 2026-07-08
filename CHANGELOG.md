@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## [0.7.0] - 2026-07-08
+
+- Add a typed, path-safe multi-config portfolio runner with deterministic site order, isolated operational errors, per-site baselines, optional per-site SARIF, and one final gate.
+- Add stable schema `0.7` portfolio JSON plus bounded GitHub-friendly Markdown summaries and separate report directories for every site.
+- Add `portfolio verify` and explicit `portfolio baseline` commands, including safe overwrite protection and optional full finding attribution.
+- Extend the official composite Action with backward-compatible `site` and `portfolio` modes, complete artifact upload, portfolio job summaries, and preserved gate exit codes.
+- Add the report-only public HTTP showcase for Dawid Rylko, Silesian Solutions, and CyberKatalog, a manual/weekly workflow, portfolio CI examples, rollout guidance, and trend-storage design boundaries.
+
 ## [0.6.1] - 2026-07-08
 
 - Add a `node-version-file` GitHub Action input so repositories can reuse `.nvmrc` or another setup-node-compatible version file instead of duplicating the Node.js version.
@@ -72,6 +80,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.7.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.4.0...v0.5.0

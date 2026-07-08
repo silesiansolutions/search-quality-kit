@@ -1,0 +1,20 @@
+name: Portfolio Search Quality
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  portfolio-search-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: SilesianSolutions/search-quality-kit/action@v0
+        with:
+          node-version-file: .nvmrc
+          package-manager: npm
+          install-command: npm ci
+          mode: portfolio
+          portfolio-config: portfolio.search-quality.config.ts
+          output-dir: search-quality-reports
+          summary: "true"
+          upload-artifact: "true"

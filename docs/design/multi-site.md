@@ -1,6 +1,6 @@
 # Multi-site and monorepo design
 
-Status: design only for v0.4. The core runner remains single-site and deterministic.
+Status: implemented in v0.7 as a thin portfolio orchestrator. The core site runner remains isolated and deterministic.
 
 ## Recommended operation today
 
@@ -44,9 +44,9 @@ search-quality/
 
 Never share a baseline across origins. Review and update only the affected site's baseline. Renaming a package or moving its build directory should be checked for baseline identity churn before merge.
 
-## Future CLI direction
+## Implemented CLI direction
 
-The smallest future API is repeated single-site invocation with root-relative paths:
+The single-site API remains available for explicit repeated invocation:
 
 ```bash
 search-quality-kit verify --config sites/site-a/search-quality.config.ts
@@ -55,10 +55,10 @@ search-quality-kit verify --config sites/site-b/search-quality.config.ts
 
 Before implementing that exact form, path resolution must be specified: whether build paths are relative to process cwd, config location, or an explicit site root. The current `--root` contract is unambiguous and should not be weakened.
 
-A future orchestrator could accept a manifest of named existing configs, not embed several sites inside today's schema:
+The v0.7 orchestrator accepts a manifest of named existing configs instead of embedding sites inside the single-site schema:
 
 ```ts
-export default defineWorkspace({
+export default definePortfolioConfig({
   sites: [
     {
       name: "marketing",
@@ -70,8 +70,8 @@ export default defineWorkspace({
 });
 ```
 
-The orchestrator would run the current engine independently, preserve per-site reports/baselines/exit status, and produce a thin aggregate summary. A `defineConfig({ sites: [...] })` shape is not recommended: it would overload single-site fields, complicate backward compatibility, and tempt cross-site crawling and baseline merging.
+The orchestrator runs the current engine independently, preserves per-site reports/baselines/status, and produces a thin aggregate summary. A `defineConfig({ sites: [...] })` shape remains intentionally unsupported because it would overload single-site fields, complicate backward compatibility, and tempt cross-site crawling and baseline merging.
 
 ## Non-goals
 
-v0.4 does not add workspace discovery, parallel scheduling, cross-site link analysis, a combined baseline, or a partially supported `sites` field. Repository-native CI matrices already provide explicit scheduling, caching, ownership, and failure isolation.
+v0.7 does not add workspace discovery, parallel scheduling, cross-site link analysis, a combined baseline, external trend storage, or a partially supported single-site `sites` field. Repository-native CI matrices still provide explicit parallel scheduling, caching, ownership, and failure isolation.

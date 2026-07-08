@@ -148,3 +148,45 @@ Hugo uses the neutral preset with its conventional output override: start from `
 ## Validation errors
 
 Configuration failures exit `2` and identify the field plus a fix. `site.baseUrl` is required by the CLI even for a local static build because reports and canonical checks need the production origin. Static mode requires `build.distDir` to exist after any configured build. `build.startCommand` requires `site.localUrl`; `site.localUrl` conflicts with `crawl.mode: "static"`; excluding `/` is rejected because it removes the whole audit scope; and invalid/duplicate plugin definitions are rejected before the build or crawl starts.
+
+## Portfolio configuration
+
+Portfolio config is a separate manifest; it does not overload the single-site schema. Every entry reuses an existing single-site config and runs through the same crawler/check/plugin/report pipeline.
+
+```ts
+import { definePortfolioConfig } from "@silesiansolutions/search-quality-kit";
+
+export default definePortfolioConfig({
+  outputDir: "search-quality-reports",
+  sites: [
+    {
+      name: "marketing",
+      root: "sites/marketing",
+      config: "search-quality.config.ts",
+      baseline: "search-quality-baseline.json",
+      outputDir: "search-quality-reports/marketing",
+    },
+    {
+      name: "docs",
+      root: "sites/docs",
+      config: "search-quality.config.ts",
+    },
+  ],
+  portfolio: {
+    failOn: ["error"],
+    failOnNew: true,
+    continueOnSiteFailure: true,
+    reportOnly: false,
+  },
+});
+```
+
+`root`, `config`, and `baseline` are safe relative paths. The site root is resolved from the portfolio manifest directory; config and baseline are resolved from that site root. Report directories are resolved from the CLI root and must stay below the aggregate `outputDir`. Passing `--output-dir` overrides every configured report path with `<output-dir>/<site-name>`.
+
+Site names are unique safe path segments: 1-64 lowercase letters/numbers with internal `.`, `_`, or `-`. Absolute paths, `..`, duplicate names, duplicate output directories, and path traversal are rejected before crawling.
+
+`failOnNew` uses only the site's own baseline. If no baseline is configured, all current findings are new. If a configured baseline is missing or invalid, that site receives an operational error and other sites continue by default. `portfolio baseline` writes normal single-site JSON reports to configured baseline paths; it creates new files but requires `--force` to replace reviewed snapshots.
+
+`portfolio.reportOnly` is useful for public observation workflows. It preserves failed/error site statuses and gate reasons in reports but returns exit code 0. Without report-only, matching findings or operational errors fail the final portfolio gate. Invalid portfolio manifests remain CLI errors and exit 2.
+
+Portfolio JSON uses schema `0.7`. By default it contains summaries, bounded highlights, and paths rather than duplicating all findings. Use `--include-findings` only when a consumer needs full site-attributed finding arrays. `--sarif` writes SARIF per site; v0.7 has no aggregate SARIF.

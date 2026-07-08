@@ -10,6 +10,7 @@ A framework-agnostic CLI for auditing technical Google Search foundations in loc
 - [GitHub repository](https://github.com/SilesianSolutions/search-quality-kit)
 - [Check catalog](docs/checks.md)
 - [Custom plugins](docs/plugins.md)
+- [Public portfolio showcase](docs/showcase.md)
 
 It checks technical foundations: crawlability, indexability, sitemap and robots rules, metadata, canonicals, JSON-LD, Open Graph, internal links, delivered HTML, basic accessibility, and lightweight performance risks. It does **not** promise rankings, score content quality, call Google APIs, replace Search Console, Rich Results Test, or Lighthouse.
 
@@ -66,6 +67,8 @@ search-quality-kit init [--preset name | --detect] [--force]
 search-quality-kit list-checks
 search-quality-kit list-profiles
 search-quality-kit report [report.json] --format markdown|sarif [--output file]
+search-quality-kit portfolio verify --config portfolio.search-quality.config.ts
+search-quality-kit portfolio baseline --config portfolio.search-quality.config.ts [--force]
 ```
 
 - Normal CI mode exits `1` when a configured failing severity is present.
@@ -75,6 +78,19 @@ search-quality-kit report [report.json] --format markdown|sarif [--output file]
 - `--format markdown --output report.md` creates a review artifact.
 - `report report.json --format sarif --output report.sarif` creates a GitHub Code Scanning-compatible artifact.
 - CLI/configuration failures exit `2`.
+
+## Portfolio runner
+
+Run several existing site configs sequentially and produce isolated site reports plus one stable `portfolio.json`, one bounded `portfolio.md`, and one final gate:
+
+```bash
+search-quality-kit portfolio verify \
+  --config examples/showcase/portfolio.search-quality.config.ts \
+  --report-only \
+  --output-dir search-quality-reports
+```
+
+Each site may define its own root, config, baseline, and output directory. Baselines are compared only within that site; missing/invalid configured baselines and plugin/config/runtime failures are attributed as operational errors. See [portfolio configuration](docs/config.md#portfolio-configuration), [CI usage](docs/ci.md#portfolio-action-mode), and the [public showcase](docs/showcase.md).
 
 For a legacy rollout, record the reviewed state and gate only regressions:
 
@@ -108,6 +124,8 @@ jobs:
 ```
 
 The composite Action calls the repository's pinned local CLI, exposes the CLI options instead of replacing them, and preserves its exit code after writing JSON/Markdown reports. Manual CLI workflows remain supported. See [CI usage](docs/ci.md).
+
+Set `mode: portfolio` and `portfolio-config` to upload the complete portfolio report directory and put `portfolio.md` in the workflow summary. Single-site mode remains the default.
 
 ## Built-in checks
 

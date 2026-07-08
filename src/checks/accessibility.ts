@@ -1,4 +1,4 @@
-import { loadHtml, normalizedText } from "../utils/html.js";
+import { loadHtml, normalizedText, textFromSelection } from "../utils/html.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
 export const accessibilityCheck: CheckDefinition = {
@@ -29,7 +29,7 @@ export const accessibilityCheck: CheckDefinition = {
       });
       $("button").each((_, e) => {
         if (!(
-          normalizedText($(e).text()) ||
+          normalizedText(textFromSelection($(e))) ||
           $(e).attr("aria-label") ||
           $(e).attr("aria-labelledby") ||
           $(e).attr("title")
@@ -47,7 +47,7 @@ export const accessibilityCheck: CheckDefinition = {
       });
       $("a[href]").each((_, e) => {
         if (!(
-          normalizedText($(e).text()) ||
+          normalizedText(textFromSelection($(e))) ||
           $(e).attr("aria-label") ||
           $(e).attr("aria-labelledby") ||
           $(e).find("img[alt]").attr("alt")

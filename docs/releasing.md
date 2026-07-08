@@ -41,3 +41,16 @@ The tag must equal `v${package.version}`. The workflow then:
 5. creates the GitHub Release only after npm publishing succeeds.
 
 If any step fails, npm is not published by later steps and no misleading GitHub Release is created.
+
+## Update the composite Action major tag
+
+The GitHub Action is also consumed through the moving `v0` major tag. After the
+versioned release tag has published successfully, move `v0` to the same commit:
+
+```bash
+git tag -f v0
+git push origin refs/tags/v0 --force
+```
+
+The release workflow only matches `v*.*.*`, so moving `v0` does not publish a
+second npm release.
