@@ -4,6 +4,7 @@ import {
   loadHtml,
   metaContent,
   normalizedText,
+  textFromSelection,
   visibleText,
 } from "../utils/html.js";
 import type {
@@ -26,7 +27,11 @@ function parsedStructuredData(html: string) {
     data: unknown[] = [];
   $('script[type="application/ld+json"]').each((_, element) => {
     try {
-      data.push(JSON.parse($(element).text()) as unknown);
+      data.push(
+        JSON.parse(
+          textFromSelection($(element), { maxChars: 1_000_000 }),
+        ) as unknown,
+      );
     } catch {
       // Core reports malformed JSON-LD. Plugins still receive rawHtml.
     }
@@ -48,7 +53,7 @@ function pageLinks(html: string, baseUrl: string): PluginPageLink[] {
     links.push({
       href,
       ...(url ? { url } : {}),
-      text: normalizedText($(element).text()),
+      text: normalizedText(textFromSelection($(element))),
       rel: ($(element).attr("rel") ?? "")
         .split(/\s+/)
         .map((item) => item.trim().toLowerCase())
@@ -75,7 +80,7 @@ function pluginPage(page: CrawlResult["pages"][number]): PluginPage {
     rawHtml: page.html,
     visibleText: visibleText(page.html),
     metadata: {
-      title: normalizedText($("title").first().text()) || undefined,
+      title: normalizedText(textFromSelection($("title").first())) || undefined,
       description: metaContent($, "description"),
       canonical: $('link[rel~="canonical"]').first().attr("href")?.trim(),
       robots: metaContent($, "robots"),

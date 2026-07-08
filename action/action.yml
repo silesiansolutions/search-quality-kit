@@ -2,6 +2,9 @@ name: Search Quality Kit
 description: Run deterministic search-quality checks with JSON, Markdown, and optional SARIF reports.
 
 inputs:
+  mode:
+    description: Audit mode, either site or portfolio.
+    default: site
   node-version:
     description: Node.js version used by the project and CLI.
     default: "22"
@@ -21,16 +24,19 @@ inputs:
     description: Project directory relative to the repository root.
     default: .
   config:
-    description: Config path relative to the working directory.
+    description: Single-site config path relative to the working directory.
     default: search-quality.config.ts
+  portfolio-config:
+    description: Portfolio config path used when mode is portfolio.
+    default: portfolio.search-quality.config.ts
   report-only:
-    description: Always exit successfully for findings (plugin/config/runtime errors still fail).
+    description: Observation mode; site findings do not fail, and portfolio gate failures are reported with exit code 0.
     default: "false"
   baseline:
     description: Optional JSON baseline path relative to the working directory.
     default: ""
   fail-on-new:
-    description: Apply ci.failOn only to findings absent from the baseline.
+    description: Apply the gate only to findings absent from the relevant site baseline.
     default: "false"
   output-dir:
     description: Directory for generated reports.
@@ -81,10 +87,12 @@ runs:
       shell: bash
       env:
         SQK_PACKAGE_MANAGER: ${{ inputs.package-manager }}
+        SQK_MODE: ${{ inputs.mode }}
         SQK_INSTALL_COMMAND: ${{ inputs.install-command }}
         SQK_BUILD_COMMAND: ${{ inputs.build-command }}
         SQK_WORKING_DIRECTORY: ${{ inputs.working-directory }}
         SQK_CONFIG: ${{ inputs.config }}
+        SQK_PORTFOLIO_CONFIG: ${{ inputs.portfolio-config }}
         SQK_REPORT_ONLY: ${{ inputs.report-only }}
         SQK_BASELINE: ${{ inputs.baseline }}
         SQK_FAIL_ON_NEW: ${{ inputs.fail-on-new }}

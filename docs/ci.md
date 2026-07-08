@@ -238,3 +238,26 @@ steps:
 ```
 
 This is orchestration, not automatic multi-site discovery. Aggregated reports and per-site runner semantics remain proposed v0.7 work.
+
+## Portfolio Action mode
+
+Single-site mode remains the default. For a monorepo or independently deployed portfolio, set `mode: portfolio`:
+
+```yaml
+- uses: SilesianSolutions/search-quality-kit/action@v0
+  with:
+    node-version-file: .nvmrc
+    package-manager: npm
+    install-command: npm ci
+    mode: portfolio
+    portfolio-config: portfolio.search-quality.config.ts
+    output-dir: search-quality-reports
+    fail-on-new: "true"
+    sarif: "true"
+    summary: "true"
+    upload-artifact: "true"
+```
+
+The Action runs `portfolio verify`, uploads the complete output directory, appends `portfolio.md` to `$GITHUB_STEP_SUMMARY`, and returns the final portfolio gate code after artifact/summary work. SARIF is generated per completed site. Configure baselines inside the portfolio manifest; the single-site `baseline` input is rejected in portfolio mode.
+
+Use a matrix when sites need separate runners, credentials, build caches, or ownership. Use the portfolio runner when one deterministic sequential job should continue through site failures and deliver one aggregate decision. The [public showcase workflow](../.github/workflows/showcase.yml) is report-only because it audits changing production HTTP targets; synthetic fixture portfolios remain the hard CI contract.

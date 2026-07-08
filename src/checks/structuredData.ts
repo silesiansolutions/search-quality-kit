@@ -14,7 +14,12 @@ import {
   obviousDescriptionConflict,
   obviousTextConflict,
 } from "../utils/consistency.js";
-import { loadHtml, metaContent, normalizedText } from "../utils/html.js";
+import {
+  loadHtml,
+  metaContent,
+  normalizedText,
+  textFromSelection,
+} from "../utils/html.js";
 import { isHttpUrl, isLocalOrStaging, normalizeUrl } from "../utils/urls.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
@@ -274,8 +279,8 @@ function compareEntity(
   const out: Finding[] = [],
     entityTypes = types(node),
     canonical = $('link[rel~="canonical"]').first().attr("href")?.trim(),
-    title = normalizedText($("title").first().text()),
-    h1 = normalizedText($("h1").first().text()),
+    title = normalizedText(textFromSelection($("title").first())),
+    h1 = normalizedText(textFromSelection($("h1").first())),
     description = metaContent($, "description"),
     options = { ...pageOptions(page), googleDocs: GOOGLE_GENERAL },
     label = scalar(node.headline) ?? scalar(node.name),
@@ -365,8 +370,8 @@ function expectedNodeExists(
   $: CheerioAPI,
   profile: ResolvedProfile,
 ) {
-  const title = normalizedText($("title").first().text()),
-    h1 = normalizedText($("h1").first().text()),
+  const title = normalizedText(textFromSelection($("title").first())),
+    h1 = normalizedText(textFromSelection($("h1").first())),
     canonical =
       $('link[rel~="canonical"]').first().attr("href")?.trim() ?? page.url;
   return allNodes.some((node) => {
@@ -430,8 +435,8 @@ function propertyRecommendations(
     options = { ...pageOptions(page), googleDocs: GOOGLE_INTRO },
     canonical =
       $('link[rel~="canonical"]').first().attr("href")?.trim() ?? page.url,
-    title = normalizedText($("title").first().text()),
-    h1 = normalizedText($("h1").first().text()),
+    title = normalizedText(textFromSelection($("title").first())),
+    h1 = normalizedText(textFromSelection($("h1").first())),
     matchesPage = entityMatchesPage(
       node,
       profile.activeProfile,

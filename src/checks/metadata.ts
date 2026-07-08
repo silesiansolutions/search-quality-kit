@@ -1,4 +1,9 @@
-import { loadHtml, metaContent, normalizedText } from "../utils/html.js";
+import {
+  loadHtml,
+  metaContent,
+  normalizedText,
+  textFromSelection,
+} from "../utils/html.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
 const TG = "https://developers.google.com/search/docs/appearance/title-link",
@@ -14,7 +19,7 @@ export const metadataCheck: CheckDefinition = {
       descs = new Map<string, string[]>();
     for (const p of crawl.pages) {
       const $ = loadHtml(p.html),
-        title = normalizedText($("title").first().text()),
+        title = normalizedText(textFromSelection($("title").first())),
         desc = metaContent($, "description") ?? "",
         o = pageOptions(p);
       if (!title)

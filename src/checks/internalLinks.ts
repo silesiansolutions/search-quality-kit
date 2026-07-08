@@ -1,4 +1,4 @@
-import { loadHtml, normalizedText } from "../utils/html.js";
+import { loadHtml, normalizedText, textFromSelection } from "../utils/html.js";
 import { normalizeUrl, pathAllowed, sameOrigin } from "../utils/urls.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
@@ -102,7 +102,7 @@ export const internalLinksCheck: CheckDefinition = {
             ),
           );
         if (
-          !normalizedText($(a).text()) &&
+          !normalizedText(textFromSelection($(a))) &&
           !$(a).attr("aria-label") &&
           !$(a).find("img[alt]").length
         )

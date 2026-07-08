@@ -1,0 +1,20 @@
+# Public portfolio showcase
+
+This example audits three public production sites over HTTP: `dawidrylko.com`, `silesiansolutions.com`, and `cyberkatalog.pl`. It uses no secrets, does not mutate a site, and writes changing reports only to `search-quality-reports/` for artifact upload.
+
+Run it from the repository root:
+
+```bash
+npm run build
+node dist/cli/index.js portfolio verify \
+  --config examples/showcase/portfolio.search-quality.config.ts \
+  --report-only \
+  --output-dir search-quality-reports \
+  --sarif
+```
+
+The manifest is report-only by default because public sites can change independently of this package. Results are examples of deterministic technical checks at crawl time, not an SEO score or ranking.
+
+No baseline is committed initially. To adopt reviewed per-site baselines, add a safe `baseline` path to each site entry, run `portfolio baseline`, review each single-site JSON file, and commit only snapshots the maintainers intentionally accept. Existing files require `--force` before replacement.
+
+See [the full showcase guide](../../docs/showcase.md) and [`snapshots/README.md`](snapshots/README.md).

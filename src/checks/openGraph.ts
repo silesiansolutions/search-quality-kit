@@ -1,4 +1,9 @@
-import { loadHtml, metaContent } from "../utils/html.js";
+import {
+  loadHtml,
+  metaContent,
+  normalizedText,
+  textFromSelection,
+} from "../utils/html.js";
 import {
   obviousDescriptionConflict,
   obviousTextConflict,
@@ -30,8 +35,8 @@ export const openGraphCheck: CheckDefinition = {
         url = metaContent($, "og:url"),
         ogTitle = metaContent($, "og:title"),
         ogDescription = metaContent($, "og:description"),
-        title = $("title").first().text().replace(/\s+/g, " ").trim(),
-        h1 = $("h1").first().text().replace(/\s+/g, " ").trim(),
+        title = normalizedText(textFromSelection($("title").first())),
+        h1 = normalizedText(textFromSelection($("h1").first())),
         description = metaContent($, "description"),
         canonical = $('link[rel~="canonical"]').first().attr("href")?.trim();
       if (config.rules.openGraph.requireImage && !image)

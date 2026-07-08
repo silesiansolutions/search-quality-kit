@@ -1,0 +1,38 @@
+name: Public portfolio showcase
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+  pull_request:
+    paths:
+      - "examples/showcase/**"
+      - "src/**"
+      - "action/**"
+      - "docs/**"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+
+jobs:
+  showcase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./action
+        with:
+          node-version: "22"
+          package-manager: npm
+          install-command: npm ci
+          build-command: npm run build
+          mode: portfolio
+          portfolio-config: examples/showcase/portfolio.search-quality.config.ts
+          output-dir: search-quality-reports
+          report-only: "true"
+          sarif: "true"
+          summary: "true"
+          upload-artifact: "true"
+          artifact-name: public-search-quality-showcase
