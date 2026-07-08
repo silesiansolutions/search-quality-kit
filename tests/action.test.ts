@@ -35,12 +35,14 @@ describe("GitHub Action wrapper", () => {
         "summary",
         "upload-artifact",
         "node-version",
+        "node-version-file",
         "package-manager",
         "install-command",
         "build-command",
       ]),
     );
     expect(action.runs.steps.map((step) => step.uses).filter(Boolean)).toEqual([
+      "actions/setup-node@v6",
       "actions/setup-node@v6",
       "actions/upload-artifact@v7",
     ]);

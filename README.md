@@ -99,7 +99,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: SilesianSolutions/search-quality-kit/action@v0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           install-command: npm ci
           build-command: npm run build
           config: search-quality.config.ts

@@ -37,6 +37,18 @@ jobs:
           upload-artifact: "true"
 ```
 
+Repositories that already pin Node in `.nvmrc`, `.node-version`, or another setup-node-compatible file should use `node-version-file` instead of duplicating the version:
+
+```yaml
+- uses: SilesianSolutions/search-quality-kit/action@v0
+  with:
+    node-version-file: .nvmrc
+    package-manager: pnpm
+    config: search-quality.config.ts
+```
+
+When `node-version-file` is set, it takes precedence over the default `node-version` input.
+
 `install-command` and `build-command` default to empty; the Action runs neither unless configured. When `build-command` is set, the Action passes `--skip-build` to the CLI so a `build.command` in config is not executed twice. `package-manager` selects only how the already-installed local binary is invoked: `npx --no-install`, `pnpm exec`, or `yarn exec`.
 
 The default artifact contains `search-quality-report.json` and `search-quality-report.md`. Set `sarif: "true"` to add `search-quality-report.sarif`; uploading SARIF to GitHub Code Scanning remains an explicit workflow decision because it requires repository permissions.
