@@ -81,6 +81,7 @@ program
         : report.findings;
     if (shouldFail(report, config, o.reportOnly, failureCandidates))
       process.exitCode = 1;
+    if (report.pluginErrors?.length) process.exitCode = 2;
   });
 program
   .command("init")

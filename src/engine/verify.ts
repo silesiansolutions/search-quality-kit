@@ -6,6 +6,7 @@ import { loadConfig } from "../config/loadConfig.js";
 import { resolveProfile } from "../config/resolveProfile.js";
 import type { SearchQualityConfig } from "../config/schema.js";
 import { crawlHttp, crawlStatic } from "../crawler/crawlSite.js";
+import { runPluginChecks } from "../plugins/runPlugins.js";
 import {
   REPORT_SCHEMA_VERSION,
   type Finding,
@@ -84,7 +85,14 @@ export async function runVerification(
     const findings: Finding[] = [];
     for (const check of checks)
       if (config.checks[check.name])
-        findings.push(...(await check.run({ config, crawl })));
+        findings.push(
+          ...(await check.run({ config, crawl })).map((item) => ({
+            ...item,
+            source: { type: "core" as const, name: check.name },
+          })),
+        );
+    const pluginResult = await runPluginChecks(config, crawl);
+    findings.push(...pluginResult.findings);
     for (let index = 0; index < findings.length; index += 1) {
       const item = findings[index]!;
       if (!item.url) continue;
@@ -136,6 +144,9 @@ export async function runVerification(
         };
       }),
       durationMs: Date.now() - start,
+      ...(pluginResult.errors.length
+        ? { pluginErrors: pluginResult.errors }
+        : {}),
     };
     return { report, config };
   } finally {

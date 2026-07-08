@@ -144,7 +144,11 @@ const isFinding = (value: unknown): value is Finding =>
   ["severity", "check", "code", "message", "suggestion", "docs"].every(
     (key) => typeof value[key] === "string",
   ) &&
-  ["error", "warning", "info"].includes(value.severity as string);
+  ["error", "warning", "info"].includes(value.severity as string) &&
+  (value.source === undefined ||
+    (isRecord(value.source) &&
+      ["core", "plugin"].includes(value.source.type as string) &&
+      typeof value.source.name === "string"));
 
 function parseReport(
   input: string,
@@ -204,6 +208,18 @@ function parseReport(
     )
       throw new Error(`Invalid ${label}: baseline comparison is malformed.`);
   }
+  if (
+    value.pluginErrors !== undefined &&
+    (!Array.isArray(value.pluginErrors) ||
+      !value.pluginErrors.every(
+        (error) =>
+          isRecord(error) &&
+          ["plugin", "check", "message"].every(
+            (key) => typeof error[key] === "string",
+          ),
+      ))
+  )
+    throw new Error(`Invalid ${label}: pluginErrors are malformed.`);
   return value as unknown as SearchQualityReport | LegacySearchQualityReport;
 }
 

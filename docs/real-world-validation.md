@@ -1,5 +1,21 @@
 # Real-world validation
 
+## v0.6 plugin API validation
+
+The v0.6 candidate was installed from the local package into clean shallow clones, built with each repository's locked pnpm version, and run with a temporary deterministic plugin that emits one info finding for the first page. The temporary configs and dependency changes stayed under `/tmp`; no target repository was modified or pushed.
+
+| Repository                                | Commit    | Pages | Errors | Warnings | Plugin findings |
+| ----------------------------------------- | --------- | ----: | -----: | -------: | --------------: |
+| `SilesianSolutions/silesiansolutions.com` | `e271ad4` |    40 |      0 |      105 |               1 |
+| `dawidrylko/dawidrylko.com`               | `698fff1` |    73 |      0 |       91 |               1 |
+| `CyberKatalog/cyberkatalog-web`           | `7683c25` |   197 |      0 |      309 |               1 |
+
+Every plugin finding had `source: { type: "plugin", name: "validation-rules" }`; every report had an empty `pluginErrors` list. JSON was reformatted to Markdown, then reused with `--baseline ... --fail-on-new`; all three round trips reported zero new and zero resolved findings.
+
+SilesianSolutions declared Node 24.11+ and emitted an engine warning under the local Node 22.17 validation runtime, but its production build completed. CyberKatalog required its real `pnpm build:site` command because that command downloads the pinned word-list build input and generates sitemap/robots files; plain `pnpm build` is not production-equivalent.
+
+Reports are stored at `/tmp/search-quality-{silesiansolutions,dawidrylko,cyberkatalog}-v06.{json,md}` with matching `-baseline.json` files.
+
 Validation date: 2026-07-08. Audits used clean temporary clones; no target repository was modified. Reports were written under `/tmp`.
 
 ## v0.5 structured-data profile validation

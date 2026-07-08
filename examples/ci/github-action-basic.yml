@@ -1,0 +1,21 @@
+name: Search Quality (official Action)
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  search-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: SilesianSolutions/search-quality-kit/action@v0
+        with:
+          node-version: "22"
+          package-manager: npm
+          install-command: npm ci
+          build-command: npm run build
+          config: search-quality.config.ts
+          summary: "true"
+          upload-artifact: "true"

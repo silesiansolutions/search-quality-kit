@@ -63,6 +63,9 @@ describe("CLI baseline mode", () => {
     expect(
       current.findings.every((finding) => finding.classification?.length),
     ).toBe(true);
+    expect(
+      current.findings.every((finding) => finding.source?.type === "core"),
+    ).toBe(true);
   });
 
   afterAll(async () => {
@@ -296,5 +299,49 @@ describe("CLI baseline mode", () => {
     expect(result.status).toBe(2);
     expect(result.stderr).toContain("build.command failed");
     expect(result.stderr).toContain("Run it manually");
+  });
+
+  it("writes a report and exits 2 when a plugin throws", async () => {
+    await writeFile(
+      path.join(root, "plugin-error.config.mjs"),
+      `export default {
+        site: { baseUrl: "https://example.com" },
+        build: { distDir: "dist" },
+        plugins: [{
+          name: "internal-rules",
+          checks: [{
+            id: "custom.broken",
+            title: "Broken example",
+            category: "custom",
+            classification: "local-heuristic",
+            defaultSeverity: "warning",
+            run() { throw new Error("matcher exploded"); }
+          }]
+        }]
+      };`,
+      "utf8",
+    );
+    const result = run([
+      "verify",
+      "--root",
+      root,
+      "--config",
+      "plugin-error.config.mjs",
+      "--report-only",
+      "--json",
+      "--output",
+      "plugin-error.json",
+    ]);
+    expect(result.status, result.stderr).toBe(2);
+    const output = JSON.parse(
+      await readFile(path.join(root, "plugin-error.json"), "utf8"),
+    ) as SearchQualityReport;
+    expect(output.pluginErrors).toEqual([
+      {
+        plugin: "internal-rules",
+        check: "custom.broken",
+        message: "matcher exploded",
+      },
+    ]);
   });
 });

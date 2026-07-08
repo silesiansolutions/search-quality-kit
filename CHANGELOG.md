@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## [0.6.0] - 2026-07-08
+
+- Add typed `defineCheck` and `definePlugin` helpers with runtime validation, namespaced ids/codes, duplicate detection, and a frozen public crawl context.
+- Run custom checks through the normal JSON, Markdown, SARIF, baseline, and `ci.failOn` pipelines while reporting plugin failures separately with exit code 2.
+- Attribute every new finding to its core check or plugin without changing the v0.3 baseline fingerprint.
+- Add the official composite GitHub Action with optional install/build commands, baseline and report-only modes, summaries, artifacts, and preserved CLI exit codes.
+- Add plugin examples, API stability guidance, Action workflows, contract/smoke tests, and the scoped v0.7 roadmap.
+
 ## [0.5.0] - 2026-07-08
 
 - Add typed site profiles and ordered route-profile globs for personal, company, blog, directory, local-business, entry, list, article, and service contexts.
@@ -60,6 +68,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.6.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.2.0...v0.3.0

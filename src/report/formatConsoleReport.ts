@@ -43,8 +43,14 @@ export function formatConsoleReport(r: SearchQualityReport) {
     }
     lines.push("");
   }
-  if (!r.findings.length)
+  if (!r.findings.length && !r.pluginErrors?.length)
     lines.push(pc.green("No findings. The configured checks passed."), "");
+  if (r.pluginErrors?.length) {
+    lines.push(pc.red(pc.bold("Plugin errors")));
+    for (const error of r.pluginErrors)
+      lines.push(`${error.plugin}/${error.check}: ${error.message}`);
+    lines.push("");
+  }
   lines.push(`Completed in ${r.durationMs} ms.`);
   return lines.join("\n");
 }

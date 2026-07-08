@@ -11,6 +11,8 @@ Every finding has a stable `code`, severity, location, remediation, tool documen
 
 Checks can inherit more than one classification. The sources below are official Google Search Central or Google Crawling Infrastructure documentation, reviewed in July 2026.
 
+New reports also include `source`. Built-in findings use `{"type":"core","name":"<check>"}`; custom findings use `{"type":"plugin","name":"<plugin>"}`. Source attribution is visible in JSON, Markdown, and SARIF properties but is not part of the v0.3 baseline fingerprint, preserving compatibility with older baselines. Custom checks and their classification rules are documented in [Custom checks and plugins](plugins.md).
+
 ## sitemap
 
 Classification: `google-recommendation`, `local-heuristic`.

@@ -55,6 +55,7 @@ export function formatSarifReport(report: SearchQualityReport) {
               : {}),
             properties: {
               check: finding.check,
+              source: finding.source,
               classification: finding.classification ?? [],
               documentation: finding.docs,
               ...(finding.googleDocs

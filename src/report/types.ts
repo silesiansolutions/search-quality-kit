@@ -28,6 +28,10 @@ export interface Finding {
   impact?: "technical-error" | "recommendation" | "profile-expectation";
   activeProfile?: string;
   expectedStructuredData?: string[];
+  source?: {
+    type: "core" | "plugin";
+    name: string;
+  };
 }
 export interface ReportSummary {
   checkedPages: number;
@@ -55,6 +59,11 @@ export interface SearchQualityReport {
     matchedProfilePattern?: string;
   }>;
   durationMs: number;
+  pluginErrors?: Array<{
+    plugin: string;
+    check: string;
+    message: string;
+  }>;
   baseline?: {
     summary: {
       totalFindings: number;

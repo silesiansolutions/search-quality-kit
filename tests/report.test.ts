@@ -28,6 +28,7 @@ const report: SearchQualityReport = {
       impact: "technical-error",
       activeProfile: "directoryEntry",
       expectedStructuredData: ["Organization", "BreadcrumbList"],
+      source: { type: "core", name: "canonical" },
     },
   ],
   pages: [
@@ -98,6 +99,7 @@ describe("report formatters", () => {
     expect(output).toContain("**Remediation:** Add one.");
     expect(output).toContain("google-recommendation, local-heuristic");
     expect(output).toContain("**Impact:** technical-error");
+    expect(output).toContain("**Source:** core `canonical`");
     expect(output).toContain("**Active profile:** `directoryEntry`");
     expect(output).toContain(
       "**Expected structured data:** `Organization`, `BreadcrumbList`",
@@ -165,8 +167,28 @@ describe("report formatters", () => {
         },
       ],
     });
+    expect(sarif.runs[0].results[0].properties.source).toEqual({
+      type: "core",
+      name: "canonical",
+    });
     expect(sarif.runs[0].results[0].locations[0].physicalLocation.region).toBe(
       undefined,
     );
+  });
+
+  it("reports plugin errors separately from findings", () => {
+    const output = formatMarkdownReport({
+      ...report,
+      pluginErrors: [
+        {
+          plugin: "internal-rules",
+          check: "custom.broken",
+          message: "matcher exploded",
+        },
+      ],
+    });
+    expect(output).toContain("## Plugin errors");
+    expect(output).toContain("`internal-rules` / `custom.broken`");
+    expect(output).toContain("matcher exploded");
   });
 });

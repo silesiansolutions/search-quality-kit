@@ -4,6 +4,7 @@ export { loadConfig } from "./config/loadConfig.js";
 export { configSchema } from "./config/schema.js";
 export { presets } from "./config/presets.js";
 export { profiles } from "./config/profiles.js";
+export { defineCheck, definePlugin } from "./plugins/definePlugin.js";
 export {
   profileCatalog,
   profileIds,
@@ -37,4 +38,16 @@ export type {
   SearchQualityReport,
   Severity,
 } from "./report/types.js";
+export type {
+  PluginCheckClassification,
+  PluginCheckContext,
+  PluginCheckDefinition,
+  PluginConfig,
+  PluginDefinition,
+  PluginError,
+  PluginFinding,
+  PluginPage,
+  PluginPageLink,
+  PluginPageMetadata,
+} from "./plugins/types.js";
 export { REPORT_SCHEMA_VERSION } from "./report/types.js";
