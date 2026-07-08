@@ -63,6 +63,8 @@ The v0.1 behavior was also exercised against two production repositories; see th
 search-quality-kit verify [--config file] [--report-only] [--json]
                           [--output report.json]
                           [--baseline report.json --fail-on-new]
+search-quality-kit doctor [--config file] [--baseline report.json]
+search-quality-kit doctor --portfolio-config portfolio.search-quality.config.ts
 search-quality-kit init [--preset name | --detect] [--force]
 search-quality-kit list-checks
 search-quality-kit list-profiles
@@ -77,6 +79,7 @@ search-quality-kit portfolio baseline --config portfolio.search-quality.config.t
 - `--baseline <file> --fail-on-new` fails only for findings absent from a prior JSON report.
 - `--format markdown --output report.md` creates a review artifact.
 - `report report.json --format sarif --output report.sarif` creates a GitHub Code Scanning-compatible artifact.
+- `doctor` checks config loading, local setup, baselines, output paths, Node engines, and portfolio manifests without running an audit.
 - CLI/configuration failures exit `2`.
 
 ## Portfolio runner

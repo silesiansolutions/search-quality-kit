@@ -4,6 +4,30 @@ The CLI has three exit codes: `0` when the configured gate passes, `1` when find
 
 Pin a released package version in `devDependencies` and start with `--report-only` while the team reviews the first report. Existing repositories should normally adopt the baseline workflow below instead of weakening checks globally.
 
+## Setup diagnostics
+
+Run `doctor` before the audit when a repository has a non-trivial config,
+baseline, custom plugins, or a portfolio manifest:
+
+```yaml
+- run: npx search-quality-kit doctor --config search-quality.config.ts
+- run: npx search-quality-kit verify --config search-quality.config.ts
+```
+
+For portfolio mode:
+
+```yaml
+- run: npx search-quality-kit doctor \
+    --portfolio-config portfolio.search-quality.config.ts
+- run: npx search-quality-kit portfolio verify \
+    --config portfolio.search-quality.config.ts
+```
+
+Doctor exits `2` for setup/config problems and never applies the SEO finding
+gate. It is useful for catching missing baselines, missing static output,
+unsafe output paths, plugin registration failures, and portfolio path mistakes
+before the audit spends time crawling.
+
 ## Official GitHub Action
 
 The official composite Action sets up Node, optionally runs explicit install/build commands, invokes the pinned local `search-quality-kit` binary, creates JSON and Markdown reports, and then preserves the CLI exit code. It does not guess a package manager, build command, config, baseline, or deployment behavior.
