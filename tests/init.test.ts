@@ -19,7 +19,7 @@ beforeAll(() => {
     throw new Error(
       `Could not build the public package entrypoint: ${result.stderr}`,
     );
-});
+}, 30_000);
 
 function run(args: string[]) {
   return spawnSync(process.execPath, ["--import", "tsx", cli, ...args], {
