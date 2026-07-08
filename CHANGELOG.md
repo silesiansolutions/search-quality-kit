@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## [0.4.0] - 2026-07-08
 
 - Add deterministic presets for Astro, Next.js static/hybrid, Gatsby, Vite SPA, and generic static builds.
 - Add `init --preset`, conservative `init --detect`, overwrite protection, and generated-config verification tests.
@@ -53,6 +53,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.4.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.1.2...v0.1.3
