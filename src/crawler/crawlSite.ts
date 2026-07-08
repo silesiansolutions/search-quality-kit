@@ -24,6 +24,26 @@ function fileUrl(file: string, dist: string, base: string) {
   return new URL(route, base).toString();
 }
 
+function publicHtmlUrl(file: string, dist: string, base: string, html: string) {
+  const generated = fileUrl(file, dist, base);
+  if (path.basename(file) === "index.html") return generated;
+  const canonical = loadHtml(html)('link[rel~="canonical"]')
+    .first()
+    .attr("href");
+  if (!canonical?.match(/^https?:\/\//)) return generated;
+  try {
+    const candidate = normalizeUrl(canonical);
+    if (!sameOrigin(candidate, base)) return generated;
+    const generatedPath = normalizeUrl(generated);
+    const extensionlessPath = normalizeUrl(generated.replace(/\.html$/, ""));
+    return candidate === generatedPath || candidate === extensionlessPath
+      ? candidate
+      : generated;
+  } catch {
+    return generated;
+  }
+}
+
 function declaredSitemapPath(value?: string): string | undefined {
   try {
     return value ? new URL(value).pathname : undefined;
@@ -137,14 +157,16 @@ export async function crawlStatic(
   const sitemap = sitemapFile ? await readOptional(sitemapFile) : undefined;
   const base = await inferBase(dist, config, sitemap);
   const pages: PageArtifact[] = [];
+  const htmlPublicUrls = new Map<string, string>();
   for (const file of files.filter((f) => f.endsWith(".html"))) {
-    const url = fileUrl(file, dist, base);
+    const html = await readFile(file, "utf8");
+    const url = publicHtmlUrl(file, dist, base, html);
+    htmlPublicUrls.set(file, url);
     if (
       !pathAllowed(new URL(url).pathname, config) ||
       pages.length >= config.crawl.maxPages
     )
       continue;
-    const html = await readFile(file, "utf8");
     if (isHtmlRedirect(html)) continue;
     pages.push({
       initialUrl: url,
@@ -169,6 +191,8 @@ export async function crawlStatic(
     if (file.endsWith(".html")) {
       const routeUrl = normalizeUrl(fileUrl(file, dist, base));
       assets.set(routeUrl, { url: routeUrl, file, bytes });
+      const publicUrl = normalizeUrl(htmlPublicUrls.get(file) ?? routeUrl);
+      assets.set(publicUrl, { url: publicUrl, file, bytes });
     }
   }
   for (const page of pages)

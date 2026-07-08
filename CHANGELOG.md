@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+- Add deterministic presets for Astro, Next.js static/hybrid, Gatsby, Vite SPA, and generic static builds.
+- Add `init --preset`, conservative `init --detect`, overwrite protection, and generated-config verification tests.
+- Add explicit static/HTTP crawl selection, actionable configuration errors, rollout examples, and real-repository configs.
+- Standardize finding classifications across `list-checks`, Markdown, and JSON reports.
+- Resolve same-origin extensionless canonicals for flat static HTML output such as SvelteKit adapter-static builds.
+- Document legacy/new-site rollout, monorepo operation, and the proposed v0.5 boundary.
+
 ## [0.3.0] - 2026-07-08
 
 - Add portable, schema-validated baselines with total, existing, new, and resolved finding counts; `--fail-on-new` now gates only new findings matching `ci.failOn`.

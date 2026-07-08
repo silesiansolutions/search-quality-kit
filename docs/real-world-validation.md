@@ -1,6 +1,22 @@
 # Real-world validation
 
-Validation date: 2026-07-08. Both audits used clean temporary clones; neither target repository was modified. Reports were written under `/tmp`.
+Validation date: 2026-07-08. Audits used clean temporary clones; no target repository was modified. Reports were written under `/tmp`.
+
+## v0.4 preset rollout validation
+
+The v0.4 candidate and all three example configs were tested against clean shallow clones on Node 24.18.0. Dependencies were installed with each repository's locked pnpm version, sites were built with their deployment-oriented build script, JSON and Markdown reports were written under `/tmp`, and each JSON report was reused with `--baseline ... --fail-on-new`. All matching-baseline runs exited `0` with zero new and zero resolved findings.
+
+| Repository / commit                                 | Stack and preset                                                                      | Build / output              | Audited result                    |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------- | --------------------------------- |
+| `SilesianSolutions/silesiansolutions.com` `e271ad4` | Astro 6, pnpm 11.7.0, `astro()`                                                       | `pnpm build`, `dist/`       | 40 pages, 0 errors, 84 warnings   |
+| `dawidrylko/dawidrylko.com` `698fff1`               | Astro 7, pnpm 10.33.0, `astro()`                                                      | `pnpm build`, `dist/`       | 73 pages, 0 errors, 58 warnings   |
+| `CyberKatalog/cyberkatalog-web` `7683c25`           | SvelteKit adapter-static/Vite, pnpm 10.12.4, `genericStatic()` with `build/` override | `pnpm build:site`, `build/` | 197 pages, 0 errors, 387 warnings |
+
+CyberKatalog's clean build requires `PUBLIC_GOOGLE_ANALYTICS_ID` and `PUBLIC_QUOTE_FORM_ENDPOINT` to exist at compile time. Validation used an empty analytics id and `https://example.invalid` as a non-secret form-endpoint placeholder; no target files were changed. The first attempt correctly failed on the missing environment variables and was not recorded as a package failure.
+
+CyberKatalog also exposed a static-route compatibility gap: SvelteKit writes flat files such as `firma/name.html` while canonical URLs, sitemap entries, and links use `/firma/name`. The crawler now accepts a same-origin extensionless canonical that corresponds exactly to the flat HTML filename. A regression test covers this mapping; arbitrary canonical rewrites remain findings rather than route aliases.
+
+The remaining CyberKatalog warnings are reviewable existing-site signals: 261 conflicting structured-data identities, 88 description-length heuristics, 26 sitemap-backed orphan candidates, 11 heading skips, and one heavy-HTML hint. The preset does not suppress them. Reports are `/tmp/search-quality-{silesiansolutions,dawidrylko,cyberkatalog}-v04.json`; matching-baseline reports add `-baseline.json`, and Markdown reports use `.md`.
 
 ## v0.3 CI adoption rerun
 

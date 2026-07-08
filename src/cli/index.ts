@@ -3,7 +3,12 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Command } from "commander";
 import { checkCatalog } from "../checks/index.js";
-import { CONFIG_FILE_TEMPLATE } from "../config/loadConfig.js";
+import { detectPreset, supportedPresetMessage } from "../config/loadConfig.js";
+import {
+  configTemplate,
+  presetByName,
+  type PresetName,
+} from "../config/presets.js";
 import { runVerification, shouldFail } from "../engine/verify.js";
 import { formatConsoleReport } from "../report/formatConsoleReport.js";
 import { formatJsonReport } from "../report/formatJsonReport.js";
@@ -78,26 +83,40 @@ program
   });
 program
   .command("init")
-  .description("Create a typed example config")
+  .description("Create a typed config for a supported project stack")
   .option("--root <directory>", "target project root", process.cwd())
+  .option("--preset <name>", "framework preset")
+  .option("--detect", "detect a preset conservatively from package.json")
   .option("--force", "overwrite existing config")
   .action(async (o) => {
+    if (o.preset && o.detect)
+      throw new Error("Use either --preset <name> or --detect, not both.");
+    let presetName = o.preset as string | undefined;
+    if (presetName) presetByName(presetName);
+    if (o.detect) {
+      presetName = await detectPreset(o.root);
+      if (!presetName)
+        throw new Error(
+          `Could not confidently detect a preset. Use --preset with one of: ${supportedPresetMessage}.`,
+        );
+    }
+    presetName ??= "generic-static";
     const dest = path.resolve(o.root, "search-quality.config.ts");
     if ((await fileExists(dest)) && !o.force)
       throw new Error(
         `Config already exists: ${dest}. Use --force to replace it.`,
       );
-    await writeFile(dest, CONFIG_FILE_TEMPLATE, "utf8");
-    process.stdout.write(`Created ${dest}\n`);
+    await writeFile(dest, configTemplate(presetName as PresetName), "utf8");
+    process.stdout.write(`Created ${dest} with preset ${presetName}\n`);
   });
 program
   .command("list-checks")
   .description("List built-in checks")
   .action(() => {
-    process.stdout.write("ID\tSEVERITIES\tBASIS\tDESCRIPTION\n");
+    process.stdout.write("ID\tSEVERITIES\tCLASSIFICATIONS\tDESCRIPTION\n");
     checkCatalog.forEach((check) =>
       process.stdout.write(
-        `${check.id}\t${check.severities.join(",")}\t${check.basis.join(", ")}\t${check.description}\n`,
+        `${check.id}\t${check.severities.join(",")}\t${check.classification.join(", ")}\t${check.description}\n`,
       ),
     );
   });

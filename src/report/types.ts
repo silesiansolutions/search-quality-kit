@@ -1,7 +1,17 @@
 export type Severity = "error" | "warning" | "info";
 export const REPORT_SCHEMA_VERSION = "0.3" as const;
 export type FindingClassification =
-  "Google requirement" | "Google recommendation" | "local heuristic";
+  | "google-requirement"
+  | "google-recommendation"
+  | "local-heuristic"
+  | "cross-channel-metadata"
+  | "accessibility-basic"
+  /** @deprecated Read legacy v0.3 reports only; new reports use kebab-case values. */
+  | "Google requirement"
+  /** @deprecated Read legacy v0.3 reports only; new reports use kebab-case values. */
+  | "Google recommendation"
+  /** @deprecated Read legacy v0.3 reports only; new reports use kebab-case values. */
+  | "local heuristic";
 export interface Finding {
   severity: Severity;
   check: string;

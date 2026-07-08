@@ -20,4 +20,26 @@ describe("config", () => {
   });
   it("rejects invalid URLs", () =>
     expect(() => configSchema.parse({ site: { baseUrl: "nope" } })).toThrow());
+  it("explains an invalid production URL", async () => {
+    await expect(
+      loadConfig(import.meta.dirname, "fixtures/invalid-url-config.ts"),
+    ).rejects.toThrow(
+      "site.baseUrl: Expected an absolute http(s) production URL",
+    );
+  });
+  it("explains a missing production URL", async () => {
+    await expect(
+      loadConfig(import.meta.dirname, "fixtures/empty-config.ts"),
+    ).rejects.toThrow("site.baseUrl is missing");
+  });
+  it("rejects a static/local URL conflict", async () => {
+    await expect(
+      loadConfig(import.meta.dirname, "fixtures/static-local-config.ts"),
+    ).rejects.toThrow("site.localUrl conflicts with crawl.mode=static");
+  });
+  it("rejects an exclusion that removes the whole site", async () => {
+    await expect(
+      loadConfig(import.meta.dirname, "fixtures/exclude-all-config.ts"),
+    ).rejects.toThrow("crawl.exclude contains '/'");
+  });
 });
