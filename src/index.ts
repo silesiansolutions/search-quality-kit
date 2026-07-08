@@ -8,6 +8,13 @@ export { presets } from "./config/presets.js";
 export { profiles } from "./config/profiles.js";
 export { defineCheck, definePlugin } from "./plugins/definePlugin.js";
 export {
+  aiVisibilitySafePolicyPack,
+  companySitePolicyPack,
+  directoryPolicyPack,
+  personalBrandPolicyPack,
+  policyPacks,
+} from "./policyPacks/index.js";
+export {
   profileCatalog,
   profileIds,
   structuredDataTypes,

@@ -4,6 +4,11 @@ Plugins let a project enforce deterministic organization-specific rules without 
 
 Plugins should not start browsers, call Google APIs, mutate build output, fetch unbounded external resources, score content quality, or depend on time, randomness, locale, network timing, or machine-specific paths. Put heavyweight or stateful integrations in a separate tool or package.
 
+Use [policy packs](policy-packs.md) before writing a custom plugin when the
+rule is a common personal-site, company-site, directory, or AI-visibility safety
+heuristic. Policy packs are exported plugin factories, so they can be mixed with
+project-specific plugins in the same `plugins` array.
+
 ## Minimal custom check
 
 ```ts
