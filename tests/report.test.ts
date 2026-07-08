@@ -25,9 +25,20 @@ const report: SearchQualityReport = {
       docs: "https://example.com/docs",
       googleDocs: "https://developers.google.com/search/docs/example",
       classification: ["google-recommendation", "local-heuristic"],
+      impact: "technical-error",
+      activeProfile: "directoryEntry",
+      expectedStructuredData: ["Organization", "BreadcrumbList"],
     },
   ],
-  pages: [{ url: "https://example.com/", status: 200 }],
+  pages: [
+    {
+      url: "https://example.com/",
+      status: 200,
+      activeProfile: "directoryEntry",
+      expectedStructuredData: ["Organization", "BreadcrumbList"],
+      matchedProfilePattern: "/firmy/**",
+    },
+  ],
   durationMs: 12,
 };
 
@@ -62,18 +73,35 @@ describe("report formatters", () => {
       "google-recommendation",
       "local-heuristic",
     ]);
+    expect(json.findings[0]).toMatchObject({
+      impact: "technical-error",
+      activeProfile: "directoryEntry",
+      expectedStructuredData: ["Organization", "BreadcrumbList"],
+    });
+    expect(json.pages[0]).toMatchObject({
+      activeProfile: "directoryEntry",
+      expectedStructuredData: ["Organization", "BreadcrumbList"],
+      matchedProfilePattern: "/firmy/**",
+    });
   });
 
   it("groups Markdown findings and includes operational context", () => {
     const output = formatMarkdownReport(report);
     expect(output).toContain("Scanned pages: 1");
     expect(output).toContain("Total findings: 1");
+    expect(output).toContain("## Profile coverage");
+    expect(output).toContain("`directoryEntry` · pattern `/firmy/**`");
     expect(output).toContain("### Error");
     expect(output).toContain("`canonical/missing` (1)");
     expect(output).toContain("**URL / route:** `https://example.com/`");
     expect(output).toContain("**Location:** `/tmp/dist/index.html`");
     expect(output).toContain("**Remediation:** Add one.");
     expect(output).toContain("google-recommendation, local-heuristic");
+    expect(output).toContain("**Impact:** technical-error");
+    expect(output).toContain("**Active profile:** `directoryEntry`");
+    expect(output).toContain(
+      "**Expected structured data:** `Organization`, `BreadcrumbList`",
+    );
     expect(output).toContain("[Google documentation]");
   });
 
@@ -103,6 +131,20 @@ describe("report formatters", () => {
     expect(output).toContain("## Resolved findings");
     expect(output).toContain("…and 2 more resolved findings.");
     expect(output).not.toContain("old-21");
+  });
+
+  it("bounds repeated Markdown details while keeping JSON complete", () => {
+    const repeated = Array.from({ length: 22 }, (_, index) => ({
+      ...report.findings[0]!,
+      url: `https://example.com/repeated-${index}`,
+    }));
+    const output = formatMarkdownReport({
+      ...report,
+      findings: repeated,
+      summary: { ...report.summary, errors: repeated.length },
+    });
+    expect(output).toContain("…and 2 more in the JSON report.");
+    expect(output).not.toContain("repeated-21");
   });
 
   it("emits GitHub-compatible SARIF without fake source lines", () => {

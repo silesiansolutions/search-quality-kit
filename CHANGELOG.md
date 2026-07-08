@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+- Add typed site profiles and ordered route-profile globs for personal, company, blog, directory, local-business, entry, list, article, and service contexts.
+- Expand JSON-LD validation across core page/entity types with URL, placeholder, identity, recommended-property, and cross-field consistency checks.
+- Add profile/classification context to JSON and Markdown reports plus `list-profiles` CLI discovery.
+- Add deterministic profile fixtures, real-world configuration templates, Google-integration boundaries, and v0.6 design direction.
+
 ## [0.4.0] - 2026-07-08
 
 - Add deterministic presets for Astro, Next.js static/hybrid, Gatsby, Vite SPA, and generic static builds.

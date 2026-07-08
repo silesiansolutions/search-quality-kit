@@ -42,4 +42,11 @@ describe("config", () => {
       loadConfig(import.meta.dirname, "fixtures/exclude-all-config.ts"),
     ).rejects.toThrow("crawl.exclude contains '/'");
   });
+  it("explains an invalid route profile pattern", async () => {
+    await expect(
+      loadConfig(import.meta.dirname, "fixtures/invalid-profile-config.ts"),
+    ).rejects.toThrow(
+      "profiles.routes.0.pattern: Expected a root-relative glob",
+    );
+  });
 });

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Prevent search regressions | Acme</title>
+    <meta
+      name="description"
+      content="Technical checks that prevent search regressions before production deployment."
+    />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="canonical" href="https://site.test/canonical-other" />
+    <meta property="og:title" content="Best pizza restaurants in Warsaw" />
+    <meta
+      property="og:description"
+      content="Fresh dough, tomato sauce, cheese, reservations, and restaurant delivery."
+    />
+    <meta property="og:url" content="https://site.test/og-other" />
+    <meta property="og:type" content="article" />
+    <script type="application/ld+json">
+      [
+        {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "@id": "https://site.test/json-other",
+          "url": "TODO",
+          "name": "Best pizza restaurants in Warsaw",
+          "description": "Fresh dough, tomato sauce, cheese, reservations, and restaurant delivery.",
+          "sameAs": ["http://localhost:3000/page"],
+          "image": ""
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "Person",
+          "@id": "https://site.test/json-other",
+          "name": "Different entity"
+        }
+      ]
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>Prevent technical search regressions</h1>
+      <p>Deterministic technical checks for deployment pipelines.</p>
+    </main>
+  </body>
+</html>

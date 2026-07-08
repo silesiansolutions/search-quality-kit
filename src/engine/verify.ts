@@ -3,6 +3,7 @@ import path from "node:path";
 import type { ChildProcess } from "node:child_process";
 import { checks } from "../checks/index.js";
 import { loadConfig } from "../config/loadConfig.js";
+import { resolveProfile } from "../config/resolveProfile.js";
 import type { SearchQualityConfig } from "../config/schema.js";
 import { crawlHttp, crawlStatic } from "../crawler/crawlSite.js";
 import {
@@ -84,6 +85,15 @@ export async function runVerification(
     for (const check of checks)
       if (config.checks[check.name])
         findings.push(...(await check.run({ config, crawl })));
+    for (let index = 0; index < findings.length; index += 1) {
+      const item = findings[index]!;
+      if (!item.url) continue;
+      const resolved = resolveProfile(item.url, config);
+      findings[index] = {
+        ...item,
+        activeProfile: item.activeProfile ?? resolved.activeProfile,
+      };
+    }
     const order: Record<Severity, number> = { error: 0, warning: 1, info: 2 };
     findings.sort(
       (a, b) =>
@@ -108,13 +118,23 @@ export async function runVerification(
         info: findings.filter((f) => f.severity === "info").length,
       },
       findings,
-      pages: crawl.pages.map(({ url, initialUrl, finalUrl, status, file }) => ({
-        url,
-        initialUrl,
-        finalUrl,
-        status,
-        ...(file ? { file } : {}),
-      })),
+      pages: crawl.pages.map(({ url, initialUrl, finalUrl, status, file }) => {
+        const resolved = resolveProfile(url, config);
+        return {
+          url,
+          initialUrl,
+          finalUrl,
+          status,
+          ...(file ? { file } : {}),
+          activeProfile: resolved.activeProfile,
+          ...(resolved.expectedStructuredData.length
+            ? { expectedStructuredData: resolved.expectedStructuredData }
+            : {}),
+          ...(resolved.matchedPattern
+            ? { matchedProfilePattern: resolved.matchedPattern }
+            : {}),
+        };
+      }),
       durationMs: Date.now() - start,
     };
     return { report, config };

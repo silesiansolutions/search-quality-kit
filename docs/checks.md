@@ -7,6 +7,7 @@ Every finding has a stable `code`, severity, location, remediation, tool documen
 - `local-heuristic`: a configurable project threshold or deterministic approximation.
 - `cross-channel-metadata`: metadata used outside Google Search, currently Open Graph.
 - `accessibility-basic`: a narrow semantic/accessibility check, not WCAG conformance.
+- `profile-expectation`: a site/route-specific expectation configured by the project; not a universal Google requirement.
 
 Checks can inherit more than one classification. The sources below are official Google Search Central or Google Crawling Infrastructure documentation, reviewed in July 2026.
 
@@ -42,19 +43,21 @@ Checks non-empty and non-generic titles, descriptions, duplicates, document lang
 
 Classification: `google-recommendation`, `local-heuristic`.
 
-Checks presence when configured, one non-empty absolute production URL, origin consistency, and normalized self-reference. In HTTP mode, self-reference is compared with the final response URL after redirects. Based on [canonical URL guidance](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls). A non-self canonical is a warning because legitimate duplicate consolidation exists.
+Checks presence when configured, one non-empty absolute production URL, origin consistency, normalized self-reference, sitemap/canonical agreement, and redirected sitemap URLs. In HTTP mode, self-reference is compared with the final response URL after redirects. Based on [canonical URL guidance](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls). A non-self canonical is a warning because legitimate duplicate consolidation exists.
 
 ## structured-data
 
 Classification: `google-recommendation`, `local-heuristic`. Structured data is not required for ordinary indexing; applicable properties and policies become requirements only for specific rich-result eligibility.
 
-Parses JSON-LD and checks `@context`, `@type`, empty values, obvious placeholders, non-production URLs, and conflicting types for the same `@id`. Google recommends JSON-LD and accurate, visible-content-aligned markup in [structured data basics](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data) and [general guidelines](https://developers.google.com/search/docs/appearance/structured-data/sd-policies). This check does not implement feature-specific required properties and does not replace Rich Results Test.
+Parses JSON-LD and recognizes `Person`, `Organization`, `WebSite`, `WebPage`, `Article`, `BlogPosting`, `BreadcrumbList`, `ItemList`, `LocalBusiness` subtypes, and `Service`. It checks `@context`, `@type`, empty values, obvious placeholders, URL syntax, non-production URLs, conflicting `@id` definitions, page-level URL/canonical agreement, and only obvious name/headline/description conflicts after whitespace, casing, and brand-suffix normalization.
+
+Profile rules add warning-level expected types and a few bounded property hints. Article fields are labeled `google-recommendation`; breadcrumb eligibility properties are labeled `google-requirement`; directory/list and site-type assumptions are labeled `profile-expectation`. Local-business contact/address/opening-hours values are never invented or universally forced. Google recommends valid, visible-content-aligned markup in [structured data basics](https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data), [general guidelines](https://developers.google.com/search/docs/appearance/structured-data/sd-policies), [Article documentation](https://developers.google.com/search/docs/appearance/structured-data/article), and [LocalBusiness documentation](https://developers.google.com/search/docs/appearance/structured-data/local-business). This check is intentionally not a feature-complete validator and does not replace Rich Results Test.
 
 ## open-graph
 
 Classification: `cross-channel-metadata`, `local-heuristic`; Open Graph is not a Google Search requirement.
 
-Checks `og:title`, `og:description`, `og:url`, `og:type`, optional `og:image`, production URLs, and agreement between `og:url` and canonical. Open Graph itself is not a Google Search requirement; it is included as a cross-channel metadata regression check.
+Checks `og:title`, `og:description`, `og:url`, `og:type`, optional `og:image`, production URLs, agreement between `og:url` and canonical, and only obvious semantic conflicts with title/H1/meta description. Exact wording and common brand suffixes may differ. Open Graph itself is not a Google Search requirement; it is included as a cross-channel metadata regression check.
 
 ## internal-links
 

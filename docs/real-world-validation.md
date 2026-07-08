@@ -2,6 +2,22 @@
 
 Validation date: 2026-07-08. Audits used clean temporary clones; no target repository was modified. Reports were written under `/tmp`.
 
+## v0.5 structured-data profile validation
+
+The v0.5 candidate was tested against clean shallow clones with site-specific ordered route profiles. Builds used each repository's locked pnpm version. The runner was Node 22.17.0; `silesiansolutions.com` declared Node 24.11 or newer and printed an engine warning, but its production build completed. CyberKatalog used the same non-secret compile-time placeholders documented below.
+
+| Repository / commit                                 | Profile coverage                                                                      | Result                            | Profile-specific signal                                           |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------- |
+| `SilesianSolutions/silesiansolutions.com` `e271ad4` | company default; exact list routes generic; blog posts and service details overridden | 40 pages, 0 errors, 105 warnings  | 0 profile findings after separating list routes from detail globs |
+| `dawidrylko/dawidrylko.com` `698fff1`               | personal default; explicit utility/archive routes; top-level article fallback         | 73 pages, 0 errors, 92 warnings   | one missing `Person` expectation on `/bio`                        |
+| `CyberKatalog/cyberkatalog-web` `7683c25`           | directory default; `/firma/**`, `/kategoria/**`, list routes, and generic legal pages | 197 pages, 0 errors, 308 warnings | one empty `ItemList`; no missing entry/list expected types        |
+
+All three JSON reports passed a matching `--baseline --fail-on-new` round-trip with zero new and zero resolved findings. JSON and Markdown reports are `/tmp/search-quality-{silesian,dawid,cyber}-v05.{json,md}`; matching-baseline reports add `-baseline.json`.
+
+The cross-field checks initially compared publisher/breadcrumb entities with page H1 and treated external directory-entry business URLs as canonical conflicts. Real output exposed that noise before release. The implementation now compares only an entity linked to the current page, allows a listing's `LocalBusiness.url` to point to the listed company's site, groups conflicting `@id` values per page, and caps each repeated Markdown group at 20 details while retaining complete JSON.
+
+CyberKatalog still reports 177 page-level `conflicting-identity` findings. Inspection confirmed a systemic generator pattern: the same page `@id` is reused for incompatible entities such as `WebPage` and `LocalBusiness` or glossary entities. This is actionable once in the site's structured-data generator; Markdown shows bounded examples rather than expanding all entries.
+
 ## v0.4 preset rollout validation
 
 The v0.4 candidate and all three example configs were tested against clean shallow clones on Node 24.18.0. Dependencies were installed with each repository's locked pnpm version, sites were built with their deployment-oriented build script, JSON and Markdown reports were written under `/tmp`, and each JSON report was reused with `--baseline ... --fail-on-new`. All matching-baseline runs exited `0` with zero new and zero resolved findings.

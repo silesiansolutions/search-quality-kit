@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { VERSION } from "../version.js";
+import {
+  profileIds,
+  structuredDataTypes,
+  validRoutePattern,
+} from "./profileDefinitions.js";
 const command = z.string().min(1).optional();
 const httpUrl = (label: string) =>
   z
@@ -38,6 +43,25 @@ export const configSchema = z.object({
         .default(["/admin", "/preview", "/api", "/404", "/404.html"]),
       requestTimeoutMs: z.number().int().positive().default(10000),
       userAgent: z.string().min(1).default(`search-quality-kit/${VERSION}`),
+    })
+    .prefault({}),
+  profiles: z
+    .object({
+      default: z.enum(profileIds).default("generic"),
+      routes: z
+        .array(
+          z.object({
+            pattern: z.string().min(1).refine(validRoutePattern, {
+              error:
+                "Expected a root-relative glob using only * or **, for example /blog/**.",
+            }),
+            profile: z.enum(profileIds).optional(),
+            expectedStructuredData: z
+              .array(z.enum(structuredDataTypes))
+              .default([]),
+          }),
+        )
+        .default([]),
     })
     .prefault({}),
   checks: z

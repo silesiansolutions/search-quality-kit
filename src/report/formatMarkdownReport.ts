@@ -3,6 +3,7 @@ import { withoutFindings } from "./baseline.js";
 import type { Finding, SearchQualityReport, Severity } from "./types.js";
 
 const RESOLVED_LIMIT = 20;
+const FINDING_GROUP_LIMIT = 20;
 const severityOrder: Severity[] = ["error", "warning", "info"];
 const text = (value: string) =>
   value
@@ -40,6 +41,15 @@ function findingLines(finding: Finding) {
     `  - **Message:** ${text(finding.message)}`,
     `  - **Remediation:** ${text(finding.suggestion)}`,
     `  - **Classification:** ${classification.map(text).join(", ")}`,
+    `  - **Impact:** ${finding.impact ?? (finding.severity === "error" ? "technical-error" : "recommendation")}`,
+    ...(finding.activeProfile
+      ? [`  - **Active profile:** ${code(finding.activeProfile)}`]
+      : []),
+    ...(finding.expectedStructuredData?.length
+      ? [
+          `  - **Expected structured data:** ${finding.expectedStructuredData.map(code).join(", ")}`,
+        ]
+      : []),
     `  - **Documentation:** ${documentation.join(" · ") || "—"}`,
   ];
 }
@@ -54,7 +64,13 @@ function section(title: string, findings: Finding[]) {
     lines.push(`### ${severity[0]!.toUpperCase()}${severity.slice(1)}`, "");
     for (const [key, items] of byCode) {
       lines.push(`#### ${code(key)} (${items.length})`, "");
-      for (const finding of items) lines.push(...findingLines(finding), "");
+      for (const finding of items.slice(0, FINDING_GROUP_LIMIT))
+        lines.push(...findingLines(finding), "");
+      if (items.length > FINDING_GROUP_LIMIT)
+        lines.push(
+          `- …and ${items.length - FINDING_GROUP_LIMIT} more in the JSON report.`,
+          "",
+        );
     }
   }
   return lines;
@@ -68,6 +84,34 @@ function collapsedSection(title: string, findings: Finding[]) {
     "",
     ...section(title, findings),
     "</details>",
+    "",
+  ];
+}
+
+function profileCoverage(report: SearchQualityReport) {
+  const groups = new Map<string, { count: number; label: string }>();
+  for (const page of report.pages) {
+    if (!page.activeProfile) continue;
+    const label = [
+      code(page.activeProfile),
+      page.matchedProfilePattern
+        ? `pattern ${code(page.matchedProfilePattern)}`
+        : "default",
+      page.expectedStructuredData?.length
+        ? `expects ${page.expectedStructuredData.map(code).join(", ")}`
+        : "sanity checks only",
+    ].join(" · ");
+    const current = groups.get(label);
+    groups.set(label, { count: (current?.count ?? 0) + 1, label });
+  }
+  if (!groups.size) return [];
+  return [
+    "## Profile coverage",
+    "",
+    ...[...groups.values()].map(
+      ({ count, label }) =>
+        `- ${label}: ${count} page${count === 1 ? "" : "s"}`,
+    ),
     "",
   ];
 }
@@ -91,6 +135,7 @@ export function formatMarkdownReport(report: SearchQualityReport) {
       `- New findings: ${report.baseline.summary.newFindings}`,
       `- Resolved findings: ${report.baseline.summary.resolvedFindings}`,
       "",
+      ...profileCoverage(report),
       ...section("New findings", report.baseline.newFindings),
     );
     lines.push(
@@ -105,7 +150,11 @@ export function formatMarkdownReport(report: SearchQualityReport) {
     );
     lines.push(...resolvedSection(report.baseline.resolvedFindings));
   } else {
-    lines.push("", ...section("Findings", report.findings));
+    lines.push(
+      "",
+      ...profileCoverage(report),
+      ...section("Findings", report.findings),
+    );
   }
 
   lines.push(`Generated at ${report.generatedAt}.`);

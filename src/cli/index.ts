@@ -4,6 +4,7 @@ import path from "node:path";
 import { Command } from "commander";
 import { checkCatalog } from "../checks/index.js";
 import { detectPreset, supportedPresetMessage } from "../config/loadConfig.js";
+import { profileCatalog } from "../config/profileDefinitions.js";
 import {
   configTemplate,
   presetByName,
@@ -117,6 +118,19 @@ program
     checkCatalog.forEach((check) =>
       process.stdout.write(
         `${check.id}\t${check.severities.join(",")}\t${check.classification.join(", ")}\t${check.description}\n`,
+      ),
+    );
+  });
+program
+  .command("list-profiles")
+  .description("List site and route profile expectations")
+  .action(() => {
+    process.stdout.write(
+      "ID\tEXPECTED STRUCTURED DATA\tTYPICAL ROUTES\tFINDING CLASS\tDESCRIPTION\n",
+    );
+    profileCatalog.forEach((profile) =>
+      process.stdout.write(
+        `${profile.id}\t${profile.expectedStructuredData.join(",") || "none"}\t${profile.typicalRoutes.join(",")}\tprofile-expectation (warning, not a hard requirement)\t${profile.description}\n`,
       ),
     );
   });
