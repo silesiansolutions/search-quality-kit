@@ -5,7 +5,10 @@
     "moduleResolution": "NodeNext",
     "baseUrl": ".",
     "paths": {
-      "@silesiansolutions/search-quality-kit": ["./src/index.ts"]
+      "@silesiansolutions/search-quality-kit": ["./src/index.ts"],
+      "@silesiansolutions/search-quality-kit/test-utils": [
+        "./src/test-utils.ts"
+      ]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": true,
