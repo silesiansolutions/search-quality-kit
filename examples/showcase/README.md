@@ -2,6 +2,12 @@
 
 This example audits three public production sites over HTTP: `dawidrylko.com`, `silesiansolutions.com`, and `cyberkatalog.pl`. It uses no secrets, does not mutate a site, and writes changing reports only to `search-quality-reports/` for artifact upload.
 
+The configs demonstrate policy packs in report-only mode:
+
+- `dawidrylko.com`: `personalBrand` plus `aiVisibilitySafe`;
+- `silesiansolutions.com`: `companySite` plus `aiVisibilitySafe`;
+- `cyberkatalog.pl`: `directory` plus `aiVisibilitySafe`.
+
 Run it from the repository root:
 
 ```bash

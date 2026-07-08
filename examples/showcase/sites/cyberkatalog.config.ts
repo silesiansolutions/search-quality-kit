@@ -1,7 +1,9 @@
-import { defineConfig, profiles } from "@silesiansolutions/search-quality-kit";
+import {
+  defineConfig,
+  policyPacks,
+} from "@silesiansolutions/search-quality-kit";
 
 export default defineConfig({
-  ...profiles.directory(),
   site: { baseUrl: "https://cyberkatalog.pl" },
   crawl: {
     mode: "http",
@@ -18,4 +20,5 @@ export default defineConfig({
       { pattern: "/aktualnosci/**", profile: "blogPost" },
     ],
   },
+  plugins: [policyPacks.directory(), policyPacks.aiVisibilitySafe()],
 });

@@ -1,6 +1,19 @@
 # Public portfolio showcase
 
-The public showcase runs the portfolio runner against `https://dawidrylko.com`, `https://silesiansolutions.com`, and `https://cyberkatalog.pl`. It demonstrates the package's public npm API, HTTP crawler, site profiles, isolated reports, and one aggregate gate without requiring access to the sites' source repositories.
+The public showcase runs the portfolio runner against `https://dawidrylko.com`, `https://silesiansolutions.com`, and `https://cyberkatalog.pl`. It demonstrates the package's public npm API, HTTP crawler, site profiles, policy packs, isolated reports, and one aggregate gate without requiring access to the sites' source repositories.
+
+## What this demonstrates
+
+- `dawidrylko.com`: a personal/blog site using `personalBrand` and
+  `aiVisibilitySafe` policy packs.
+- `silesiansolutions.com`: a company/service/blog site using `companySite` and
+  `aiVisibilitySafe` policy packs.
+- `cyberkatalog.pl`: a directory/blog site using `directory` and
+  `aiVisibilitySafe` policy packs.
+
+The showcase remains report-only. Public HTTP results can change independently
+of the package release, so they are observations in workflow artifacts, not a
+release gate or committed generated report.
 
 ## Why it lives in this repository
 
@@ -38,7 +51,7 @@ Each enabled site gets its own JSON and Markdown report. `--sarif` adds one SARI
 
 ## Add another public site
 
-1. Add a bounded HTTP config under `examples/showcase/sites/` with the correct production `baseUrl` and site/route profiles.
+1. Add a bounded HTTP config under `examples/showcase/sites/` with the correct production `baseUrl`, site/route profiles, and relevant policy packs.
 2. Add a unique, path-safe lowercase name to `portfolio.search-quality.config.ts`.
 3. Keep `maxPages` and timeouts reasonable; do not add credentials, mutation, browsers, Google APIs, or private endpoints.
 4. Run report-only locally and inspect the per-site and aggregate reports.
