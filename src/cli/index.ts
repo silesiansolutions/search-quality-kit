@@ -11,6 +11,7 @@ import {
   type PresetName,
 } from "../config/presets.js";
 import { runVerification, shouldFail } from "../engine/verify.js";
+import { formatDoctorReport, runDoctor } from "../doctor.js";
 import { formatConsoleReport } from "../report/formatConsoleReport.js";
 import { formatJsonReport } from "../report/formatJsonReport.js";
 import { formatMarkdownReport } from "../report/formatMarkdownReport.js";
@@ -169,6 +170,28 @@ program
       );
     await writeFile(dest, configTemplate(presetName as PresetName), "utf8");
     process.stdout.write(`Created ${dest} with preset ${presetName}\n`);
+  });
+program
+  .command("doctor")
+  .description("Diagnose config, setup, and local operational issues")
+  .option("-c, --config <file>", "single-site config path relative to root")
+  .option("--portfolio-config <file>", "portfolio config path relative to root")
+  .option("--root <directory>", "target project root", process.cwd())
+  .option("--baseline <file>", "optional single-site baseline path")
+  .option("--json", "print JSON")
+  .action(async (o) => {
+    const report = await runDoctor({
+      root: o.root,
+      configPath: o.config,
+      portfolioConfigPath: o.portfolioConfig,
+      baselinePath: o.baseline,
+    });
+    process.stdout.write(
+      o.json
+        ? `${JSON.stringify(report, null, 2)}\n`
+        : `${formatDoctorReport(report)}\n`,
+    );
+    if (report.summary.errors > 0) process.exitCode = 2;
   });
 program
   .command("list-checks")

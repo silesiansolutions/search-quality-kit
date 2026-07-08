@@ -149,6 +149,40 @@ Hugo uses the neutral preset with its conventional output override: start from `
 
 Configuration failures exit `2` and identify the field plus a fix. `site.baseUrl` is required by the CLI even for a local static build because reports and canonical checks need the production origin. Static mode requires `build.distDir` to exist after any configured build. `build.startCommand` requires `site.localUrl`; `site.localUrl` conflicts with `crawl.mode: "static"`; excluding `/` is rejected because it removes the whole audit scope; and invalid/duplicate plugin definitions are rejected before the build or crawl starts.
 
+## Doctor
+
+Use `doctor` to validate local setup before an audit:
+
+```bash
+search-quality-kit doctor
+search-quality-kit doctor --config search-quality.config.ts
+search-quality-kit doctor --config search-quality.config.ts \
+  --baseline search-quality-baseline.json
+search-quality-kit doctor \
+  --portfolio-config portfolio.search-quality.config.ts
+search-quality-kit doctor --json
+```
+
+Doctor does not crawl pages, run checks, execute builds, or apply the finding
+gate. It checks operational setup:
+
+- config file discovery and loading;
+- `site.baseUrl` validation through the normal config loader;
+- static `build.distDir` existence;
+- duplicate build-command ownership when `SQK_BUILD_COMMAND` is present;
+- optional single-site baseline path existence;
+- plugin registration and duplicate check ids;
+- output file paths staying inside the project root;
+- Node version compatibility with the package and project `engines.node`;
+- portfolio site config and baseline paths;
+- portfolio site names, output-directory isolation, disabled sites, and final
+  gate shape.
+
+Console output is intended for humans; `--json` returns the same issue list as a
+machine-readable report. Exit code `0` means there are no doctor errors. Exit
+code `2` means at least one operational/configuration error needs attention.
+Warnings are visible but do not fail the command.
+
 ## Portfolio configuration
 
 Portfolio config is a separate manifest; it does not overload the single-site schema. Every entry reuses an existing single-site config and runs through the same crawler/check/plugin/report pipeline.
