@@ -5,6 +5,9 @@ inputs:
   node-version:
     description: Node.js version used by the project and CLI.
     default: "22"
+  node-version-file:
+    description: Optional path to a Node.js version file such as .nvmrc. Takes precedence over node-version.
+    default: ""
   package-manager:
     description: Package manager used to execute the local CLI (npm, pnpm, or yarn).
     default: npm
@@ -59,7 +62,15 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Set up Node.js from version file
+      if: ${{ inputs.node-version-file != '' }}
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: ${{ inputs.node-version-file }}
+        package-manager-cache: false
+
     - name: Set up Node.js
+      if: ${{ inputs.node-version-file == '' }}
       uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node-version }}
