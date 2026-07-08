@@ -7,6 +7,7 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 | `site`                 | `baseUrl`, `localUrl`, `stagingHosts`                                   | common local/preview host tokens |
 | `build`                | `command`, `startCommand`, `distDir`, `startupTimeoutMs`                | `dist`, 30 seconds               |
 | `crawl`                | `mode`, entrypoints, page/sitemap limits, `include`, `exclude`, timeout | `auto`, `/`, 100 pages           |
+| `profiles`             | default site type and ordered route overrides                           | `generic`, no route overrides    |
 | `checks`               | one boolean per built-in check                                          | all enabled                      |
 | `rules.title`          | min/max length, duplicate policy                                        | 10–70, no duplicates             |
 | `rules.description`    | min/max, missing and duplicate policy                                   | 50–170, required, no duplicates  |
@@ -28,6 +29,43 @@ Paths in `include`, `exclude`, and `entrypoints` are URL paths. Exclusions apply
 `crawl.maxSitemaps` defaults to 50 and `crawl.maxSitemapDepth` defaults to 3. They bound recursive sitemap-index traversal in both static and HTTP modes. A truncated traversal produces `sitemap/fetch-limit`; raise the limits only when the site intentionally needs a larger sitemap tree.
 
 Baseline behavior is controlled by CLI flags rather than config: use `--baseline <report.json> --fail-on-new`. The gate still reads severity policy from `ci.failOn`, while `ci.warnOnly` and `--report-only` suppress finding-based failure. Report and SARIF output are presentation formats and do not alter finding identity or gate behavior.
+
+## Site and route profiles
+
+Use a factory for the common case, or configure `profiles.default` directly. The two forms produce the same config shape.
+
+```ts
+import {
+  defineConfig,
+  presets,
+  profiles,
+} from "@silesiansolutions/search-quality-kit";
+
+export default defineConfig({
+  ...presets.astro(),
+  ...profiles.directory(),
+  site: { baseUrl: "https://example.com" },
+  profiles: {
+    default: "directory",
+    routes: [
+      {
+        pattern: "/entries/**",
+        profile: "directoryEntry",
+        expectedStructuredData: ["Organization", "BreadcrumbList"],
+      },
+      {
+        pattern: "/blog/**",
+        profile: "blogPost",
+        expectedStructuredData: ["BreadcrumbList"],
+      },
+    ],
+  },
+});
+```
+
+Supported default profiles are `generic`, `personal`, `company`, `blog`, `directory`, and `localBusiness`. Route-only profiles are `blogPost`, `directoryEntry`, `directoryList`, and `servicePage`. Routes are evaluated in declaration order; the first matching pattern wins. Patterns are root-relative and support `*` within one path segment and `**` across segments. Invalid or non-root-relative patterns fail config loading.
+
+`expectedStructuredData` is additive to the selected profile. Missing expected markup is a warning classified as `profile-expectation`; it does not become a Google requirement. Full behavior and safe suppression guidance live in [structured data profiles](structured-data-profiles.md).
 
 ## Framework presets
 

@@ -1,4 +1,8 @@
 import { loadHtml, metaContent } from "../utils/html.js";
+import {
+  obviousDescriptionConflict,
+  obviousTextConflict,
+} from "../utils/consistency.js";
 import { isHttpUrl, isLocalOrStaging, normalizeUrl } from "../utils/urls.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
@@ -24,6 +28,11 @@ export const openGraphCheck: CheckDefinition = {
           );
       const image = metaContent($, "og:image"),
         url = metaContent($, "og:url"),
+        ogTitle = metaContent($, "og:title"),
+        ogDescription = metaContent($, "og:description"),
+        title = $("title").first().text().replace(/\s+/g, " ").trim(),
+        h1 = $("h1").first().text().replace(/\s+/g, " ").trim(),
+        description = metaContent($, "description"),
         canonical = $('link[rel~="canonical"]').first().attr("href")?.trim();
       if (config.rules.openGraph.requireImage && !image)
         out.push(
@@ -66,6 +75,40 @@ export const openGraphCheck: CheckDefinition = {
       } catch {
         // Invalid URLs are reported above.
       }
+      if (
+        ogTitle &&
+        title &&
+        h1 &&
+        obviousTextConflict(ogTitle, title) &&
+        obviousTextConflict(ogTitle, h1)
+      )
+        out.push(
+          finding(
+            "open-graph",
+            "title-mismatch",
+            "warning",
+            `og:title '${ogTitle}' conflicts with both title and H1.`,
+            "Keep the social title semantically aligned; exact wording and brand suffixes may differ.",
+            o,
+          ),
+        );
+      if (
+        ogDescription &&
+        description &&
+        ogDescription.length >= 30 &&
+        description.length >= 30 &&
+        obviousDescriptionConflict(ogDescription, description)
+      )
+        out.push(
+          finding(
+            "open-graph",
+            "description-mismatch",
+            "warning",
+            "og:description conflicts with the meta description.",
+            "Keep both descriptions semantically aligned; exact wording is not required.",
+            o,
+          ),
+        );
     }
     return out;
   },

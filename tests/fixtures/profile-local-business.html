@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Acme Security audit service</title>
+    <meta
+      name="description"
+      content="Application security audit service delivered by the local Acme Security engineering team."
+    />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="canonical" href="https://site.test/services/audit" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "ProfessionalService",
+            "@id": "https://site.test/services/audit#business",
+            "name": "Acme Security",
+            "url": "https://site.test/services/audit",
+            "telephone": "+48 123 456 789"
+          },
+          {
+            "@type": "Service",
+            "@id": "https://site.test/services/audit#service",
+            "name": "Application security audit",
+            "url": "https://site.test/services/audit",
+            "provider": { "@id": "https://site.test/services/audit#business" }
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>Application security audit</h1>
+      <p>
+        Local engineers review your application and provide a practical
+        remediation plan.
+      </p>
+    </main>
+  </body>
+</html>

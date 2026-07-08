@@ -31,10 +31,15 @@ For reproducible CI, pin `@silesiansolutions/search-quality-kit` in `devDependen
 `search-quality.config.ts`:
 
 ```ts
-import { defineConfig, presets } from "@silesiansolutions/search-quality-kit";
+import {
+  defineConfig,
+  presets,
+  profiles,
+} from "@silesiansolutions/search-quality-kit";
 
 export default defineConfig({
   ...presets.astro(),
+  ...profiles.companySite(),
   site: {
     baseUrl: "https://example.com",
   },
@@ -42,6 +47,8 @@ export default defineConfig({
 ```
 
 Official presets are `astro`, `nextStatic`, `nextHybrid`, `gatsby`, `viteSpa`, and `genericStatic`. They select a safe output directory, crawl mode, and narrow generated-route exclusions. They never run a build or start a server. Add `build.command` or `build.startCommand` only when that automation is intentional.
+
+Site profiles add contextual, warning-level expectations for `personal`, `company`, `blog`, `directory`, and `localBusiness` sites. Route overrides can model article, listing, entry, and service pages without changing hard technical checks. See [structured data profiles](docs/structured-data-profiles.md).
 
 `init --detect` recognizes unambiguous Astro, Gatsby, Vite SPA, and Next static-export projects. It refuses to guess between Next static and hybrid modes. See the [preset reference](docs/config.md) and [rollout guide](docs/rollout.md).
 
@@ -56,6 +63,7 @@ search-quality-kit verify [--config file] [--report-only] [--json]
                           [--baseline report.json --fail-on-new]
 search-quality-kit init [--preset name | --detect] [--force]
 search-quality-kit list-checks
+search-quality-kit list-profiles
 search-quality-kit report [report.json] --format markdown|sarif [--output file]
 ```
 
@@ -102,7 +110,7 @@ For rollout guidance and report artifacts, see [docs/ci.md](docs/ci.md).
 
 `sitemap`, `robots`, `indexability`, `metadata`, `canonical`, `structuredData`, `openGraph`, `internalLinks`, `renderedHtml`, `accessibility`, and `performanceHints`.
 
-Rules are tied to official areas of [Google Search Central](https://developers.google.com/search/docs/essentials). Project heuristics such as title length, HTML weight, and image size are labeled as heuristics; they are configurable and are not represented as Google ranking thresholds.
+Rules are tied to official areas of [Google Search Central](https://developers.google.com/search/docs/essentials). Project heuristics such as title length, HTML weight, and image size are labeled as heuristics; profile expectations are labeled separately and are not represented as Google requirements or ranking thresholds.
 
 ## Add a check
 

@@ -243,6 +243,16 @@ describe("CLI baseline mode", () => {
     expect(result.stdout).toContain("accessibility-basic");
   });
 
+  it("lists profile expectations separately from hard requirements", () => {
+    const result = run(["list-profiles"]);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain("directoryEntry");
+    expect(result.stdout).toContain("Organization,LocalBusiness");
+    expect(result.stdout).toContain(
+      "profile-expectation (warning, not a hard requirement)",
+    );
+  });
+
   it("explains a missing static output directory", async () => {
     await writeFile(
       path.join(root, "missing-dist.config.json"),

@@ -45,6 +45,7 @@ const legacyBasis: Record<string, CheckBasis> = {
   "local-heuristic": "local heuristic",
   "cross-channel-metadata": "local heuristic",
   "accessibility-basic": "local heuristic",
+  "profile-expectation": "local heuristic",
 };
 
 export const legacyBasisForCheck = (check: string) => [
@@ -70,9 +71,28 @@ export function finding(
   message: string,
   suggestion: string,
   options: Partial<
-    Pick<Finding, "url" | "file" | "googleDocs" | "relatedUrls">
+    Pick<
+      Finding,
+      | "url"
+      | "file"
+      | "googleDocs"
+      | "relatedUrls"
+      | "classification"
+      | "impact"
+      | "activeProfile"
+      | "expectedStructuredData"
+    >
   > = {},
 ): Finding {
+  const classification =
+    options.classification ?? classificationForCheck(check);
+  const impact =
+    options.impact ??
+    (classification.includes("profile-expectation")
+      ? "profile-expectation"
+      : severity === "error"
+        ? "technical-error"
+        : "recommendation");
   return {
     severity,
     check,
@@ -80,7 +100,8 @@ export function finding(
     message,
     suggestion,
     docs: `https://github.com/SilesianSolutions/search-quality-kit/blob/master/docs/checks.md#${check}`,
-    classification: classificationForCheck(check),
+    classification,
+    impact,
     ...options,
   };
 }

@@ -6,6 +6,7 @@ export type FindingClassification =
   | "local-heuristic"
   | "cross-channel-metadata"
   | "accessibility-basic"
+  | "profile-expectation"
   /** @deprecated Read legacy v0.3 reports only; new reports use kebab-case values. */
   | "Google requirement"
   /** @deprecated Read legacy v0.3 reports only; new reports use kebab-case values. */
@@ -24,6 +25,9 @@ export interface Finding {
   googleDocs?: string;
   relatedUrls?: string[];
   classification?: FindingClassification[];
+  impact?: "technical-error" | "recommendation" | "profile-expectation";
+  activeProfile?: string;
+  expectedStructuredData?: string[];
 }
 export interface ReportSummary {
   checkedPages: number;
@@ -46,6 +50,9 @@ export interface SearchQualityReport {
     finalUrl?: string;
     status: number;
     file?: string;
+    activeProfile?: string;
+    expectedStructuredData?: string[];
+    matchedProfilePattern?: string;
   }>;
   durationMs: number;
   baseline?: {

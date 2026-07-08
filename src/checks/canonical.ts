@@ -14,7 +14,16 @@ export const canonicalCheck: CheckDefinition = {
   description:
     "Checks canonical presence, uniqueness, public URL, and self-consistency.",
   run({ crawl, config }) {
-    const out = [];
+    const out = [],
+      sitemapUrls = new Set(
+        crawl.sitemapUrls.flatMap((url) => {
+          try {
+            return [normalizeUrl(url)];
+          } catch {
+            return [];
+          }
+        }),
+      );
     for (const p of crawl.pages) {
       const $ = loadHtml(p.html),
         cs = $('link[rel~="canonical"]')
@@ -99,10 +108,31 @@ export const canonicalCheck: CheckDefinition = {
         out.push(
           finding(
             "canonical",
-            "not-self-referencing",
+            sitemapUrls.has(normalizeUrl(p.url))
+              ? "sitemap-canonical-mismatch"
+              : "not-self-referencing",
             "warning",
-            `Canonical '${c}' differs from '${p.url}'.`,
-            "Confirm duplication or self-reference.",
+            sitemapUrls.has(normalizeUrl(p.url))
+              ? `Sitemap URL '${p.url}' declares a different canonical '${c}'.`
+              : `Canonical '${c}' differs from final URL '${p.url}'.`,
+            sitemapUrls.has(normalizeUrl(p.url))
+              ? "Keep sitemap URLs canonical, or remove the duplicate URL from the sitemap."
+              : "Confirm intentional duplicate consolidation or use a self-reference.",
+            o,
+          ),
+        );
+      if (
+        p.initialUrl !== p.finalUrl &&
+        sitemapUrls.has(normalizeUrl(p.initialUrl)) &&
+        !sitemapUrls.has(normalizeUrl(p.finalUrl))
+      )
+        out.push(
+          finding(
+            "canonical",
+            "sitemap-final-url-mismatch",
+            "warning",
+            `Sitemap contains redirected URL '${p.initialUrl}' instead of final URL '${p.finalUrl}'.`,
+            "Publish the final canonical URL in the sitemap.",
             o,
           ),
         );

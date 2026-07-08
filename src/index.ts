@@ -3,11 +3,21 @@ export const defineConfig = (config: SearchQualityConfigInput) => config;
 export { loadConfig } from "./config/loadConfig.js";
 export { configSchema } from "./config/schema.js";
 export { presets } from "./config/presets.js";
+export { profiles } from "./config/profiles.js";
+export {
+  profileCatalog,
+  profileIds,
+  structuredDataTypes,
+} from "./config/profileDefinitions.js";
 export type { PresetName } from "./config/presets.js";
 export type {
   SearchQualityConfig,
   SearchQualityConfigInput,
 } from "./config/schema.js";
+export type {
+  SiteProfileId,
+  StructuredDataType,
+} from "./config/profileDefinitions.js";
 export { runVerification, shouldFail } from "./engine/verify.js";
 export {
   compareBaseline,
