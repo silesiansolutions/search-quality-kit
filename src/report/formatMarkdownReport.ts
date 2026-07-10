@@ -55,6 +55,16 @@ function findingLines(finding: Finding) {
           `  - **Expected structured data:** ${finding.expectedStructuredData.map(code).join(", ")}`,
         ]
       : []),
+    ...(finding.suppressed && finding.suppression
+      ? [
+          `  - **Reviewed suppression:** accepted by ${code(finding.suppression.owner)}`,
+          `  - **Reason:** ${text(finding.suppression.reason)}`,
+          `  - **Route scope:** ${code(finding.suppression.urlPattern)}`,
+          ...(finding.suppression.expires
+            ? [`  - **Expires:** ${code(finding.suppression.expires)}`]
+            : []),
+        ]
+      : []),
     `  - **Documentation:** ${documentation.join(" · ") || "—"}`,
   ];
 }
@@ -122,6 +132,8 @@ function profileCoverage(report: SearchQualityReport) {
 }
 
 export function formatMarkdownReport(report: SearchQualityReport) {
+  const suppressed = report.findings.filter((finding) => finding.suppressed);
+  const active = report.findings.filter((finding) => !finding.suppressed);
   const lines = [
     "# Search Quality Report",
     "",
@@ -132,6 +144,7 @@ export function formatMarkdownReport(report: SearchQualityReport) {
     `- Errors: ${report.summary.errors}`,
     `- Warnings: ${report.summary.warnings}`,
     `- Info: ${report.summary.info}`,
+    `- Reviewed suppressions: ${suppressed.length}`,
   ];
 
   if (report.baseline) {
@@ -141,26 +154,23 @@ export function formatMarkdownReport(report: SearchQualityReport) {
       `- Resolved findings: ${report.baseline.summary.resolvedFindings}`,
       "",
       ...profileCoverage(report),
-      ...section("New findings", report.baseline.newFindings),
+      ...section(
+        "New findings",
+        report.baseline.newFindings.filter((finding) => !finding.suppressed),
+      ),
     );
     lines.push(
       ...collapsedSection(
         "Existing findings",
-        withoutFindings(
-          report.findings,
-          report.baseline.newFindings,
-          report.target,
-        ),
+        withoutFindings(active, report.baseline.newFindings, report.target),
       ),
     );
     lines.push(...resolvedSection(report.baseline.resolvedFindings));
   } else {
-    lines.push(
-      "",
-      ...profileCoverage(report),
-      ...section("Findings", report.findings),
-    );
+    lines.push("", ...profileCoverage(report), ...section("Findings", active));
   }
+
+  lines.push(...section("Reviewed suppressions", suppressed));
 
   if (report.pluginErrors?.length) {
     lines.push("## Plugin errors", "");

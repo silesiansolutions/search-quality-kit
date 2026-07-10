@@ -97,6 +97,9 @@ function siteSummary(report: SearchQualityReport) {
       report.baseline?.summary.existingFindings ?? report.findings.length,
     newFindings: report.baseline?.summary.newFindings ?? 0,
     resolvedFindings: report.baseline?.summary.resolvedFindings ?? 0,
+    suppressedFindings:
+      report.summary.suppressedFindings ??
+      report.findings.filter((finding) => finding.suppressed).length,
   };
 }
 
@@ -299,10 +302,11 @@ export async function runPortfolio(
         ? (report.baseline?.newFindings ?? report.findings)
         : report.findings
       : [];
+    const gateCandidates = candidates.filter((finding) => !finding.suppressed);
     const findingFailures = options.writeBaselines
       ? []
       : failOn.flatMap((severity) => {
-          const count = candidates.filter(
+          const count = gateCandidates.filter(
             (finding) => finding.severity === severity,
           ).length;
           return count
@@ -403,6 +407,10 @@ export async function runPortfolio(
         (total, site) => total + site.summary.resolvedFindings,
         0,
       ),
+      suppressedFindings: sites.reduce(
+        (total, site) => total + site.summary.suppressedFindings,
+        0,
+      ),
       errors: sites.reduce((total, site) => total + site.summary.errors, 0),
       warnings: sites.reduce((total, site) => total + site.summary.warnings, 0),
       infos: sites.reduce((total, site) => total + site.summary.info, 0),
@@ -415,10 +423,14 @@ export async function runPortfolio(
         (siteReport) => siteReport.baseline?.newFindings ?? [],
       ),
       errors: boundedHighlights(completed, (siteReport) =>
-        siteReport.findings.filter((finding) => finding.severity === "error"),
+        siteReport.findings.filter(
+          (finding) => finding.severity === "error" && !finding.suppressed,
+        ),
       ),
       warnings: boundedHighlights(completed, (siteReport) =>
-        siteReport.findings.filter((finding) => finding.severity === "warning"),
+        siteReport.findings.filter(
+          (finding) => finding.severity === "warning" && !finding.suppressed,
+        ),
       ),
       resolved: boundedHighlights(
         completed,

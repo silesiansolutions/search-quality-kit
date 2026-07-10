@@ -49,4 +49,56 @@ describe("config", () => {
       "profiles.routes.0.pattern: Expected a root-relative glob",
     );
   });
+  it("requires reviewed suppression metadata and valid dates", () => {
+    const base = {
+      site: { baseUrl: "https://example.com" },
+      suppressions: [
+        {
+          code: "metadata.description-length",
+          urlPattern: "/legal/**",
+          reason: "Reviewed legal-page exception.",
+          owner: "site-owner",
+        },
+      ],
+    };
+    expect(() =>
+      configSchema.parse({
+        ...base,
+        suppressions: [{ ...base.suppressions[0], reason: "" }],
+      }),
+    ).toThrow("reviewed reason");
+    expect(() =>
+      configSchema.parse({
+        ...base,
+        suppressions: [{ ...base.suppressions[0], owner: "" }],
+      }),
+    ).toThrow("suppression owner");
+    expect(() =>
+      configSchema.parse({
+        ...base,
+        suppressions: [{ ...base.suppressions[0], expires: "2026-02-30" }],
+      }),
+    ).toThrow("valid calendar date");
+  });
+  it("requires an explicit opt-in for whole-site suppressions", () => {
+    const broad = {
+      code: "metadata.description-length",
+      urlPattern: "/**",
+      reason: "Reviewed temporary migration exception.",
+      owner: "site-owner",
+    };
+    expect(() =>
+      configSchema.parse({
+        site: { baseUrl: "https://example.com" },
+        suppressions: [broad],
+      }),
+    ).toThrow("allowBroadSuppressions");
+    expect(
+      configSchema.parse({
+        site: { baseUrl: "https://example.com" },
+        allowBroadSuppressions: true,
+        suppressions: [broad],
+      }).suppressions,
+    ).toHaveLength(1);
+  });
 });

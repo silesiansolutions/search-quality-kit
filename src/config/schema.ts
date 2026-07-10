@@ -8,13 +8,29 @@ import {
 import { validatePluginCollection } from "../plugins/definePlugin.js";
 import type { PluginDefinition } from "../plugins/types.js";
 const command = z.string().min(1).optional();
+const stableFindingCode = z
+  .string()
+  .regex(
+    /^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$/,
+    "Expected a stable namespaced finding code, for example metadata.description-length.",
+  );
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected a date in YYYY-MM-DD format.")
+  .refine((value) => {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return (
+      !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+    );
+  }, "Expected a valid calendar date in YYYY-MM-DD format.");
+const broadSuppressionPatterns = new Set(["/", "/*", "/**"]);
 const httpUrl = (label: string) =>
   z
     .url({ error: `Expected an absolute http(s) ${label} URL.` })
     .refine((value) => /^https?:\/\//.test(value), {
       error: `Expected an absolute http(s) ${label} URL.`,
     });
-export const configSchema = z.object({
+const baseConfigSchema = z.object({
   site: z
     .object({
       baseUrl: httpUrl("production").optional(),
@@ -80,6 +96,23 @@ export const configSchema = z.object({
         return z.NEVER;
       }
     }),
+  suppressions: z
+    .array(
+      z
+        .object({
+          code: stableFindingCode,
+          urlPattern: z.string().min(1).refine(validRoutePattern, {
+            error:
+              "Expected a root-relative glob using only * or **, for example /legal/**.",
+          }),
+          reason: z.string().trim().min(1, "A reviewed reason is required."),
+          owner: z.string().trim().min(1, "A suppression owner is required."),
+          expires: isoDate.optional(),
+        })
+        .strict(),
+    )
+    .default([]),
+  allowBroadSuppressions: z.boolean().default(false),
   checks: z
     .object({
       sitemap: z.boolean().default(true),
@@ -157,6 +190,18 @@ export const configSchema = z.object({
       warnOnly: z.boolean().default(false),
     })
     .prefault({}),
+});
+export const configSchema = baseConfigSchema.superRefine((config, context) => {
+  if (config.allowBroadSuppressions) return;
+  config.suppressions.forEach((suppression, index) => {
+    if (!broadSuppressionPatterns.has(suppression.urlPattern)) return;
+    context.addIssue({
+      code: "custom",
+      path: ["suppressions", index, "urlPattern"],
+      message:
+        "Broad suppressions require allowBroadSuppressions: true. Prefer a narrow route pattern.",
+    });
+  });
 });
 export type SearchQualityConfig = z.infer<typeof configSchema>;
 export type SearchQualityConfigInput = z.input<typeof configSchema>;

@@ -26,6 +26,7 @@ const summarySchema = z
     existingFindings: z.number().int().nonnegative(),
     newFindings: z.number().int().nonnegative(),
     resolvedFindings: z.number().int().nonnegative(),
+    suppressedFindings: z.number().int().nonnegative().default(0),
   })
   .strict();
 
@@ -49,6 +50,7 @@ export const portfolioReportSchema = z
         totalFindings: z.number().int().nonnegative(),
         newFindings: z.number().int().nonnegative(),
         resolvedFindings: z.number().int().nonnegative(),
+        suppressedFindings: z.number().int().nonnegative().default(0),
         errors: z.number().int().nonnegative(),
         warnings: z.number().int().nonnegative(),
         infos: z.number().int().nonnegative(),
@@ -187,7 +189,7 @@ export function formatPortfolioMarkdownReport(report: PortfolioReport) {
     const reportLink = site.markdownReportPath
       ? `[Markdown](${site.markdownReportPath})`
       : "—";
-    return `| ${escapeCell(site.name)} | ${displayStatus(site.status)} | ${site.summary.checkedPages} | ${site.summary.errors} | ${site.summary.warnings} | ${site.summary.newFindings} | ${site.summary.resolvedFindings} | ${reportLink} |`;
+    return `| ${escapeCell(site.name)} | ${displayStatus(site.status)} | ${site.summary.checkedPages} | ${site.summary.errors} | ${site.summary.warnings} | ${site.summary.suppressedFindings} | ${site.summary.newFindings} | ${site.summary.resolvedFindings} | ${reportLink} |`;
   });
   const operational = report.sites
     .filter((site) => site.operationalError)
@@ -213,7 +215,7 @@ export function formatPortfolioMarkdownReport(report: PortfolioReport) {
 
 - Sites: ${report.portfolio.sitesTotal} total · ${report.portfolio.sitesPassed} passed · ${report.portfolio.sitesFailed} failed · ${report.portfolio.sitesSkipped} skipped/disabled
 - Pages: ${report.portfolio.totalPages}
-- Findings: ${report.portfolio.totalFindings} total · ${report.portfolio.errors} errors · ${report.portfolio.warnings} warnings · ${report.portfolio.infos} info
+- Findings: ${report.portfolio.totalFindings} total · ${report.portfolio.errors} errors · ${report.portfolio.warnings} warnings · ${report.portfolio.infos} info · ${report.portfolio.suppressedFindings} reviewed suppressions
 - Baseline delta: ${report.portfolio.newFindings} new · ${report.portfolio.resolvedFindings} resolved
 
 ## Gate status
@@ -224,8 +226,8 @@ ${gateFailures.join("\n")}
 
 ## Per-site status
 
-| Site | Status | Pages | Errors | Warnings | New | Resolved | Report |
-|---|---:|---:|---:|---:|---:|---:|---|
+| Site | Status | Pages | Errors | Warnings | Suppressed | New | Resolved | Report |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
 ${rows.join("\n")}
 
 ## New findings by site

@@ -371,6 +371,52 @@ describe("portfolio runner", () => {
     expect(forced.exitCode).toBe(0);
   });
 
+  it("aggregates reviewed suppressions without failing the portfolio gate", async () => {
+    const root = await fixture({ failOn: ["warning"], failOnNew: false });
+    await writeFile(
+      path.join(root, "sites/site-a/search-quality.config.json"),
+      JSON.stringify({
+        site: { baseUrl: "https://site-a.example" },
+        build: { distDir: "dist" },
+        crawl: { mode: "static" },
+        checks: Object.fromEntries(
+          checks.map((check) => [check, check === "canonical"]),
+        ),
+        allowBroadSuppressions: true,
+        suppressions: [
+          {
+            code: "canonical.missing",
+            urlPattern: "/",
+            reason: "Reviewed fixture exception.",
+            owner: "site-owner",
+          },
+        ],
+      }),
+      "utf8",
+    );
+    await writeFile(
+      path.join(root, "sites/site-a/dist/index.html"),
+      html("https://site-a.example").replace(/<link rel="canonical"[^>]+>/, ""),
+      "utf8",
+    );
+    const result = await runPortfolio({
+      root,
+      configPath: "portfolio.search-quality.config.json",
+      includeFindings: true,
+    });
+    expect(result.report.sites[0]).toMatchObject({
+      status: "passed",
+      summary: { suppressedFindings: 1 },
+    });
+    expect(result.report.portfolio.suppressedFindings).toBe(1);
+    expect(result.report.gate.failures).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ site: "site-a" })]),
+    );
+    expect(result.report.sites[0]?.findings?.[0]).toMatchObject({
+      suppressed: true,
+    });
+  });
+
   it("validates the JSON contract and bounded Markdown sections", async () => {
     const root = await fixture({ reportOnly: true });
     const result = await runPortfolio({

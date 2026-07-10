@@ -191,4 +191,36 @@ describe("report formatters", () => {
     expect(output).toContain("`internal-rules` / `custom.broken`");
     expect(output).toContain("matcher exploded");
   });
+
+  it("keeps reviewed suppressions visible in JSON and Markdown", () => {
+    const suppressedReport: SearchQualityReport = {
+      ...report,
+      summary: { ...report.summary, suppressedFindings: 1 },
+      findings: [
+        {
+          ...report.findings[0]!,
+          suppressed: true,
+          suppression: {
+            code: "canonical.missing",
+            urlPattern: "/legal/**",
+            reason: "Legal pages use an alternate canonical policy.",
+            owner: "site-owner",
+            expires: "2026-12-31",
+          },
+        },
+      ],
+    };
+    const json = JSON.parse(formatJsonReport(suppressedReport));
+    expect(json.findings[0]).toMatchObject({
+      suppressed: true,
+      suppression: { owner: "site-owner", expires: "2026-12-31" },
+    });
+    const markdown = formatMarkdownReport(suppressedReport);
+    expect(markdown).toContain("## Reviewed suppressions");
+    expect(markdown).toContain(
+      "Legal pages use an alternate canonical policy.",
+    );
+    expect(markdown).toContain("accepted by `site-owner`");
+    expect(markdown).not.toContain("## Findings\n\n### Error");
+  });
 });

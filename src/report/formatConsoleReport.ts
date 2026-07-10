@@ -18,6 +18,7 @@ export function formatConsoleReport(r: SearchQualityReport) {
     `Errors: ${r.summary.errors}`,
     `Warnings: ${r.summary.warnings}`,
     `Info: ${r.summary.info}`,
+    `Reviewed suppressions: ${r.findings.filter((finding) => finding.suppressed).length}`,
     ...(r.baseline
       ? [
           `Existing findings: ${r.baseline.summary.existingFindings}`,
@@ -39,7 +40,12 @@ export function formatConsoleReport(r: SearchQualityReport) {
         : f.file
           ? ` (${f.file})`
           : "";
-      lines.push(`${label(f)} ${f.message}${where}`, `  Fix: ${f.suggestion}`);
+      lines.push(
+        `${f.suppressed ? pc.blue("REVIEWED") : label(f)} ${f.message}${where}`,
+        f.suppressed && f.suppression
+          ? `  Accepted by ${f.suppression.owner}: ${f.suppression.reason}`
+          : `  Fix: ${f.suggestion}`,
+      );
     }
     lines.push("");
   }

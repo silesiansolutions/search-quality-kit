@@ -61,7 +61,23 @@ export function formatSarifReport(report: SearchQualityReport) {
               ...(finding.googleDocs
                 ? { googleDocumentation: finding.googleDocs }
                 : {}),
+              ...(finding.suppressed
+                ? {
+                    suppressed: true,
+                    suppression: finding.suppression,
+                  }
+                : {}),
             },
+            ...(finding.suppressed
+              ? {
+                  suppressions: [
+                    {
+                      kind: "external",
+                      justification: finding.suppression?.reason,
+                    },
+                  ],
+                }
+              : {}),
           })),
         },
       ],

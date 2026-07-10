@@ -10,6 +10,7 @@ import {
   safeSiteName,
   type PortfolioConfig,
 } from "./portfolio/config.js";
+import { isSuppressionExpired } from "./suppressions.js";
 
 export type DoctorMode = "site" | "portfolio";
 export type DoctorIssueLevel = "ok" | "info" | "warning" | "error";
@@ -175,6 +176,48 @@ function pluginRegistrationIssues(config: SearchQualityConfig): DoctorIssue[] {
   ];
 }
 
+function suppressionIssues(config: SearchQualityConfig): DoctorIssue[] {
+  if (!config.suppressions.length)
+    return [
+      {
+        level: "ok",
+        code: "suppressions-reviewed",
+        message: "No reviewed suppressions are configured.",
+      },
+    ];
+  const issues: DoctorIssue[] = [];
+  const seen = new Set<string>();
+  for (const suppression of config.suppressions) {
+    const identity = `${suppression.code}\u0000${suppression.urlPattern}`;
+    if (seen.has(identity))
+      issues.push({
+        level: "warning",
+        code: "suppression-duplicate",
+        message: `Duplicate reviewed suppression for '${suppression.code}' on '${suppression.urlPattern}'.`,
+      });
+    seen.add(identity);
+    if (isSuppressionExpired(suppression))
+      issues.push({
+        level: "warning",
+        code: "suppression-expired",
+        message: `Reviewed suppression '${suppression.code}' on '${suppression.urlPattern}' expired on ${suppression.expires} and no longer affects the gate.`,
+      });
+  }
+  issues.push({
+    level: "ok",
+    code: "suppressions-reviewed",
+    message: `${config.suppressions.length} reviewed suppression${config.suppressions.length === 1 ? "" : "s"} passed config validation; ${config.suppressions.filter((suppression) => !isSuppressionExpired(suppression)).length} active.`,
+  });
+  if (config.allowBroadSuppressions)
+    issues.push({
+      level: "warning",
+      code: "broad-suppressions-enabled",
+      message:
+        "allowBroadSuppressions is enabled. Review broad route scopes carefully.",
+    });
+  return issues;
+}
+
 async function siteDoctor(options: DoctorOptions): Promise<DoctorReport> {
   const root = path.resolve(options.root ?? process.cwd()),
     issues: DoctorIssue[] = [];
@@ -270,6 +313,7 @@ async function siteDoctor(options: DoctorOptions): Promise<DoctorReport> {
       );
     }
     issues.push(...pluginRegistrationIssues(config));
+    issues.push(...suppressionIssues(config));
     issues.push(...outputFileIssues(root, config));
   }
 

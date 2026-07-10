@@ -13,6 +13,13 @@ export type FindingClassification =
   | "Google recommendation"
   /** @deprecated Read legacy v0.3 reports only; new reports use kebab-case values. */
   | "local heuristic";
+export interface FindingSuppression {
+  code: string;
+  urlPattern: string;
+  reason: string;
+  owner: string;
+  expires?: string;
+}
 export interface Finding {
   severity: Severity;
   check: string;
@@ -32,12 +39,15 @@ export interface Finding {
     type: "core" | "plugin";
     name: string;
   };
+  suppressed?: true;
+  suppression?: FindingSuppression;
 }
 export interface ReportSummary {
   checkedPages: number;
   errors: number;
   warnings: number;
   info: number;
+  suppressedFindings?: number;
 }
 export interface SearchQualityReport {
   schemaVersion: typeof REPORT_SCHEMA_VERSION;

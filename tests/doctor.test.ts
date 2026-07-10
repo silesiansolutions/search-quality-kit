@@ -100,6 +100,33 @@ describe("doctor command", () => {
     );
   });
 
+  it("warns when a reviewed suppression has expired", async () => {
+    const root = await tempRoot();
+    await writeSite(root, {
+      suppressions: [
+        {
+          code: "metadata.description-length",
+          urlPattern: "/legal/**",
+          reason: "Reviewed legal-page exception.",
+          owner: "site-owner",
+          expires: "2020-01-01",
+        },
+      ],
+    });
+    const result = run(["doctor", "--root", root, "--json"]);
+    expect(result.status, result.stderr).toBe(0);
+    const report = JSON.parse(result.stdout) as DoctorReport;
+    expect(report.status).toBe("warning");
+    expect(report.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "suppression-expired",
+          level: "warning",
+        }),
+      ]),
+    );
+  });
+
   it("checks portfolio site configs, baselines, outputs, and gate settings", async () => {
     const root = await tempRoot();
     await mkdir(path.join(root, "sites/site-a"), { recursive: true });
