@@ -139,6 +139,13 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const hasNumericFields = (value: unknown, fields: string[]) =>
   isRecord(value) && fields.every((field) => typeof value[field] === "number");
 
+const isFindingSuppression = (value: unknown) =>
+  isRecord(value) &&
+  ["code", "urlPattern", "reason", "owner"].every(
+    (key) => typeof value[key] === "string",
+  ) &&
+  (value.expires === undefined || typeof value.expires === "string");
+
 const isFinding = (value: unknown): value is Finding =>
   isRecord(value) &&
   ["severity", "check", "code", "message", "suggestion", "docs"].every(
@@ -148,7 +155,9 @@ const isFinding = (value: unknown): value is Finding =>
   (value.source === undefined ||
     (isRecord(value.source) &&
       ["core", "plugin"].includes(value.source.type as string) &&
-      typeof value.source.name === "string"));
+      typeof value.source.name === "string")) &&
+  (value.suppressed === undefined ||
+    (value.suppressed === true && isFindingSuppression(value.suppression)));
 
 function parseReport(
   input: string,

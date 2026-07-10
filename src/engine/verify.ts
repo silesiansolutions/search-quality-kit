@@ -15,6 +15,10 @@ import {
 } from "../report/types.js";
 import { runCommand, startCommand, waitForUrl } from "../utils/process.js";
 import { VERSION } from "../version.js";
+import {
+  applyReviewedSuppressions,
+  unsuppressedFindings,
+} from "../suppressions.js";
 export interface VerifyOptions {
   root?: string;
   configPath?: string;
@@ -112,6 +116,7 @@ export async function runVerification(
         (a.file ?? "").localeCompare(b.file ?? "") ||
         a.message.localeCompare(b.message),
     );
+    const reviewedFindings = applyReviewedSuppressions(findings, config);
     const report: SearchQualityReport = {
       schemaVersion: REPORT_SCHEMA_VERSION,
       tool: "search-quality-kit",
@@ -124,8 +129,9 @@ export async function runVerification(
         errors: findings.filter((f) => f.severity === "error").length,
         warnings: findings.filter((f) => f.severity === "warning").length,
         info: findings.filter((f) => f.severity === "info").length,
+        suppressedFindings: reviewedFindings.filter((f) => f.suppressed).length,
       },
-      findings,
+      findings: reviewedFindings,
       pages: crawl.pages.map(({ url, initialUrl, finalUrl, status, file }) => {
         const resolved = resolveProfile(url, config);
         return {
@@ -161,4 +167,4 @@ export const shouldFail = (
 ) =>
   !reportOnly &&
   !c.ci.warnOnly &&
-  findings.some((f) => c.ci.failOn.includes(f.severity));
+  unsuppressedFindings(findings).some((f) => c.ci.failOn.includes(f.severity));

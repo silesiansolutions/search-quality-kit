@@ -44,9 +44,16 @@ export type { VerifyOptions } from "./engine/verify.js";
 export type {
   Finding,
   FindingClassification,
+  FindingSuppression,
   SearchQualityReport,
   Severity,
 } from "./report/types.js";
+export {
+  applyReviewedSuppressions,
+  findingStableCode,
+  isSuppressionExpired,
+  unsuppressedFindings,
+} from "./suppressions.js";
 export type {
   PluginCheckClassification,
   PluginCheckContext,

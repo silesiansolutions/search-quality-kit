@@ -135,6 +135,37 @@ describe("finding baselines", () => {
     expect(shouldFail(report([error]), defaultConfig, true, [error])).toBe(
       false,
     );
+    const suppressed = {
+      ...error,
+      suppressed: true as const,
+      suppression: {
+        code: "canonical.missing",
+        urlPattern: "/",
+        reason: "Reviewed exception.",
+        owner: "site-owner",
+      },
+    };
+    expect(
+      shouldFail(report([suppressed]), defaultConfig, false, [suppressed]),
+    ).toBe(false);
+  });
+
+  it("keeps suppression metadata out of baseline identity", () => {
+    const current = finding("Existing");
+    current.suppressed = true;
+    current.suppression = {
+      code: "canonical.missing",
+      urlPattern: "/",
+      reason: "Reviewed exception.",
+      owner: "site-owner",
+    };
+    expect(
+      compareBaseline(report([current]), report([finding("Existing")])),
+    ).toMatchObject({
+      existing: [current],
+      new: [],
+      resolved: [],
+    });
   });
 
   it("accepts current and legacy reports but rejects incompatible schemas", () => {

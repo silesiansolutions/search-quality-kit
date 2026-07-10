@@ -24,6 +24,7 @@ export interface PortfolioSiteReport {
     existingFindings: number;
     newFindings: number;
     resolvedFindings: number;
+    suppressedFindings: number;
   };
   baseline: {
     status: "used" | "not-configured" | "missing" | "invalid";
@@ -53,6 +54,7 @@ export interface PortfolioReport {
     totalFindings: number;
     newFindings: number;
     resolvedFindings: number;
+    suppressedFindings: number;
     errors: number;
     warnings: number;
     infos: number;
@@ -90,4 +92,5 @@ export const emptyPortfolioSiteSummary = () => ({
   existingFindings: 0,
   newFindings: 0,
   resolvedFindings: 0,
+  suppressedFindings: 0,
 });
