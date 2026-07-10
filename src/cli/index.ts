@@ -29,6 +29,12 @@ import { fileExists } from "../utils/files.js";
 import { VERSION } from "../version.js";
 import { runPortfolio } from "../portfolio/runner.js";
 import { formatPortfolioJsonReport } from "../portfolio/report.js";
+import {
+  createPortfolioContract,
+  createSiteContract,
+  formatContractJson,
+  formatContractMarkdown,
+} from "../contract.js";
 const program = new Command();
 const formats = ["console", "json", "markdown", "sarif"] as const;
 
@@ -142,6 +148,30 @@ portfolio
       `Portfolio baselines: ${result.report.gate.status}. Reports: ${result.outputDirectory}\n`,
     );
     process.exitCode = result.exitCode;
+  });
+program
+  .command("contract")
+  .description("Export the validated search quality policy without auditing")
+  .option("-c, --config <file>", "single-site config path relative to root")
+  .option("--portfolio-config <file>", "portfolio config path relative to root")
+  .option("--root <directory>", "target project root", process.cwd())
+  .option("--format <format>", "json or markdown", "json")
+  .option("-o, --output <file>", "write the contract to a file")
+  .action(async (o) => {
+    if (o.config && o.portfolioConfig)
+      throw new Error("Use either --config or --portfolio-config, not both.");
+    if (!["json", "markdown"].includes(o.format))
+      throw new Error(`Unknown contract format: ${o.format}`);
+    const contract = o.portfolioConfig
+      ? await createPortfolioContract(o.root, o.portfolioConfig)
+      : await createSiteContract(o.root, o.config);
+    const rendered =
+      o.format === "markdown"
+        ? formatContractMarkdown(contract)
+        : formatContractJson(contract);
+    if (o.output)
+      await writeFile(path.resolve(o.root, o.output), `${rendered}\n`, "utf8");
+    else process.stdout.write(`${rendered}\n`);
   });
 program
   .command("init")
