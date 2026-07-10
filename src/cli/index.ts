@@ -29,6 +29,12 @@ import { fileExists } from "../utils/files.js";
 import { VERSION } from "../version.js";
 import { runPortfolio } from "../portfolio/runner.js";
 import { formatPortfolioJsonReport } from "../portfolio/report.js";
+import { parsePortfolioReport } from "../portfolio/report.js";
+import {
+  formatPortfolioHandoffReport,
+  formatSiteHandoffReport,
+  loadPortfolioSiteReports,
+} from "../report/formatHandoffReport.js";
 import {
   createPortfolioContract,
   createSiteContract,
@@ -251,17 +257,63 @@ program
   .command("report")
   .description("Reformat a JSON report")
   .argument("[file]", "JSON report file", "search-quality-report.json")
-  .option("--format <format>", "console, json, markdown, or sarif", "markdown")
+  .option(
+    "--format <format>",
+    "console, json, markdown, sarif, or handoff",
+    "markdown",
+  )
   .option("-o, --output <file>")
+  .option("--limit <count>", "maximum handoff details per section")
   .action(async (file, o) => {
-    const r = parseSearchQualityReport(
-        await readFile(path.resolve(file), "utf8"),
-      ),
-      report: SearchQualityReport =
-        "schemaVersion" in r && r.schemaVersion === REPORT_SCHEMA_VERSION
-          ? r
-          : { ...r, schemaVersion: REPORT_SCHEMA_VERSION },
+    const reportFile = path.resolve(file);
+    const input = await readFile(reportFile, "utf8");
+    let rendered: string;
+    if (o.format === "handoff") {
+      const limit = o.limit === undefined ? undefined : Number(o.limit);
+      if (
+        limit !== undefined &&
+        (!Number.isInteger(limit) || limit <= 0 || limit > 500)
+      )
+        throw new Error("--limit must be an integer from 1 to 500");
+      let discriminator: unknown;
+      try {
+        discriminator = JSON.parse(input);
+      } catch {
+        throw new Error("Invalid report: expected valid JSON.");
+      }
+      if (
+        typeof discriminator === "object" &&
+        discriminator !== null &&
+        (discriminator as { tool?: unknown }).tool === "search-quality-kit"
+      ) {
+        const parsed = parseSearchQualityReport(input);
+        const report: SearchQualityReport =
+          "schemaVersion" in parsed &&
+          parsed.schemaVersion === REPORT_SCHEMA_VERSION
+            ? parsed
+            : { ...parsed, schemaVersion: REPORT_SCHEMA_VERSION };
+        rendered = formatSiteHandoffReport(report, {
+          ...(limit ? { detailLimit: limit } : {}),
+        });
+      } else {
+        const portfolioReport = parsePortfolioReport(input);
+        const loaded = await loadPortfolioSiteReports(
+          portfolioReport,
+          reportFile,
+        );
+        rendered = formatPortfolioHandoffReport(portfolioReport, loaded, {
+          ...(limit ? { detailLimit: limit } : {}),
+        });
+      }
+    } else {
+      const parsed = parseSearchQualityReport(input);
+      const report: SearchQualityReport =
+        "schemaVersion" in parsed &&
+        parsed.schemaVersion === REPORT_SCHEMA_VERSION
+          ? parsed
+          : { ...parsed, schemaVersion: REPORT_SCHEMA_VERSION };
       rendered = renderReport(report, o.format);
+    }
     if (o.output)
       await writeFile(path.resolve(o.output), `${rendered}\n`, `utf8`);
     else process.stdout.write(`${rendered}\n`);
