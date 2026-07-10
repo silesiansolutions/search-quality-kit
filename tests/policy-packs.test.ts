@@ -40,8 +40,16 @@ async function runPack(
   url: string,
   config: Record<string, unknown> = {},
 ) {
-  const html = await fixture(htmlFixture),
-    cfg = configured([plugin], config),
+  return runPackHtml(plugin, await fixture(htmlFixture), url, config);
+}
+
+async function runPackHtml(
+  plugin: PluginDefinition,
+  html: string,
+  url: string,
+  config: Record<string, unknown> = {},
+) {
+  const cfg = configured([plugin], config),
     crawl = context({ pages: [page(html, url)] }, cfg).crawl;
   return runPluginChecks(cfg, crawl);
 }
@@ -58,6 +66,10 @@ describe("policy packs", () => {
     expect(policyPacks.directory()).toMatchObject({ name: "directory" });
     expect(policyPacks.aiVisibilitySafe()).toMatchObject({
       name: "ai-visibility-safe",
+    });
+    expect(policyPacks.companySite().policyPack).toEqual({
+      name: "companySite",
+      optionsSummary: {},
     });
   });
 
@@ -176,5 +188,103 @@ describe("policy packs", () => {
         finding.classification?.includes("local-heuristic"),
       ),
     ).toBe(true);
+  });
+
+  it("supports literal custom placeholders and route scopes", async () => {
+    const plugin = companySitePolicyPack({
+      placeholders: ["Example Industries"],
+      routePatterns: ["/services/**"],
+    });
+    const html =
+      "<!doctype html><html><body><main><h1>Example Industries</h1></main></body></html>";
+    const included = await runPackHtml(
+      plugin,
+      html,
+      "https://example.com/services/audit",
+    );
+    const excluded = await runPackHtml(
+      plugin,
+      html,
+      "https://example.com/legal/terms",
+    );
+    expect(included.findings.map((finding) => finding.code)).toContain(
+      "company-site.no-placeholder-copy",
+    );
+    expect(excluded.findings).toEqual([]);
+    expect(plugin.policyPack?.optionsSummary).toMatchObject({
+      placeholders: ["Example Industries"],
+      routePatterns: ["/services/**"],
+    });
+    const emailOnly = await runPackHtml(
+      companySitePolicyPack(),
+      '<!doctype html><html><body><a href="mailto:owner@example.com">Email</a></body></html>',
+      "https://example.com/",
+      { profiles: { default: "company" } },
+    );
+    expect(emailOnly.findings.map((finding) => finding.code)).not.toContain(
+      "company-site.no-placeholder-copy",
+    );
+  });
+
+  it("accepts custom and Polish-friendly contact labels and href patterns", async () => {
+    const html = (href: string, text: string) =>
+      `<!doctype html><html><body><main><h1>Service</h1><a href="${href}">${text}</a></main></body></html>`;
+    const config = {
+      profiles: {
+        default: "company",
+        routes: [{ pattern: "/services/**", profile: "servicePage" }],
+      },
+    };
+    const polishDefault = await runPackHtml(
+      companySitePolicyPack(),
+      html("/start", "Umów konsultację"),
+      "https://example.com/services/audit",
+      config,
+    );
+    const custom = await runPackHtml(
+      companySitePolicyPack({
+        contactLinkText: ["Porozmawiajmy"],
+        contactHrefPatterns: ["/zapytaj"],
+      }),
+      html("/zapytaj", "Porozmawiajmy"),
+      "https://example.com/services/audit",
+      config,
+    );
+    for (const result of [polishDefault, custom])
+      expect(result.findings.map((finding) => finding.code)).not.toContain(
+        "company-site.contact-link",
+      );
+  });
+
+  it("supports visible-text thresholds and reviewed directive exceptions", async () => {
+    const html = `<!doctype html><html><head><meta name="robots" content="noindex,nosnippet"></head><body><main><h1>Privacy</h1><p>Short but intentionally public legal copy.</p></main></body></html>`;
+    const result = await runPackHtml(
+      aiVisibilitySafePolicyPack({
+        minVisibleTextLength: 0,
+        allowNoindexOn: ["/privacy/**"],
+        allowNosnippetOn: ["/privacy/**"],
+      }),
+      html,
+      "https://example.com/privacy/policy",
+    );
+    expect(result.findings.map((finding) => finding.code)).not.toContain(
+      "ai-visibility-safe.public-snippet-directives",
+    );
+    expect(result.findings.map((finding) => finding.code)).not.toContain(
+      "ai-visibility-safe.meaningful-visible-text",
+    );
+  });
+
+  it("rejects invalid policy pack options at runtime", () => {
+    expect(() =>
+      companySitePolicyPack({ routePatterns: ["not-root-relative"] }),
+    ).toThrow("root-relative globs");
+    expect(() =>
+      aiVisibilitySafePolicyPack({ minVisibleTextLength: -1 }),
+    ).toThrow();
+    expect(() =>
+      personalBrandPolicyPack({ placeholders: [42] as never }),
+    ).toThrow();
+    expect(() => directoryPolicyPack({ unknown: true } as never)).toThrow();
   });
 });

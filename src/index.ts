@@ -14,6 +14,12 @@ export {
   personalBrandPolicyPack,
   policyPacks,
 } from "./policyPacks/index.js";
+export type {
+  AiVisibilitySafePolicyPackOptions,
+  CompanySitePolicyPackOptions,
+  DirectoryPolicyPackOptions,
+  PersonalBrandPolicyPackOptions,
+} from "./policyPacks/index.js";
 export {
   profileCatalog,
   profileIds,
@@ -65,6 +71,7 @@ export type {
   PluginPage,
   PluginPageLink,
   PluginPageMetadata,
+  PluginPolicyPackMetadata,
 } from "./plugins/types.js";
 export { REPORT_SCHEMA_VERSION } from "./report/types.js";
 export {

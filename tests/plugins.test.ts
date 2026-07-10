@@ -162,6 +162,31 @@ describe("plugin definitions", () => {
       }).checks,
     ).toHaveLength(2);
   });
+
+  it("keeps policy pack metadata serializable", () => {
+    const withMetadata = definePlugin({
+      name: "internal-rules",
+      checks: [placeholderCheck],
+      policyPack: {
+        name: "internalRules",
+        optionsSummary: { routePatterns: ["/docs/**"] },
+      },
+    });
+    expect(withMetadata.policyPack).toEqual({
+      name: "internalRules",
+      optionsSummary: { routePatterns: ["/docs/**"] },
+    });
+    expect(() =>
+      definePlugin({
+        name: "internal-rules",
+        checks: [placeholderCheck],
+        policyPack: {
+          name: "internalRules",
+          optionsSummary: { matcher: (() => true) as never },
+        },
+      }),
+    ).toThrow("serializable values");
+  });
 });
 
 describe("plugin execution", () => {

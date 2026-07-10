@@ -19,6 +19,14 @@ const record = (value: unknown): Record<string, unknown> | undefined =>
     ? (value as Record<string, unknown>)
     : undefined;
 
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return value;
+}
+
 export function validateCheckDefinition(value: unknown): PluginCheckDefinition {
   const check = record(value);
   if (!check) throw new Error("Invalid plugin check: expected an object.");
@@ -92,7 +100,45 @@ export function validatePluginDefinition(value: unknown): PluginDefinition {
       );
     ids.add(check.id);
   }
-  return Object.freeze({ name: plugin.name, checks: Object.freeze(checks) });
+  let policyPack: PluginDefinition["policyPack"];
+  if (plugin.policyPack !== undefined) {
+    const metadata = record(plugin.policyPack);
+    if (!metadata || typeof metadata.name !== "string" || !metadata.name.trim())
+      throw new Error(
+        `Invalid plugin '${plugin.name}': policyPack.name is required.`,
+      );
+    const optionsSummary = record(metadata.optionsSummary);
+    if (!optionsSummary)
+      throw new Error(
+        `Invalid plugin '${plugin.name}': policyPack.optionsSummary must be an object.`,
+      );
+    let safeOptionsSummary: Record<string, unknown>;
+    try {
+      safeOptionsSummary = JSON.parse(
+        JSON.stringify(optionsSummary, (_key, option: unknown) => {
+          if (
+            option === undefined ||
+            ["function", "symbol", "bigint"].includes(typeof option)
+          )
+            throw new Error("non-serializable option");
+          return option;
+        }),
+      ) as Record<string, unknown>;
+    } catch {
+      throw new Error(
+        `Invalid plugin '${plugin.name}': policyPack.optionsSummary must contain serializable values.`,
+      );
+    }
+    policyPack = Object.freeze({
+      name: metadata.name,
+      optionsSummary: deepFreeze(safeOptionsSummary),
+    });
+  }
+  return Object.freeze({
+    name: plugin.name,
+    checks: Object.freeze(checks),
+    ...(policyPack ? { policyPack } : {}),
+  });
 }
 
 export function definePlugin(definition: PluginDefinition): PluginDefinition {
