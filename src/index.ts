@@ -75,6 +75,22 @@ export type {
 } from "./plugins/types.js";
 export { REPORT_SCHEMA_VERSION } from "./report/types.js";
 export {
+  CONTRACT_SCHEMA_VERSION,
+  createPortfolioContract,
+  createSiteContract,
+  createSiteContractFromConfig,
+  formatContractJson,
+  formatContractMarkdown,
+} from "./contract.js";
+export type {
+  ContractPlugin,
+  ContractPluginCheck,
+  SearchQualityContract,
+  SearchQualityPortfolioContract,
+  SearchQualitySiteContract,
+  SiteContractBody,
+} from "./contract.js";
+export {
   findPortfolioConfig,
   loadPortfolioConfig,
   portfolioConfigSchema,

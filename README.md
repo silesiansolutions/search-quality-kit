@@ -10,6 +10,7 @@ A framework-agnostic CLI for auditing technical Google Search foundations in loc
 - [GitHub repository](https://github.com/SilesianSolutions/search-quality-kit)
 - [Check catalog](docs/checks.md)
 - [Custom plugins](docs/plugins.md)
+- [Search quality contracts](docs/contracts.md)
 - [Public portfolio showcase](docs/showcase.md)
 
 It checks technical foundations: crawlability, indexability, sitemap and robots rules, metadata, canonicals, JSON-LD, Open Graph, internal links, delivered HTML, basic accessibility, and lightweight performance risks. It does **not** promise rankings, score content quality, call Google APIs, replace Search Console, Rich Results Test, or Lighthouse.
@@ -91,6 +92,8 @@ search-quality-kit verify [--config file] [--report-only] [--json]
                           [--baseline report.json --fail-on-new]
 search-quality-kit doctor [--config file] [--baseline report.json]
 search-quality-kit doctor --portfolio-config portfolio.search-quality.config.ts
+search-quality-kit contract [--config file | --portfolio-config file]
+                            [--format json|markdown] [--output file]
 search-quality-kit init [--preset name | --detect] [--force]
 search-quality-kit list-checks
 search-quality-kit list-profiles
@@ -106,6 +109,7 @@ search-quality-kit portfolio baseline --config portfolio.search-quality.config.t
 - `--format markdown --output report.md` creates a review artifact.
 - `report report.json --format sarif --output report.sarif` creates a GitHub Code Scanning-compatible artifact.
 - `doctor` checks config loading, local setup, baselines, output paths, Node engines, and portfolio manifests without running an audit.
+- `contract` exports validated site or portfolio policy without running a build or crawl; see [search quality contracts](docs/contracts.md).
 - CLI/configuration failures exit `2`.
 
 Run `doctor` before the first audit in a repository, after changing baselines or
