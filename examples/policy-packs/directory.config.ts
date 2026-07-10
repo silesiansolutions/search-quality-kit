@@ -19,5 +19,15 @@ export default defineConfig({
       { pattern: "/blog/**", profile: "blogPost" },
     ],
   },
-  plugins: [policyPacks.directory(), policyPacks.aiVisibilitySafe()],
+  plugins: [
+    policyPacks.directory({
+      placeholders: ["Demo Company", "Acme", "Your Company", "Company Name"],
+      routePatterns: ["/", "/entries/**", "/categories/**"],
+    }),
+    policyPacks.aiVisibilitySafe({
+      minVisibleTextLength: 200,
+      allowNoindexOn: ["/privacy/**"],
+      allowNosnippetOn: ["/privacy/**"],
+    }),
+  ],
 });

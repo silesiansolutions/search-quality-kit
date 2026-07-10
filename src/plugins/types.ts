@@ -75,9 +75,15 @@ export interface PluginCheckDefinition {
     | ((context: PluginCheckContext) => Promise<readonly PluginFinding[]>);
 }
 
+export interface PluginPolicyPackMetadata {
+  readonly name: string;
+  readonly optionsSummary: Readonly<Record<string, unknown>>;
+}
+
 export interface PluginDefinition {
   readonly name: string;
   readonly checks: readonly PluginCheckDefinition[];
+  readonly policyPack?: PluginPolicyPackMetadata;
 }
 
 export interface PluginError {

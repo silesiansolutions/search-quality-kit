@@ -24,9 +24,31 @@ export default defineConfig({
   site: {
     baseUrl: "https://example.com",
   },
-  plugins: [policyPacks.companySite(), policyPacks.aiVisibilitySafe()],
+  plugins: [
+    policyPacks.companySite({
+      placeholders: ["Demo Company", "Acme", "Your Company"],
+      contactLinkText: [
+        "Kontakt",
+        "Skontaktuj się",
+        "Umów konsultację",
+        "Napisz",
+      ],
+      contactHrefPatterns: ["/kontakt", "mailto:"],
+      routePatterns: ["/", "/services/**", "/uslugi/**"],
+    }),
+    policyPacks.aiVisibilitySafe({
+      minVisibleTextLength: 250,
+      allowNoindexOn: ["/privacy/**"],
+      allowNosnippetOn: ["/legal/**", "/privacy/**"],
+    }),
+  ],
 });
 ```
+
+Options are validated when the config loads. Text and href options are literal,
+case-insensitive strings; route options are root-relative `*` / `**` globs.
+Policy packs do not execute user-provided regular expressions. Supplying an
+empty array intentionally disables that text list or route scope.
 
 The exported factories are:
 
@@ -58,6 +80,19 @@ Checks:
 The contact/profile check is a `profile-expectation`. It does not require a
 phone number, address, or private personal data.
 
+Options:
+
+- `placeholders`: literal visible-text placeholders.
+- `contactLinkText`: literal contact/profile link labels.
+- `contactHrefPatterns`: literal href fragments such as `/kontakt` or
+  `mailto:`.
+- `routePatterns`: optional route scope for every check in the pack.
+
+Default contact labels include English and Polish variants such as `Contact`,
+`Kontakt`, `Skontaktuj się`, `Umów konsultację`, and `Napisz`. Default href
+patterns include `/contact`, `/kontakt`, `mailto:`, and `tel:`. Public social
+profile links continue to satisfy the contact/profile expectation.
+
 ## `companySite`
 
 Plugin name: `company-site`.
@@ -75,6 +110,16 @@ Checks:
 
 The pack does not require phone numbers, physical addresses, tax IDs, or company
 registry data.
+
+Options:
+
+- `placeholders`: literal visible-text placeholders.
+- `contactLinkText`: literal contact CTA labels.
+- `contactHrefPatterns`: literal href fragments.
+- `routePatterns`: optional route scope for every check in the pack.
+
+Defaults preserve the `0.8.0` behavior and add Polish-friendly contact labels
+and `/kontakt` matching.
 
 ## `directory`
 
@@ -96,6 +141,11 @@ Checks:
 The pack checks for obvious structural regressions. It does not judge listing
 quality or require complete business details.
 
+Options:
+
+- `placeholders`: literal visible-text placeholders.
+- `routePatterns`: optional route scope for every check in the pack.
+
 ## `aiVisibilitySafe`
 
 Plugin name: `ai-visibility-safe`.
@@ -113,6 +163,19 @@ Checks:
 
 All checks in this pack are local heuristics. The pack does not require
 `llms.txt` and does not represent AI-search-specific ranking requirements.
+
+Options:
+
+- `placeholders`: literal placeholder/app-shell text.
+- `routePatterns`: optional route scope for every check in the pack.
+- `minVisibleTextLength`: non-negative local heuristic threshold; default `80`.
+- `allowNoindexOn`: reviewed route globs where `noindex` / `none` is expected.
+- `allowNosnippetOn`: reviewed route globs where `nosnippet`, `none`, or
+  `max-snippet:0` is expected.
+
+Directive exceptions are narrow route policy, not ranking advice. A `none`
+directive blocks both indexing and snippets, so its route must be present in
+both allow-lists to avoid a finding.
 
 ## Route profiles
 

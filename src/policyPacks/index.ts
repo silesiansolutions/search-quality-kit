@@ -1,3 +1,8 @@
+import { z } from "zod";
+import {
+  matchesRoutePattern,
+  validRoutePattern,
+} from "../config/profileDefinitions.js";
 import { resolveProfile } from "../config/resolveProfile.js";
 import type { SearchQualityConfig } from "../config/schema.js";
 import { obviousTextConflict, comparableText } from "../utils/consistency.js";
@@ -34,8 +39,122 @@ const SOCIAL_HOSTS = [
   "substack.com",
 ];
 
-const CONTACT_WORDS =
-  /\b(contact|kontakt|email|e-mail|mail|hire|work with me|book|consultation|consulting|call|message)\b/i;
+const DEFAULT_CONTACT_LINK_TEXT = [
+  "Contact",
+  "Kontakt",
+  "Email",
+  "E-mail",
+  "Mail",
+  "Hire",
+  "Work with me",
+  "Book",
+  "Consultation",
+  "Consulting",
+  "Call",
+  "Message",
+  "Skontaktuj się",
+  "Umów konsultację",
+  "Napisz",
+];
+
+const DEFAULT_CONTACT_HREF_PATTERNS = [
+  "mailto:",
+  "tel:",
+  "/contact",
+  "/kontakt",
+  "/email",
+  "/e-mail",
+  "/mail",
+  "/hire",
+  "/work-with-me",
+  "/book",
+  "/booking",
+  "/consultation",
+  "/consulting",
+  "/call",
+  "/message",
+];
+
+const PERSONAL_PLACEHOLDERS = [
+  "Lorem ipsum",
+  "TODO",
+  "TBD",
+  "Demo Person",
+  "Your Name",
+  "example.com",
+];
+
+const COMPANY_PLACEHOLDERS = [
+  "Demo Company",
+  "Acme",
+  "Your Company",
+  "TODO",
+  "example.com",
+];
+
+const DIRECTORY_PLACEHOLDERS = [
+  "Lorem ipsum",
+  "TODO",
+  "TBD",
+  "Demo Company",
+  "Acme",
+  "Your Company",
+  "Company Name",
+  "example.com",
+];
+
+const AI_VISIBILITY_PLACEHOLDERS = [
+  "Lorem ipsum",
+  "TODO",
+  "TBD",
+  "example.com",
+  "Demo Company",
+  "Your Company",
+  "Your Name",
+];
+
+export interface PersonalBrandPolicyPackOptions {
+  readonly placeholders?: readonly string[];
+  readonly contactLinkText?: readonly string[];
+  readonly contactHrefPatterns?: readonly string[];
+  readonly routePatterns?: readonly string[];
+}
+
+export type CompanySitePolicyPackOptions = PersonalBrandPolicyPackOptions;
+
+export interface DirectoryPolicyPackOptions {
+  readonly placeholders?: readonly string[];
+  readonly routePatterns?: readonly string[];
+}
+
+export interface AiVisibilitySafePolicyPackOptions {
+  readonly placeholders?: readonly string[];
+  readonly routePatterns?: readonly string[];
+  readonly minVisibleTextLength?: number;
+  readonly allowNoindexOn?: readonly string[];
+  readonly allowNosnippetOn?: readonly string[];
+}
+
+const stringList = z.array(z.string().trim().min(1)).max(100);
+const routePatterns = stringList.refine(
+  (patterns) => patterns.every(validRoutePattern),
+  "Expected root-relative globs using only * or **, for example /services/**.",
+);
+const commonPolicyPackSchema = z
+  .object({
+    placeholders: stringList.optional(),
+    routePatterns: routePatterns.optional(),
+  })
+  .strict();
+const contactPolicyPackSchema = commonPolicyPackSchema.extend({
+  contactLinkText: stringList.optional(),
+  contactHrefPatterns: stringList.optional(),
+});
+const aiVisibilitySafePolicyPackSchema = commonPolicyPackSchema.extend({
+  minVisibleTextLength: z.number().int().nonnegative().max(100_000).optional(),
+  allowNoindexOn: routePatterns.optional(),
+  allowNosnippetOn: routePatterns.optional(),
+});
 
 const APP_SHELL =
   /^(loading(?:\.\.\.)?|please enable javascript|enable javascript|coming soon|app loading|loading app)$/i;
@@ -84,6 +203,41 @@ function pagePath(page: PluginPage) {
   return new URL(page.url).pathname.replace(/\/$/, "") || "/";
 }
 
+function appliesToRoute(page: PluginPage, patterns?: readonly string[]) {
+  if (!patterns) return true;
+  const pathname = new URL(page.url).pathname;
+  return patterns.some((pattern) => matchesRoutePattern(pathname, pattern));
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function containsConfiguredText(value: string, candidates: readonly string[]) {
+  if (!candidates.length) return false;
+  const text = normalizedText(value);
+  return candidates.some((candidate) => {
+    const normalized = normalizedText(candidate);
+    if (!normalized) return false;
+    const boundary = normalized.includes(".")
+      ? "@\\p{L}\\p{N}._-"
+      : "\\p{L}\\p{N}";
+    return new RegExp(
+      `(?:^|[^${boundary}])${escapeRegExp(normalized)}(?=$|[^${boundary}])`,
+      "iu",
+    ).test(text);
+  });
+}
+
+function optionsSummary(options: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(options).map(([key, value]) => [
+      key,
+      Array.isArray(value) ? [...value] : value,
+    ]),
+  );
+}
+
 function activeProfile(page: PluginPage, ctx: PluginCheckContext) {
   return resolveProfile(page.url, ctx.config as SearchQualityConfig)
     .activeProfile;
@@ -99,12 +253,21 @@ function isAbout(page: PluginPage) {
   );
 }
 
-function hasContactOrProfileLink(page: PluginPage) {
+function hasContactOrProfileLink(
+  page: PluginPage,
+  contactLinkText: readonly string[],
+  contactHrefPatterns: readonly string[],
+) {
   return page.links.some((link) => {
     const href = link.href.toLowerCase(),
       text = link.text.toLowerCase();
-    if (href.startsWith("mailto:") || href.startsWith("tel:")) return true;
-    if (CONTACT_WORDS.test(`${href} ${text}`)) return true;
+    if (
+      contactHrefPatterns.some((pattern) =>
+        href.includes(pattern.toLowerCase()),
+      ) ||
+      contactLinkText.some((label) => text.includes(label.toLowerCase()))
+    )
+      return true;
     if (!link.url) return false;
     try {
       const host = new URL(link.url).hostname.replace(/^www\./, "");
@@ -137,11 +300,13 @@ function pageFinding(
 function visiblePlaceholderFindings(
   pages: readonly PluginPage[],
   code: string,
-  placeholderPattern: RegExp,
+  placeholders: readonly string[],
   message: string,
+  routePatterns?: readonly string[],
 ): PluginFinding[] {
   return pages.flatMap((page) =>
-    placeholderPattern.test(page.visibleText)
+    appliesToRoute(page, routePatterns) &&
+    containsConfiguredText(page.visibleText, placeholders)
       ? [
           pageFinding(
             code,
@@ -240,11 +405,20 @@ function firstUrlConflict(
   return undefined;
 }
 
-export function personalBrandPolicyPack() {
-  const placeholders =
-    /\b(?:lorem ipsum|todo|tbd|demo person|your name)\b|(?:^|[^@\w.-])example\.com(?:[^\w.-]|$)/i;
+export function personalBrandPolicyPack(
+  input: PersonalBrandPolicyPackOptions = {},
+) {
+  const options = contactPolicyPackSchema.parse(input);
+  const placeholders = options.placeholders ?? PERSONAL_PLACEHOLDERS;
+  const contactLinkText = options.contactLinkText ?? DEFAULT_CONTACT_LINK_TEXT;
+  const contactHrefPatterns =
+    options.contactHrefPatterns ?? DEFAULT_CONTACT_HREF_PATTERNS;
   return definePlugin({
     name: "personal-brand",
+    policyPack: {
+      name: "personalBrand",
+      optionsSummary: optionsSummary(options),
+    },
     checks: [
       defineCheck({
         id: "personal-brand.no-placeholder-copy",
@@ -259,6 +433,7 @@ export function personalBrandPolicyPack() {
             "personal-brand.no-placeholder-copy",
             placeholders,
             "Visible copy contains a personal-site placeholder.",
+            options.routePatterns,
           ),
       }),
       defineCheck({
@@ -270,9 +445,17 @@ export function personalBrandPolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             if (activeProfile(page, ctx) !== "personal") return [];
             if (!isHome(page) && !isAbout(page)) return [];
-            if (hasContactOrProfileLink(page)) return [];
+            if (
+              hasContactOrProfileLink(
+                page,
+                contactLinkText,
+                contactHrefPatterns,
+              )
+            )
+              return [];
             return [
               pageFinding(
                 "personal-brand.contact-or-profile-link",
@@ -292,6 +475,7 @@ export function personalBrandPolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) =>
+            appliesToRoute(page, options.routePatterns) &&
             activeProfile(page, ctx) === "personal" &&
             genericDescription(page, /^(personal website|personal site)$/i)
               ? [
@@ -309,11 +493,20 @@ export function personalBrandPolicyPack() {
   });
 }
 
-export function companySitePolicyPack() {
-  const placeholders =
-    /\b(?:demo company|acme|your company|todo)\b|(?:^|[^@\w.-])example\.com(?:[^\w.-]|$)/i;
+export function companySitePolicyPack(
+  input: CompanySitePolicyPackOptions = {},
+) {
+  const options = contactPolicyPackSchema.parse(input);
+  const placeholders = options.placeholders ?? COMPANY_PLACEHOLDERS;
+  const contactLinkText = options.contactLinkText ?? DEFAULT_CONTACT_LINK_TEXT;
+  const contactHrefPatterns =
+    options.contactHrefPatterns ?? DEFAULT_CONTACT_HREF_PATTERNS;
   return definePlugin({
     name: "company-site",
+    policyPack: {
+      name: "companySite",
+      optionsSummary: optionsSummary(options),
+    },
     checks: [
       defineCheck({
         id: "company-site.no-placeholder-copy",
@@ -328,6 +521,7 @@ export function companySitePolicyPack() {
             "company-site.no-placeholder-copy",
             placeholders,
             "Visible copy contains a company-site placeholder.",
+            options.routePatterns,
           ),
       }),
       defineCheck({
@@ -339,13 +533,21 @@ export function companySitePolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             const profile = activeProfile(page, ctx);
             if (!(
               (profile === "company" && isHome(page)) ||
               profile === "servicePage"
             ))
               return [];
-            if (hasContactOrProfileLink(page)) return [];
+            if (
+              hasContactOrProfileLink(
+                page,
+                contactLinkText,
+                contactHrefPatterns,
+              )
+            )
+              return [];
             return [
               pageFinding(
                 "company-site.contact-link",
@@ -365,6 +567,7 @@ export function companySitePolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             const { title, h1 } = titleAndH1(page),
               conflict = organizationNames(page).find(
                 (name) =>
@@ -394,6 +597,7 @@ export function companySitePolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) =>
+            appliesToRoute(page, options.routePatterns) &&
             LOCAL_OR_STAGING_TEXT.test(page.visibleText)
               ? [
                   pageFinding(
@@ -410,11 +614,15 @@ export function companySitePolicyPack() {
   });
 }
 
-export function directoryPolicyPack() {
-  const placeholders =
-    /\b(?:lorem ipsum|todo|tbd|demo company|acme|your company|company name)\b|(?:^|[^@\w.-])example\.com(?:[^\w.-]|$)/i;
+export function directoryPolicyPack(input: DirectoryPolicyPackOptions = {}) {
+  const options = commonPolicyPackSchema.parse(input);
+  const placeholders = options.placeholders ?? DIRECTORY_PLACEHOLDERS;
   return definePlugin({
     name: "directory",
+    policyPack: {
+      name: "directory",
+      optionsSummary: optionsSummary(options),
+    },
     checks: [
       defineCheck({
         id: "directory.no-placeholder-copy",
@@ -429,6 +637,7 @@ export function directoryPolicyPack() {
             "directory.no-placeholder-copy",
             placeholders,
             "Visible directory copy contains a placeholder.",
+            options.routePatterns,
           ),
       }),
       defineCheck({
@@ -440,6 +649,7 @@ export function directoryPolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             if (activeProfile(page, ctx) !== "directoryEntry") return [];
             const { title, h1 } = titleAndH1(page),
               names = directoryEntityNames(page);
@@ -463,6 +673,7 @@ export function directoryPolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             if (activeProfile(page, ctx) !== "directoryEntry") return [];
             const { title, h1 } = titleAndH1(page),
               conflict = directoryEntityNames(page).find(
@@ -493,6 +704,7 @@ export function directoryPolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             if (activeProfile(page, ctx) !== "directoryList") return [];
             if (
               itemListEmpty(page) ||
@@ -520,6 +732,7 @@ export function directoryPolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             if (activeProfile(page, ctx) !== "directoryEntry") return [];
             return genericDescription(
               page,
@@ -540,9 +753,18 @@ export function directoryPolicyPack() {
   });
 }
 
-export function aiVisibilitySafePolicyPack() {
+export function aiVisibilitySafePolicyPack(
+  input: AiVisibilitySafePolicyPackOptions = {},
+) {
+  const options = aiVisibilitySafePolicyPackSchema.parse(input);
+  const placeholders = options.placeholders ?? AI_VISIBILITY_PLACEHOLDERS;
+  const minVisibleTextLength = options.minVisibleTextLength ?? 80;
   return definePlugin({
     name: "ai-visibility-safe",
+    policyPack: {
+      name: "aiVisibilitySafe",
+      optionsSummary: optionsSummary(options),
+    },
     checks: [
       defineCheck({
         id: "ai-visibility-safe.public-snippet-directives",
@@ -553,6 +775,7 @@ export function aiVisibilitySafePolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             const $ = loadHtml(page.rawHtml),
               robots = [
                 page.metadata.robots,
@@ -561,11 +784,20 @@ export function aiVisibilitySafePolicyPack() {
               ]
                 .filter(Boolean)
                 .join(",");
-            if (
-              /(?:^|[,\s])(?:noindex|none|nosnippet|max-snippet\s*:\s*0)(?:$|[,\s])/i.test(
+            const blocksIndex = /(?:^|[,\s])(?:noindex|none)(?:$|[,\s])/i.test(
                 robots,
-              )
-            )
+              ),
+              blocksSnippet =
+                /(?:^|[,\s])(?:nosnippet|none|max-snippet\s*:\s*0)(?:$|[,\s])/i.test(
+                  robots,
+                ),
+              allowsIndex =
+                !blocksIndex ||
+                appliesToRoute(page, options.allowNoindexOn ?? []),
+              allowsSnippet =
+                !blocksSnippet ||
+                appliesToRoute(page, options.allowNosnippetOn ?? []);
+            if (!allowsIndex || !allowsSnippet)
               return [
                 pageFinding(
                   "ai-visibility-safe.public-snippet-directives",
@@ -586,13 +818,14 @@ export function aiVisibilitySafePolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             const text = normalizedText(page.visibleText);
-            return text.length < 80 || APP_SHELL.test(text)
+            return text.length < minVisibleTextLength || APP_SHELL.test(text)
               ? [
                   pageFinding(
                     "ai-visibility-safe.meaningful-visible-text",
                     page,
-                    `Delivered HTML has only ${text.length} visible text characters or looks like an app shell.`,
+                    `Delivered HTML has only ${text.length} visible text characters; configured minimum is ${minVisibleTextLength}, or the page looks like an app shell.`,
                     "Pre-render meaningful page content in the delivered HTML rather than relying only on client-side rendering.",
                   ),
                 ]
@@ -608,6 +841,7 @@ export function aiVisibilitySafePolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             const expected = page.metadata.canonical ?? page.finalUrl,
               candidates = [
                 page.metadata.openGraph["og:url"]
@@ -645,12 +879,11 @@ export function aiVisibilitySafePolicyPack() {
         docsUrl: DOCS,
         run: (ctx) =>
           ctx.pages.flatMap((page) => {
+            if (!appliesToRoute(page, options.routePatterns)) return [];
             const text = normalizedText(page.visibleText);
             if (
               APP_SHELL.test(text) ||
-              /\b(?:lorem ipsum|todo|tbd|example\.com|demo company|your company|your name)\b/i.test(
-                text,
-              )
+              containsConfiguredText(text, placeholders)
             )
               return [
                 pageFinding(
