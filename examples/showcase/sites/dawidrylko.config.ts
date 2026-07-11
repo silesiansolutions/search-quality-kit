@@ -15,5 +15,15 @@ export default defineConfig({
     default: "personal",
     routes: [{ pattern: "/blog/**", profile: "blogPost" }],
   },
-  plugins: [policyPacks.personalBrand(), policyPacks.aiVisibilitySafe()],
+  plugins: [
+    policyPacks.personalBrand({
+      contactLinkText: ["Kontakt", "Skontaktuj się", "Napisz", "Book a call"],
+      contactHrefPatterns: ["/kontakt", "mailto:", "linkedin.com/in/"],
+      routePatterns: ["/", "/o-mnie", "/about", "/blog/**"],
+    }),
+    policyPacks.aiVisibilitySafe({
+      minVisibleTextLength: 160,
+      routePatterns: ["/", "/o-mnie", "/about", "/blog/**"],
+    }),
+  ],
 });
