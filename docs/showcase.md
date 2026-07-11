@@ -53,6 +53,12 @@ The manual and weekly workflow is [`.github/workflows/showcase.yml`](../.github/
 
 Use synthetic static fixtures in the regular test suite for the hard gate. Use the public workflow to demonstrate current production behavior.
 
+To copy the pattern into a real repository, keep the same shape: run the
+official Action, export the contract, render a handoff report from the JSON
+report, and upload the completed report directory as one artifact. For internal
+deterministic targets, remove report-only after the baseline and suppression
+decisions have been reviewed.
+
 ## Read the reports
 
 `portfolio.json` is the stable schema `0.7` machine report. It contains portfolio totals, per-site summaries and report paths, bounded highlights, operational errors, and the final gate decision. Full findings stay in each site's `search-quality-report.json` unless `--include-findings` is requested. `portfolio.md` is a bounded GitHub summary with the gate reason, site table, top findings, resolved items, operational failures, and next actions.

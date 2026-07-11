@@ -1,6 +1,10 @@
 # Rollout guide
 
-The safe rollout pattern is: generate a narrow config, observe current findings, review intent, record a baseline, then fail only new regressions. Do not turn every historical warning into a blocking migration project.
+The safe rollout pattern is: generate a narrow config, run `doctor`, observe
+current findings, review intent, add only narrow reviewed suppressions where a
+finding is an accepted decision, record a baseline, then fail only new
+regressions. Do not turn every historical warning into a blocking migration
+project.
 
 ## 1. Install and choose a preset
 
@@ -15,7 +19,25 @@ Available CLI names are `astro`, `next-static`, `next-hybrid`, `gatsby`, `vite-s
 
 Replace the generated `baseUrl` TODO with the production origin. Presets do not add build commands. Keep build ownership in the repository's existing scripts.
 
-## 2. Run without gating
+## 2. Run setup diagnostics
+
+Validate config and local setup before spending time on a crawl:
+
+```bash
+npx search-quality-kit doctor --config search-quality.config.ts
+```
+
+For portfolios, validate the manifest and every enabled site config:
+
+```bash
+npx search-quality-kit doctor \
+  --portfolio-config portfolio.search-quality.config.ts
+```
+
+Fix doctor errors before the first audit. Warnings, including expired or broad
+reviewed suppressions, should be reviewed before the config becomes a gate.
+
+## 3. Run without gating
 
 Build exactly as deployment does, then run the first audit in report-only mode:
 
@@ -32,7 +54,7 @@ npx search-quality-kit report /tmp/search-quality-first.json \
 
 For Next hybrid, start the application at the preset's `http://localhost:3000` first, or explicitly configure `build.startCommand` and keep `site.localUrl`. Static presets fail when their output directory is absent, which prevents an accidental production crawl.
 
-## 3. Review findings and scope
+## 4. Review findings and scope
 
 Triage in this order:
 
@@ -46,7 +68,11 @@ A heuristic is evidence to inspect, not a Google ranking threshold. Title, descr
 
 ### Intentional noindex versus a defect
 
-Confirm the route's product intent and its sitemap/link behavior. An intentionally private, preview, legal, or utility route may be added to `crawl.exclude`; preserve the preset's existing values when extending the list. A public landing page accidentally carrying `noindex`, a noindexed URL in the sitemap, or a route excluded only to make CI green is a defect.
+Confirm the route's product intent and its sitemap/link behavior. Private,
+preview, generated, admin, and API routes may be added to `crawl.exclude`;
+preserve the preset's existing values when extending the list. A public landing
+page accidentally carrying `noindex`, a noindexed URL in the sitemap, or a route
+excluded only to make CI green is a defect.
 
 ```ts
 const preset = presets.astro();
@@ -61,7 +87,31 @@ export default defineConfig({
 });
 ```
 
-## 4. Record the reviewed baseline
+For a public route that should remain crawled but has an accepted finding, use a
+narrow suppression instead:
+
+```ts
+export default defineConfig({
+  site: { baseUrl: "https://example.com" },
+  suppressions: [
+    {
+      code: "metadata.description-length",
+      urlPattern: "/legal/**",
+      reason:
+        "Legal pages intentionally use concise metadata and are not discovery landing pages.",
+      owner: "site-owner",
+      expires: "2026-12-31",
+    },
+  ],
+});
+```
+
+For `aiVisibilitySafe` snippet directives, prefer `allowNoindexOn` and
+`allowNosnippetOn` when the exception is route policy for that pack. Use
+suppression for an individual accepted finding that should stay visible in
+reports.
+
+## 5. Record the reviewed baseline
 
 After fixing genuine errors and documenting intentional scope, create the baseline from the same build and config used in CI:
 
@@ -75,7 +125,7 @@ git add search-quality.config.ts search-quality-baseline.json
 
 Review baseline changes like dependency-lock changes. Never regenerate it automatically on every CI run; that would accept regressions before review.
 
-## 5. Gate only new regressions in CI
+## 6. Gate only new regressions in CI
 
 Build once, then audit with `--skip-build` when `build.command` is also present in config:
 
@@ -90,10 +140,11 @@ npx search-quality-kit verify \
 
 The gate applies `ci.failOn` only to new findings. Start with `failOn: ["error"]`. Promote warnings only after their false-positive rate and ownership are understood. Use the examples under `examples/ci/` for Markdown job summaries and artifacts.
 
-## 6. Keep pull requests readable
+## 7. Keep pull requests readable
 
 - Put the grouped Markdown report in the workflow summary; do not emit one PR comment per finding.
-- Upload JSON and Markdown as one artifact for debugging.
+- Upload JSON, Markdown, contract, and handoff Markdown as one artifact for debugging.
+- Use `report --format handoff` for the implementation checklist in PRs.
 - Gate new errors first; leave historical warnings in the collapsible existing-findings section.
 - Cap organizational noise by fixing shared templates before page-by-page symptoms.
 - Update the baseline only in a reviewed PR that explains intentional additions or removals.
@@ -101,13 +152,16 @@ The gate applies `ci.failOn` only to new findings. Start with `failOn: ["error"]
 
 ## Recommended rollout for legacy sites
 
-1. Use the closest preset and run `--report-only` against a clean production-equivalent build.
-2. Add the relevant site profile, route profiles, and policy packs.
+1. Use the closest preset.
+2. Add the relevant site profile, route profiles, and configurable policy packs.
 3. Run `search-quality-kit doctor` and fix setup/config errors before crawling.
-4. Fix broken build output, indexability errors, and local/staging leaks first.
-5. Exclude only confirmed intentional noindex/generated routes.
-6. Run report-only, review the Markdown artifact, and commit a reviewed baseline even if warnings remain.
-7. Gate new errors with `--baseline ... --fail-on-new`; then decide whether selected warning classes deserve enforcement.
+4. Run `verify --report-only` against a clean production-equivalent build.
+5. Review the Markdown report and fix broken build output, indexability errors, and local/staging leaks first.
+6. Exclude only confirmed out-of-scope generated/private routes.
+7. Add narrow reviewed suppressions only for accepted findings with reason, owner, and optional expiry.
+8. Commit a reviewed baseline even if warnings remain.
+9. Gate new errors with `--baseline ... --fail-on-new`.
+10. Add a handoff report artifact so PRs show the immediate actions, reviewed suppressions, baseline debt, and resolved findings.
 
 Gatsby repositories deserve an extra check for stale `public/` artifacts. Clean before building, and verify that the deployment and audit use the same output. The Gatsby preset handles known generated fallback routes but does not hide old pages left in `public/`.
 
@@ -163,3 +217,5 @@ These areas were reviewed and intentionally left out of the current scope:
   reliable route/source evidence;
 - a separate showcase repository while the package-aligned showcase remains
   small, tested, and artifact-based.
+- dashboards, SaaS scheduling, and content scoring, which would change the
+  product and dependency model.

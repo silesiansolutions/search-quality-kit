@@ -44,6 +44,11 @@ and each site's name, enabled state, root, config path, baseline path, output
 directory, and validated site-contract summary. Site configs are loaded but no
 site is built or crawled.
 
+Portfolio contracts are useful before a coding agent edits one site in a group:
+the agent can see the intended crawl scope, profiles, policy packs, baselines,
+suppressions, and gate policy for every configured site without running the
+portfolio audit.
+
 ## Markdown format
 
 Use Markdown when the contract should be reviewed in a pull request or supplied
@@ -58,6 +63,25 @@ search-quality-kit contract \
 
 JSON is the default and should be preferred for automation. Both formats are
 deterministic for the same resolved config and intentionally omit timestamps.
+
+## Contract versus handoff
+
+Use a contract before changing code: it explains the rules that must remain
+true. Use a handoff report after an audit: it explains which findings need
+action, which findings are reviewed suppressions, which findings are baseline
+debt, and which findings were resolved.
+
+```bash
+search-quality-kit report search-quality-report.json \
+  --format handoff \
+  --output search-quality-handoff.md
+
+search-quality-kit report portfolio.json \
+  --format handoff \
+  --output portfolio-handoff.md
+```
+
+Neither format crawls, builds, calls Google APIs, or scores content quality.
 
 ## CI usage
 

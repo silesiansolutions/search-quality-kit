@@ -11,6 +11,7 @@ A framework-agnostic CLI for auditing technical Google Search foundations in loc
 - [Check catalog](docs/checks.md)
 - [Custom plugins](docs/plugins.md)
 - [Search quality contracts](docs/contracts.md)
+- [CI and rollout](docs/ci.md)
 - [Public portfolio showcase](docs/showcase.md)
 
 It checks technical foundations: crawlability, indexability, sitemap and robots rules, metadata, canonicals, JSON-LD, Open Graph, internal links, delivered HTML, basic accessibility, and lightweight performance risks. It does **not** promise rankings, score content quality, call Google APIs, replace Search Console, Rich Results Test, or Lighthouse.
@@ -84,6 +85,37 @@ Available packs are `personalBrand`, `companySite`, `directory`, and
 automation, no content scoring, and no private contact-data requirements. See
 [policy packs](docs/policy-packs.md) and [plugin testing](docs/testing-plugins.md).
 
+Pack options let real repositories tune placeholder text, contact labels,
+contact href patterns, route scope, visible-text thresholds, and reviewed
+snippet-directive exceptions without writing a custom plugin.
+
+## Reviewed suppressions
+
+Use reviewed suppressions for accepted findings that should stay visible in
+reports but should not fail the gate:
+
+```ts
+export default defineConfig({
+  site: { baseUrl: "https://example.com" },
+  suppressions: [
+    {
+      code: "company-site.contact-link",
+      urlPattern: "/services/legacy/**",
+      reason:
+        "Legacy service pages use the global footer contact CTA instead of a page-level CTA.",
+      owner: "growth",
+      expires: "2026-12-31",
+    },
+  ],
+});
+```
+
+Suppressions require a stable finding code, narrow route pattern, reason, and
+owner. Expired suppressions stop affecting the gate. Broad suppression patterns
+are rejected unless `allowBroadSuppressions` is enabled intentionally. JSON,
+Markdown, portfolio, handoff, and contract outputs keep suppressed findings
+visible as reviewed decisions.
+
 ## Commands
 
 ```text
@@ -97,7 +129,7 @@ search-quality-kit contract [--config file | --portfolio-config file]
 search-quality-kit init [--preset name | --detect] [--force]
 search-quality-kit list-checks
 search-quality-kit list-profiles
-search-quality-kit report [report.json] --format markdown|sarif [--output file]
+search-quality-kit report [report.json] --format markdown|handoff|sarif [--output file]
 search-quality-kit portfolio verify --config portfolio.search-quality.config.ts
 search-quality-kit portfolio baseline --config portfolio.search-quality.config.ts [--force]
 ```
@@ -107,6 +139,7 @@ search-quality-kit portfolio baseline --config portfolio.search-quality.config.t
 - `--json` writes machine-readable JSON to stdout; build and preview logs stay on stderr.
 - `--baseline <file> --fail-on-new` fails only for findings absent from a prior JSON report.
 - `--format markdown --output report.md` creates a review artifact.
+- `--format handoff --output handoff.md` creates a bounded action list for developers, site owners, and coding agents.
 - `report report.json --format sarif --output report.sarif` creates a GitHub Code Scanning-compatible artifact.
 - `doctor` checks config loading, local setup, baselines, output paths, Node engines, and portfolio manifests without running an audit.
 - `contract` exports validated site or portfolio policy without running a build or crawl; see [search quality contracts](docs/contracts.md).
@@ -132,7 +165,7 @@ search-quality-kit portfolio verify \
   --output-dir search-quality-reports
 ```
 
-Each site may define its own root, config, baseline, and output directory. Baselines are compared only within that site; missing/invalid configured baselines and plugin/config/runtime failures are attributed as operational errors. See [portfolio configuration](docs/config.md#portfolio-configuration), [CI usage](docs/ci.md#portfolio-action-mode), and the [public showcase](docs/showcase.md).
+Each site may define its own root, config, baseline, and output directory. Baselines are compared only within that site; missing/invalid configured baselines and plugin/config/runtime failures are attributed as operational errors. Portfolio summaries aggregate reviewed suppressions per site. See [portfolio configuration](docs/config.md#portfolio-configuration), [CI usage](docs/ci.md#portfolio-action-mode), and the [public showcase](docs/showcase.md).
 
 For a legacy rollout, record the reviewed state and gate only regressions:
 

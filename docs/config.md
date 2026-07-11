@@ -9,6 +9,7 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 | `crawl`                | `mode`, entrypoints, page/sitemap limits, `include`, `exclude`, timeout | `auto`, `/`, 100 pages           |
 | `profiles`             | default site type and ordered route overrides                           | `generic`, no route overrides    |
 | `plugins`              | typed custom-check plugins                                              | none                             |
+| `suppressions`         | reviewed accepted findings by stable code and route pattern             | none                             |
 | `checks`               | one boolean per built-in check                                          | all enabled                      |
 | `rules.title`          | min/max length, duplicate policy                                        | 10–70, no duplicates             |
 | `rules.description`    | min/max, missing and duplicate policy                                   | 50–170, required, no duplicates  |
@@ -23,13 +24,57 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 
 Length and byte thresholds are regression heuristics, not Google ranking limits. Tune them to the project instead of disabling unrelated checks.
 
-Paths in `include`, `exclude`, and `entrypoints` are URL paths. Exclusions apply to sitemap scope and crawling. A deliberate `noindex` page should normally be excluded rather than globally weakening the indexability check.
+Paths in `include`, `exclude`, and `entrypoints` are URL paths. Exclusions apply to sitemap scope and crawling. Use `exclude` for routes that are outside the audit scope, such as generated 404 aliases or private preview/admin routes. Do not exclude a public route just to hide a finding; use a narrow reviewed suppression or a policy-pack allow-list when the route should remain visible in reports.
 
 `crawl.mode` is `auto`, `static`, or `http`. `auto` preserves the original target selection: prefer `site.localUrl`, otherwise use an existing `build.distDir`, otherwise crawl `site.baseUrl`. Official static presets use `static`, so a missing output directory fails clearly instead of silently auditing production. `nextHybrid()` uses `http` and defaults `site.localUrl` to `http://localhost:3000`.
 
 `crawl.maxSitemaps` defaults to 50 and `crawl.maxSitemapDepth` defaults to 3. They bound recursive sitemap-index traversal in both static and HTTP modes. A truncated traversal produces `sitemap/fetch-limit`; raise the limits only when the site intentionally needs a larger sitemap tree.
 
 Baseline behavior is controlled by CLI flags rather than config: use `--baseline <report.json> --fail-on-new`. The gate still reads severity policy from `ci.failOn`, while `ci.warnOnly` and `--report-only` suppress finding-based failure. Report and SARIF output are presentation formats and do not alter finding identity or gate behavior.
+
+## Reviewed suppressions
+
+Reviewed suppressions are explicit accepted-risk entries. They keep a finding in
+JSON and Markdown, mark it as `suppressed: true`, and remove it from
+finding-based gate failure while the suppression is active. They are useful for
+intentional project policy decisions that should not be hidden through
+`crawl.exclude`, disabled checks, or a broad baseline.
+
+```ts
+import { defineConfig } from "@silesiansolutions/search-quality-kit";
+
+export default defineConfig({
+  site: { baseUrl: "https://example.com" },
+  suppressions: [
+    {
+      code: "metadata.description-length",
+      urlPattern: "/legal/**",
+      reason:
+        "Legal pages intentionally use concise metadata and are not discovery landing pages.",
+      owner: "site-owner",
+      expires: "2026-12-31",
+    },
+  ],
+});
+```
+
+`code` must match the stable finding code. Core findings use
+`<check>.<code>`, for example `metadata.description-length`; policy-pack and
+custom plugin findings already use namespaced codes such as
+`company-site.contact-link`. `urlPattern` uses the same root-relative glob
+syntax as route profiles. `reason` and `owner` are required. `expires` is
+optional, but when present must be `YYYY-MM-DD`; expired suppressions are still
+reported and no longer affect the gate.
+
+The loader rejects suppressions without a reason or owner. It also rejects
+catch-all patterns such as `/`, `/*`, or `/**` unless
+`allowBroadSuppressions: true` is set at the top level. Only enable that flag
+for a reviewed migration and expect `doctor` to warn about it.
+
+Baselines and suppressions solve different problems. A baseline records
+reviewed historical state and lets CI fail only on new findings. A suppression
+records an accepted decision for one finding pattern and keeps that decision
+visible in reports, portfolio summaries, handoff reports, and contract exports.
 
 ## Plugins
 
@@ -70,6 +115,40 @@ export default defineConfig({
 ```
 
 Plugin names use lowercase letters, numbers, and hyphens. Check ids and finding codes must be namespaced with `custom.` or the plugin name. Config loading rejects missing fields and duplicate check ids before crawling. Runtime exceptions and invalid findings are reported separately as plugin errors and exit `2`. See [the full plugin guide](plugins.md).
+
+## Policy pack options
+
+Policy packs are normal plugins with validated option objects. They avoid
+user-provided regular expressions; text options are literal case-insensitive
+strings, and route options are the same root-relative globs used by route
+profiles.
+
+```ts
+import { defineConfig, policyPacks } from "@silesiansolutions/search-quality-kit";
+
+export default defineConfig({
+  site: { baseUrl: "https://example.com" },
+  plugins: [
+    policyPacks.companySite({
+      placeholders: ["Demo Company", "Acme", "Your Company"],
+      contactLinkText: ["Kontakt", "Skontaktuj się", "Umów konsultację"],
+      contactHrefPatterns: ["/kontakt", "mailto:"],
+      routePatterns: ["/", "/services/**", "/uslugi/**"],
+    }),
+    policyPacks.aiVisibilitySafe({
+      minVisibleTextLength: 250,
+      allowNoindexOn: ["/privacy/**"],
+      allowNosnippetOn: ["/legal/**", "/privacy/**"],
+    }),
+  ],
+});
+```
+
+Use `routePatterns` to scope a whole pack to the routes where that policy is
+owned. Use `allowNoindexOn` and `allowNosnippetOn` for reviewed local snippet
+policy. Use `suppressions` when an individual finding should remain visible as
+accepted debt. See [policy packs](policy-packs.md) for each pack's available
+options.
 
 ## Site and route profiles
 
@@ -172,6 +251,7 @@ gate. It checks operational setup:
 - duplicate build-command ownership when `SQK_BUILD_COMMAND` is present;
 - optional single-site baseline path existence;
 - plugin registration and duplicate check ids;
+- reviewed suppression validation, duplicate entries, expiry, and broad scopes;
 - output file paths staying inside the project root;
 - Node version compatibility with the package and project `engines.node`;
 - portfolio site config and baseline paths;
@@ -224,3 +304,9 @@ Site names are unique safe path segments: 1-64 lowercase letters/numbers with in
 `portfolio.reportOnly` is useful for public observation workflows. It preserves failed/error site statuses and gate reasons in reports but returns exit code 0. Without report-only, matching findings or operational errors fail the final portfolio gate. Invalid portfolio manifests remain CLI errors and exit 2.
 
 Portfolio JSON uses schema `0.7`. By default it contains summaries, bounded highlights, and paths rather than duplicating all findings. Use `--include-findings` only when a consumer needs full site-attributed finding arrays. `--sarif` writes SARIF per site; v0.7 has no aggregate SARIF.
+
+Suppressed findings remain in each site's full JSON and Markdown reports. The
+portfolio summary counts them per site and across the portfolio, but active
+suppressions are not treated as new gate failures. Portfolio contract export
+records each site's policy packs, suppression policy, crawl scope, and gate
+settings without running the portfolio audit.
