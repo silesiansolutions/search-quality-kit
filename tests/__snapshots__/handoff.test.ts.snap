@@ -1,0 +1,175 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`handoff report > renders deterministic site actions and keeps suppressions out of Do now 1`] = `
+"# Search Quality Handoff
+
+## Summary
+
+- Target: \`/tmp/dist\`
+- Pages checked: 3
+- Findings: 3 total · 1 error · 2 warnings · 0 info
+- Do now: 1
+- Reviewed suppressions: 1
+- Baseline / debt: 1
+- Resolved since baseline: 1
+
+## Do now
+
+### Error (1)
+
+#### \`canonical.wrong-origin\`
+
+- **State:** \`new\`
+- **URL:** \`https://example.com/services/audit\`
+- **Location:** \`/tmp/dist/services/audit/index.html\`
+- **Source:** \`core:canonical\`
+- **Classification:** \`local-heuristic\`
+- **Route / profile:** \`/services/audit\` · profile \`servicePage\` · pattern \`/services/**\`
+- **Message:** Canonical points outside the production origin.
+- **Action:** Remediate canonical.wrong-origin.
+
+## Review accepted suppressions
+
+### Warning (1)
+
+#### \`company-site.contact-link\`
+
+- **State:** \`suppressed\`
+- **URL:** \`https://example.com/services/legacy\`
+- **Location:** \`/tmp/dist/services/legacy/index.html\`
+- **Source:** \`plugin:company-site\`
+- **Classification:** \`local-heuristic\`
+- **Route / profile:** \`/services/legacy\` · profile \`servicePage\` · pattern \`/services/**\`
+- **Message:** Legacy page has no page-level contact CTA.
+- **Reviewed decision:** owner \`growth\` · route \`/services/legacy/**\` · expires \`2026-12-31\`
+- **Reason:** Legacy pages intentionally use the global footer CTA.
+- **Original remediation (not a TODO):** Remediate company-site.contact-link.
+- **Review step:** confirm the decision, owner, scope, and expiry still hold. Do not change the page solely because this item appears here.
+
+## Baseline / debt
+
+### Warning (1)
+
+#### \`metadata.description-length\`
+
+- **State:** \`existing\`
+- **URL:** \`https://example.com/about\`
+- **Location:** \`/tmp/dist/about/index.html\`
+- **Source:** \`core:metadata\`
+- **Classification:** \`local-heuristic\`
+- **Route / profile:** \`/about\` · profile \`company\`
+- **Message:** Description is shorter than the configured range.
+- **Action:** Remediate metadata.description-length.
+
+## Resolved since baseline
+
+### Error (1)
+
+#### \`metadata.missing-title\`
+
+- **State:** \`resolved\`
+- **URL:** \`https://example.com/old\`
+- **Location:** \`/tmp/dist/old/index.html\`
+- **Source:** \`core:metadata\`
+- **Classification:** \`local-heuristic\`
+- **Route / profile:** \`/old\` · profile \`company\`
+- **Message:** Page had no title.
+- **Previous remediation:** Remediate metadata.missing-title.
+- **Action:** no change required; keep the fix and verify the resolution is intentional.
+"
+`;
+
+exports[`handoff report > renders top portfolio actions, per-site tables, and operational errors 1`] = `
+"# Search Quality Portfolio Handoff
+
+## Summary
+
+- Sites: 2 total · 0 passed · 1 failed · 0 skipped/disabled
+- Pages checked: 3
+- Findings: 3 total · 1 error · 2 warnings · 0 info
+- Do now across all sites: 1
+- Reviewed suppressions: 1
+- Baseline / debt: 1
+- Resolved since baseline: 1
+- Gate: \`failed\` · One new error matched the portfolio gate.
+
+## Per-site action table
+
+| Site | Status | Pages | Do now | Suppressed | Debt | Resolved | Report |
+|---|---:|---:|---:|---:|---:|---:|---|
+| site-a | failed | 3 | 1 | 1 | 1 | 1 | [Markdown](site-a/search-quality-report.md) |
+| site-b | error | 0 | 0 | 0 | 0 | 0 | — |
+
+## Do now
+
+### Error (1)
+
+#### \`canonical.wrong-origin\`
+
+- **Site:** \`site-a\`
+- **State:** \`new\`
+- **URL:** \`https://example.com/services/audit\`
+- **Location:** \`/tmp/dist/services/audit/index.html\`
+- **Source:** \`core:canonical\`
+- **Classification:** \`local-heuristic\`
+- **Route / profile:** \`/services/audit\` · profile \`servicePage\` · pattern \`/services/**\`
+- **Message:** Canonical points outside the production origin.
+- **Action:** Remediate canonical.wrong-origin.
+
+## Review accepted suppressions
+
+### Warning (1)
+
+#### \`company-site.contact-link\`
+
+- **Site:** \`site-a\`
+- **State:** \`suppressed\`
+- **URL:** \`https://example.com/services/legacy\`
+- **Location:** \`/tmp/dist/services/legacy/index.html\`
+- **Source:** \`plugin:company-site\`
+- **Classification:** \`local-heuristic\`
+- **Route / profile:** \`/services/legacy\` · profile \`servicePage\` · pattern \`/services/**\`
+- **Message:** Legacy page has no page-level contact CTA.
+- **Reviewed decision:** owner \`growth\` · route \`/services/legacy/**\` · expires \`2026-12-31\`
+- **Reason:** Legacy pages intentionally use the global footer CTA.
+- **Original remediation (not a TODO):** Remediate company-site.contact-link.
+- **Review step:** confirm the decision, owner, scope, and expiry still hold. Do not change the page solely because this item appears here.
+
+## Baseline / debt
+
+### Warning (1)
+
+#### \`metadata.description-length\`
+
+- **Site:** \`site-a\`
+- **State:** \`existing\`
+- **URL:** \`https://example.com/about\`
+- **Location:** \`/tmp/dist/about/index.html\`
+- **Source:** \`core:metadata\`
+- **Classification:** \`local-heuristic\`
+- **Route / profile:** \`/about\` · profile \`company\`
+- **Message:** Description is shorter than the configured range.
+- **Action:** Remediate metadata.description-length.
+
+## Resolved since baseline
+
+### Error (1)
+
+#### \`metadata.missing-title\`
+
+- **Site:** \`site-a\`
+- **State:** \`resolved\`
+- **URL:** \`https://example.com/old\`
+- **Location:** \`/tmp/dist/old/index.html\`
+- **Source:** \`core:metadata\`
+- **Classification:** \`local-heuristic\`
+- **Route / profile:** \`/old\` · profile \`company\`
+- **Message:** Page had no title.
+- **Previous remediation:** Remediate metadata.missing-title.
+- **Action:** no change required; keep the fix and verify the resolution is intentional.
+
+## Operational errors
+
+- **site-b** · \`config\`: Config file is missing.
+"
+`;
