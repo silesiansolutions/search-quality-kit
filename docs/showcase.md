@@ -1,15 +1,18 @@
 # Public portfolio showcase
 
-The public showcase runs the portfolio runner against `https://dawidrylko.com`, `https://silesiansolutions.com`, and `https://cyberkatalog.pl`. It demonstrates the package's public npm API, HTTP crawler, site profiles, policy packs, isolated reports, and one aggregate gate without requiring access to the sites' source repositories.
+The public showcase runs the portfolio runner against `https://dawidrylko.com`, `https://silesiansolutions.com`, and `https://cyberkatalog.pl`. It demonstrates the package's public npm API, HTTP crawler, site profiles, configurable policy packs, reviewed suppressions, contract export, handoff reports, isolated reports, and one aggregate gate without requiring access to the sites' source repositories.
 
 ## What this demonstrates
 
 - `dawidrylko.com`: a personal/blog site using `personalBrand` and
-  `aiVisibilitySafe` policy packs.
+  `aiVisibilitySafe` policy packs with Polish contact labels and scoped blog
+  routes.
 - `silesiansolutions.com`: a company/service/blog site using `companySite` and
-  `aiVisibilitySafe` policy packs.
+  `aiVisibilitySafe` policy packs with English/Polish contact labels and a
+  narrow reviewed suppression example.
 - `cyberkatalog.pl`: a directory/blog site using `directory` and
-  `aiVisibilitySafe` policy packs.
+  `aiVisibilitySafe` policy packs with directory route scope and reviewed
+  snippet-directive exceptions.
 
 The showcase remains report-only. Public HTTP results can change independently
 of the package release, so they are observations in workflow artifacts, not a
@@ -33,19 +36,37 @@ node dist/cli/index.js portfolio verify \
   --report-only \
   --output-dir search-quality-reports \
   --sarif
+node dist/cli/index.js contract \
+  --portfolio-config examples/showcase/portfolio.search-quality.config.ts \
+  --output search-quality-reports/portfolio-contract.json
+node dist/cli/index.js report \
+  search-quality-reports/portfolio.json \
+  --format handoff \
+  --output search-quality-reports/portfolio-handoff.md
 ```
 
 The manifest itself sets `portfolio.reportOnly: true`, so the production HTTP showcase observes changes without blocking package releases. `--report-only` makes that intent explicit at the call site. The crawl is read-only, bounded by each site's `maxPages`, needs no secret, and sends only normal HTTP requests.
 
 ## GitHub Actions
 
-The manual and weekly workflow is [`.github/workflows/showcase.yml`](../.github/workflows/showcase.yml). It also runs on pull requests that change showcase, source, Action, package, or documentation files. It uploads the whole `search-quality-reports/` directory and appends `portfolio.md` to the job summary. It is not a release gate because a production site or network can change independently of this repository.
+The manual and weekly workflow is [`.github/workflows/showcase.yml`](../.github/workflows/showcase.yml). It also runs on pull requests that change showcase, source, Action, package, or documentation files. It uploads the whole `search-quality-reports/` directory after adding `portfolio-contract.json` and `portfolio-handoff.md`, then appends the portfolio and handoff Markdown to the job summary. It is not a release gate because a production site or network can change independently of this repository.
 
 Use synthetic static fixtures in the regular test suite for the hard gate. Use the public workflow to demonstrate current production behavior.
 
 ## Read the reports
 
-`portfolio.json` is the stable schema `0.7` machine contract. It contains portfolio totals, per-site summaries and report paths, bounded highlights, operational errors, and the final gate decision. Full findings stay in each site's `search-quality-report.json` unless `--include-findings` is requested. `portfolio.md` is a bounded GitHub summary with the gate reason, site table, top findings, resolved items, operational failures, and next actions.
+`portfolio.json` is the stable schema `0.7` machine report. It contains portfolio totals, per-site summaries and report paths, bounded highlights, operational errors, and the final gate decision. Full findings stay in each site's `search-quality-report.json` unless `--include-findings` is requested. `portfolio.md` is a bounded GitHub summary with the gate reason, site table, top findings, resolved items, operational failures, and next actions.
+
+`portfolio-contract.json` is the schema `0.9` contract export. It records the
+validated portfolio/site policy without crawling: base URLs, crawl scope,
+profiles, policy packs, suppressions, and gate settings. Use it when a reviewer
+or coding agent needs to understand the quality contract before changing a
+site.
+
+`portfolio-handoff.md` is the action-oriented report for maintainers and coding
+agents. It separates immediate fixes from reviewed suppressions, baseline debt,
+resolved items, and operational errors. Suppressed findings remain visible as
+accepted decisions; they are not listed as unreviewed TODOs.
 
 Each enabled site gets its own JSON and Markdown report. `--sarif` adds one SARIF file per completed site; there is no combined portfolio SARIF in v0.7.
 

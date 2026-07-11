@@ -20,5 +20,20 @@ export default defineConfig({
       { pattern: "/aktualnosci/**", profile: "blogPost" },
     ],
   },
-  plugins: [policyPacks.directory(), policyPacks.aiVisibilitySafe()],
+  plugins: [
+    policyPacks.directory({
+      placeholders: [
+        "Demo Company",
+        "Acme",
+        "Your Company",
+        "Company Name",
+      ],
+      routePatterns: ["/", "/firma/**", "/kategoria/**"],
+    }),
+    policyPacks.aiVisibilitySafe({
+      minVisibleTextLength: 180,
+      allowNoindexOn: ["/regulamin/**", "/polityka-prywatnosci/**"],
+      allowNosnippetOn: ["/regulamin/**", "/polityka-prywatnosci/**"],
+    }),
+  ],
 });

@@ -2,11 +2,14 @@
 
 This example audits three public production sites over HTTP: `dawidrylko.com`, `silesiansolutions.com`, and `cyberkatalog.pl`. It uses no secrets, does not mutate a site, and writes changing reports only to `search-quality-reports/` for artifact upload.
 
-The configs demonstrate policy packs in report-only mode:
+The configs demonstrate configurable policy packs in report-only mode:
 
-- `dawidrylko.com`: `personalBrand` plus `aiVisibilitySafe`;
-- `silesiansolutions.com`: `companySite` plus `aiVisibilitySafe`;
-- `cyberkatalog.pl`: `directory` plus `aiVisibilitySafe`.
+- `dawidrylko.com`: `personalBrand` plus `aiVisibilitySafe` with Polish
+  contact labels and scoped blog routes;
+- `silesiansolutions.com`: `companySite` plus `aiVisibilitySafe` with
+  English/Polish contact labels and one reviewed suppression example;
+- `cyberkatalog.pl`: `directory` plus `aiVisibilitySafe` with directory route
+  scope and reviewed snippet-directive exceptions.
 
 Run it from the repository root:
 
@@ -17,6 +20,13 @@ node dist/cli/index.js portfolio verify \
   --report-only \
   --output-dir search-quality-reports \
   --sarif
+node dist/cli/index.js contract \
+  --portfolio-config examples/showcase/portfolio.search-quality.config.ts \
+  --output search-quality-reports/portfolio-contract.json
+node dist/cli/index.js report \
+  search-quality-reports/portfolio.json \
+  --format handoff \
+  --output search-quality-reports/portfolio-handoff.md
 ```
 
 The manifest is report-only by default because public sites can change independently of this package. Results are examples of deterministic technical checks at crawl time, not an SEO score or ranking.

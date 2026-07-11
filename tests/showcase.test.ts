@@ -49,9 +49,32 @@ describe("public showcase", () => {
       ).toEqual(
         expectedRouteProfiles[site.name as keyof typeof expectedRouteProfiles],
       );
+      expect(
+        loaded.config.plugins
+          .map((plugin) => plugin.policyPack?.optionsSummary)
+          .filter(Boolean).length,
+      ).toBeGreaterThan(0);
       const source = await readFile(path.join(showcase, site.config), "utf8");
       expect(source).not.toMatch(/process\.env|secret|token/i);
     }
+
+    const silesian = await loadConfig(
+      showcase,
+      "sites/silesiansolutions.config.ts",
+    );
+    expect(silesian.config.suppressions).toEqual([
+      expect.objectContaining({
+        code: "company-site.contact-link",
+        urlPattern: "/services/legacy/**",
+        owner: "growth",
+      }),
+    ]);
+    expect(
+      silesian.config.plugins[0]?.policyPack?.optionsSummary,
+    ).toMatchObject({
+      contactLinkText: expect.arrayContaining(["Kontakt", "Book a call"]),
+      contactHrefPatterns: expect.arrayContaining(["/kontakt", "mailto:"]),
+    });
   });
 
   it("keeps the showcase workflow observational and artifact-based", async () => {
@@ -61,7 +84,11 @@ describe("public showcase", () => {
       on: Record<string, unknown>;
       jobs: {
         showcase: {
-          steps: Array<{ uses?: string; with?: Record<string, string> }>;
+          steps: Array<{
+            run?: string;
+            uses?: string;
+            with?: Record<string, string>;
+          }>;
         };
       };
     };
@@ -73,8 +100,23 @@ describe("public showcase", () => {
     expect(action?.with).toMatchObject({
       mode: "portfolio",
       "report-only": "true",
-      "upload-artifact": "true",
+      "upload-artifact": "false",
       summary: "true",
     });
+    expect(
+      workflow.jobs.showcase.steps.some((step) =>
+        step.run?.includes("contract"),
+      ),
+    ).toBe(true);
+    expect(
+      workflow.jobs.showcase.steps.some((step) =>
+        step.run?.includes("--format handoff"),
+      ),
+    ).toBe(true);
+    expect(
+      workflow.jobs.showcase.steps.some(
+        (step) => step.uses === "actions/upload-artifact@v7",
+      ),
+    ).toBe(true);
   });
 });

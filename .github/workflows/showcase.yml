@@ -34,5 +34,36 @@ jobs:
           report-only: "true"
           sarif: "true"
           summary: "true"
-          upload-artifact: "true"
+          upload-artifact: "false"
           artifact-name: public-search-quality-showcase
+
+      - name: Export portfolio contract
+        if: ${{ always() && hashFiles('dist/cli/index.js') != '' }}
+        run: |
+          mkdir -p search-quality-reports
+          node dist/cli/index.js contract \
+            --portfolio-config examples/showcase/portfolio.search-quality.config.ts \
+            --output search-quality-reports/portfolio-contract.json
+
+      - name: Write portfolio handoff report
+        if: ${{ always() && hashFiles('search-quality-reports/portfolio.json') != '' }}
+        run: |
+          node dist/cli/index.js report \
+            search-quality-reports/portfolio.json \
+            --format handoff \
+            --output search-quality-reports/portfolio-handoff.md
+
+      - name: Append handoff summary
+        if: ${{ always() && hashFiles('search-quality-reports/portfolio-handoff.md') != '' }}
+        run: |
+          printf '\n' >> "$GITHUB_STEP_SUMMARY"
+          sed -e 's/^# /## /' search-quality-reports/portfolio-handoff.md >> "$GITHUB_STEP_SUMMARY"
+          printf '\n' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload showcase artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: public-search-quality-showcase
+          path: search-quality-reports
+          if-no-files-found: warn
