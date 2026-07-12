@@ -140,6 +140,35 @@ export default defineConfig({
 For existing sites, start with `report-only`, review the policy findings, then
 capture a baseline and gate new findings with `--fail-on-new`.
 
+## Reviewed suppressions in CI
+
+Reviewed suppressions are part of config, so they work the same in local CLI,
+the official Action, baseline mode, SARIF, portfolio reports, contracts, and
+handoff reports.
+
+Use them for accepted findings that should stay visible but should not fail the
+gate:
+
+```ts
+export default defineConfig({
+  site: { baseUrl: "https://example.com" },
+  suppressions: [
+    {
+      code: "company-site.contact-link",
+      urlPattern: "/services/legacy/**",
+      reason:
+        "Legacy service pages use the global footer contact CTA instead of a page-level CTA.",
+      owner: "growth",
+      expires: "2026-12-31",
+    },
+  ],
+});
+```
+
+Do not use suppressions as a replacement for fixing real errors. Keep each
+entry narrow, include a human reason and owner, and run `doctor` in CI so
+expired, duplicate, or broad suppressions are visible before the audit.
+
 ## Manual CLI workflow
 
 Use the manual form when the repository needs custom job ordering, separate permissions, SARIF upload, or nonstandard report handling. This workflow writes JSON during the audit, reformats it as Markdown even when the gate fails, appends Markdown to the workflow summary, and uploads both files.
@@ -196,6 +225,52 @@ jobs:
 
 Remove `npm run build` and `--skip-build` when `build.command` in `search-quality.config.ts` should own the build. The separate form above avoids building twice in repositories that already have an explicit build step.
 
+## Contract and handoff artifacts
+
+The Action uploads its artifact before later workflow steps run. If a job should
+include contract and handoff files in the same artifact, disable the Action's
+upload step and upload the directory yourself after generating the extra files:
+
+```yaml
+- uses: SilesianSolutions/search-quality-kit/action@v0
+  with:
+    node-version-file: .nvmrc
+    package-manager: pnpm
+    install-command: pnpm install --frozen-lockfile
+    build-command: pnpm build
+    config: search-quality.config.ts
+    output-dir: search-quality-reports
+    summary: "true"
+    upload-artifact: "false"
+
+- name: Export search quality contract
+  if: always()
+  run: >-
+    pnpm exec search-quality-kit contract
+    --config search-quality.config.ts
+    --output search-quality-reports/search-quality-contract.json
+
+- name: Write handoff report
+  if: ${{ always() && hashFiles('search-quality-reports/search-quality-report.json') != '' }}
+  run: >-
+    pnpm exec search-quality-kit report
+    search-quality-reports/search-quality-report.json
+    --format handoff
+    --output search-quality-reports/search-quality-handoff.md
+
+- uses: actions/upload-artifact@v7
+  if: always()
+  with:
+    name: search-quality-report
+    path: search-quality-reports
+    if-no-files-found: warn
+```
+
+For portfolio mode, replace `--config` with `--portfolio-config` in the
+contract command and render handoff from `search-quality-reports/portfolio.json`.
+The public showcase workflow uses that pattern for a complete report-only
+artifact.
+
 ## Baseline semantics: fail only on regressions
 
 Create a baseline from a reviewed commit:
@@ -251,7 +326,7 @@ search-quality-kit report search-quality-report.json \
 
 Each finding becomes a SARIF result, `code` is the rule id, and severities map to `error`, `warning`, and `note`. The URL or known file is used as the artifact URI. The tool deliberately does not invent source line numbers: crawl routes generally cannot be mapped safely to source files.
 
-GitHub workflow-command annotations are not emitted in v0.3 for the same reason. Markdown summaries and SARIF provide bounded, honest review surfaces without pretending that a route has a source line. A future annotation mode should require real source mappings and enforce a configurable cap.
+GitHub workflow-command annotations are not emitted for the same reason. Markdown summaries, handoff reports, and SARIF provide bounded, honest review surfaces without pretending that a route has a source line.
 
 ## JSON report compatibility
 
@@ -286,7 +361,7 @@ steps:
       artifact-name: search-quality-${{ matrix.site }}
 ```
 
-This is orchestration, not automatic multi-site discovery. Aggregated reports and per-site runner semantics remain proposed v0.7 work.
+This is orchestration, not automatic multi-site discovery. Use portfolio mode when one sequential job and one aggregate report are a better fit than a matrix.
 
 ## Portfolio Action mode
 

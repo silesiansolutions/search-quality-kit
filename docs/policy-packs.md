@@ -199,5 +199,10 @@ export default defineConfig({
 ```
 
 Use `profile-expectation` findings as project policy: review them, fix real
-issues, or document intentional exceptions in your rollout baseline. Keep custom
-project rules in your own plugin when they depend on private business logic.
+issues, document historical debt in a baseline, or add a narrow reviewed
+suppression when the finding is an accepted decision with a clear owner. Keep
+custom project rules in your own plugin when they depend on private business
+logic.
+
+Run `search-quality-kit contract` to expose the selected policy packs and their
+serializable option summaries to CI or coding agents without running an audit.
