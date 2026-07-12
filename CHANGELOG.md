@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## [0.9.0] - 2026-07-12
+
+- Add reviewed suppressions with required reason and owner, optional `YYYY-MM-DD` expiry, glob URL scoping, and `doctor` validation so accepted findings stay visible in JSON, Markdown, SARIF, baseline, and portfolio outputs without failing `ci.failOn`.
+- Make policy packs configurable with runtime-validated placeholder, contact-label, contact-href, route-scope, text-length, and noindex/nosnippet options while keeping `0.8.0` defaults.
+- Add `search-quality-kit contract` exporting deterministic schema `0.9` site and portfolio contracts with safe plugin, policy-pack, suppression, and gate metadata without running builds or crawls.
+- Add a handoff report format for site and portfolio reports that groups prioritized actions, reviewed suppressions, baseline debt, and resolved findings for developers, site owners, and coding agents.
+- Update the public showcase workflow with contract and handoff artifacts and expand suppression, contract, CI, rollout, and adoption documentation.
+
 ## [0.8.0] - 2026-07-09
 
 - Add reusable policy packs for personal-brand, company-site, directory, and AI-visibility safety checks through the existing plugin API.
@@ -88,6 +96,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.9.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.6.0...v0.6.1
