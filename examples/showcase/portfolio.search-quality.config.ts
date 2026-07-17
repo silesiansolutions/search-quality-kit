@@ -15,6 +15,10 @@ export default definePortfolioConfig({
       name: "cyberkatalog",
       config: "sites/cyberkatalog.config.ts",
     },
+    {
+      name: "dawiddev",
+      config: "sites/dawiddev.config.ts",
+    },
   ],
   portfolio: {
     failOn: ["error"],

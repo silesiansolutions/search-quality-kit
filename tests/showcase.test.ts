@@ -11,11 +11,13 @@ const expectedPlugins = {
   dawidrylko: ["personal-brand", "ai-visibility-safe"],
   silesiansolutions: ["company-site", "ai-visibility-safe"],
   cyberkatalog: ["directory", "ai-visibility-safe"],
+  dawiddev: [],
 } as const;
 const expectedRouteProfiles = {
   dawidrylko: ["blogPost"],
   silesiansolutions: ["servicePage", "blogPost", "blogPost"],
   cyberkatalog: ["directoryEntry", "directoryList", "blogPost"],
+  dawiddev: [],
 } as const;
 
 describe("public showcase", () => {
@@ -30,6 +32,7 @@ describe("public showcase", () => {
       "dawidrylko",
       "silesiansolutions",
       "cyberkatalog",
+      "dawiddev",
     ]);
     expect(config.sites.every((site) => site.baseline === undefined)).toBe(
       true,
@@ -49,11 +52,13 @@ describe("public showcase", () => {
       ).toEqual(
         expectedRouteProfiles[site.name as keyof typeof expectedRouteProfiles],
       );
-      expect(
-        loaded.config.plugins
-          .map((plugin) => plugin.policyPack?.optionsSummary)
-          .filter(Boolean).length,
-      ).toBeGreaterThan(0);
+      if (loaded.config.plugins.length > 0) {
+        expect(
+          loaded.config.plugins
+            .map((plugin) => plugin.policyPack?.optionsSummary)
+            .filter(Boolean).length,
+        ).toBeGreaterThan(0);
+      }
       const source = await readFile(path.join(showcase, site.config), "utf8");
       expect(source).not.toMatch(/process\.env|secret|token/i);
     }
