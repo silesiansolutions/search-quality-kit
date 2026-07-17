@@ -105,6 +105,7 @@ function testCrawl(
       status: 200,
       content: `User-agent: *\nAllow: /\nSitemap: ${publicBaseUrl}/sitemap.xml`,
     },
+    llmsTxt: { url: `${publicBaseUrl}/llms.txt`, status: 404 },
     sitemap,
     sitemaps: [sitemap],
     sitemapUrls: [],

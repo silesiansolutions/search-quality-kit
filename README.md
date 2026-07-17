@@ -204,9 +204,9 @@ Set `mode: portfolio` and `portfolio-config` to upload the complete portfolio re
 
 ## Built-in checks
 
-`sitemap`, `robots`, `indexability`, `metadata`, `canonical`, `structuredData`, `openGraph`, `internalLinks`, `renderedHtml`, `accessibility`, and `performanceHints`.
+`sitemap`, `robots`, `indexability`, `metadata`, `canonical`, `structuredData`, `openGraph`, `internalLinks`, `renderedHtml`, `accessibility`, `performanceHints`, and `agentReadiness`.
 
-Rules are tied to official areas of [Google Search Central](https://developers.google.com/search/docs/essentials). Project heuristics such as title length, HTML weight, and image size are labeled as heuristics; profile expectations are labeled separately and are not represented as Google requirements or ranking thresholds.
+Rules are tied to official areas of [Google Search Central](https://developers.google.com/search/docs/essentials). Project heuristics such as title length, HTML weight, and image size are labeled as heuristics; profile expectations are labeled separately and are not represented as Google requirements or ranking thresholds. `agentReadiness` checks deterministic agent-readiness signals — llms.txt recommendations and declarative WebMCP annotations — aligned with the experimental Lighthouse Agentic Browsing category; runtime audits such as CLS, the accessibility tree, and imperative WebMCP tools stay with Lighthouse and PageSpeed Insights.
 
 ## Custom checks
 

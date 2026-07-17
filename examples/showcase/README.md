@@ -1,6 +1,6 @@
 # Public portfolio showcase
 
-This example audits three public production sites over HTTP: `dawidrylko.com`, `silesiansolutions.com`, and `cyberkatalog.pl`. It uses no secrets, does not mutate a site, and writes changing reports only to `search-quality-reports/` for artifact upload.
+This example audits four public production sites over HTTP: `dawidrylko.com`, `silesiansolutions.com`, `cyberkatalog.pl`, and `dawid.dev`. It uses no secrets, does not mutate a site, and writes changing reports only to `search-quality-reports/` for artifact upload.
 
 The configs demonstrate configurable policy packs in report-only mode:
 
@@ -9,7 +9,8 @@ The configs demonstrate configurable policy packs in report-only mode:
 - `silesiansolutions.com`: `companySite` plus `aiVisibilitySafe` with
   English/Polish contact labels and one reviewed suppression example;
 - `cyberkatalog.pl`: `directory` plus `aiVisibilitySafe` with directory route
-  scope and reviewed snippet-directive exceptions.
+  scope and reviewed snippet-directive exceptions;
+- `dawid.dev`: no policy packs, the minimal showcase entry.
 
 Run it from the repository root:
 

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <body>
+    <form toolname="contact" tooldescription="Send a contact message.">
+      <input type="text" name="email" />
+      <input
+        type="text"
+        name="phone"
+        toolparamdescription="Phone number to call back."
+      />
+      <label for="fname">First name</label>
+      <input type="text" id="fname" name="firstName" />
+      <label>Last name <input type="text" name="lastName" /></label>
+      <input type="text" name="notes" aria-describedby="notes-help" />
+      <span id="notes-help">Additional notes for the request.</span>
+      <input type="hidden" name="source" value="site" />
+      <button type="submit">Send</button>
+    </form>
+  </body>
+</html>

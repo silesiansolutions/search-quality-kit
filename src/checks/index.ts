@@ -1,4 +1,5 @@
 import { accessibilityCheck } from "./accessibility.js";
+import { agentReadinessCheck } from "./agentReadiness.js";
 import { canonicalCheck } from "./canonical.js";
 import { indexabilityCheck } from "./indexability.js";
 import { internalLinksCheck } from "./internalLinks.js";
@@ -25,6 +26,7 @@ export const checks = [
   renderedHtmlCheck,
   accessibilityCheck,
   performanceHintsCheck,
+  agentReadinessCheck,
 ];
 
 export type { CheckBasis } from "./types.js";
@@ -44,6 +46,7 @@ const severities: Record<
   renderedHtml: ["error", "warning"],
   accessibility: ["error", "warning"],
   performanceHints: ["error", "warning"],
+  agentReadiness: ["warning", "info"],
 };
 
 export const checkCatalog = checks.map((check) => ({

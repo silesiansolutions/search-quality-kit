@@ -10,7 +10,7 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 | `profiles`             | default site type and ordered route overrides                           | `generic`, no route overrides    |
 | `plugins`              | typed custom-check plugins                                              | none                             |
 | `suppressions`         | reviewed accepted findings by stable code and route pattern             | none                             |
-| `checks`               | one boolean per built-in check                                          | all enabled                      |
+| `checks`               | one boolean per built-in check, including `agentReadiness`              | all enabled                      |
 | `rules.title`          | min/max length, duplicate policy                                        | 10–70, no duplicates             |
 | `rules.description`    | min/max, missing and duplicate policy                                   | 50–170, required, no duplicates  |
 | `rules.canonical`      | `required`                                                              | true                             |
@@ -19,6 +19,7 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 | `rules.openGraph`      | `requireImage`                                                          | false                            |
 | `rules.renderedHtml`   | main/H1 policy and minimum visible text                                 | main and H1 required, 80 chars   |
 | `rules.performance`    | HTML, script, and image thresholds                                      | 500 KiB HTML/image, 10 scripts   |
+| `rules.agentReadiness` | `requireLlmsTxt`                                                        | false                             |
 | `output`               | default format (`console`, `json`, `markdown`, `sarif`) and filenames   | console                          |
 | `ci`                   | `failOn`, `warnOnly`                                                    | fail on error                    |
 

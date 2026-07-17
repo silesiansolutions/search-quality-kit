@@ -25,6 +25,10 @@ export function context(
       content:
         "User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml",
     },
+    llmsTxt: overrides.llmsTxt ?? {
+      url: "https://example.com/llms.txt",
+      status: 404,
+    },
     sitemap,
     sitemaps: overrides.sitemaps ?? [sitemap],
     sitemapUrls: [],

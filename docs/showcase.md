@@ -1,6 +1,6 @@
 # Public portfolio showcase
 
-The public showcase runs the portfolio runner against `https://dawidrylko.com`, `https://silesiansolutions.com`, and `https://cyberkatalog.pl`. It demonstrates the package's public npm API, HTTP crawler, site profiles, configurable policy packs, reviewed suppressions, contract export, handoff reports, isolated reports, and one aggregate gate without requiring access to the sites' source repositories.
+The public showcase runs the portfolio runner against `https://dawidrylko.com`, `https://silesiansolutions.com`, `https://cyberkatalog.pl`, and `https://dawid.dev`. It demonstrates the package's public npm API, HTTP crawler, site profiles, configurable policy packs, reviewed suppressions, contract export, handoff reports, isolated reports, and one aggregate gate without requiring access to the sites' source repositories.
 
 ## What this demonstrates
 
@@ -13,6 +13,8 @@ The public showcase runs the portfolio runner against `https://dawidrylko.com`, 
 - `cyberkatalog.pl`: a directory/blog site using `directory` and
   `aiVisibilitySafe` policy packs with directory route scope and reviewed
   snippet-directive exceptions.
+- `dawid.dev`: a minimal personal site with no policy packs, showing the
+  smallest possible showcase entry.
 
 The showcase remains report-only. Public HTTP results can change independently
 of the package release, so they are observations in workflow artifacts, not a
@@ -63,7 +65,7 @@ decisions have been reviewed.
 
 `portfolio.json` is the stable schema `0.7` machine report. It contains portfolio totals, per-site summaries and report paths, bounded highlights, operational errors, and the final gate decision. Full findings stay in each site's `search-quality-report.json` unless `--include-findings` is requested. `portfolio.md` is a bounded GitHub summary with the gate reason, site table, top findings, resolved items, operational failures, and next actions.
 
-`portfolio-contract.json` is the schema `0.9` contract export. It records the
+`portfolio-contract.json` is the schema `0.10` contract export. It records the
 validated portfolio/site policy without crawling: base URLs, crawl scope,
 profiles, policy packs, suppressions, and gate settings. Use it when a reviewer
 or coding agent needs to understand the quality contract before changing a

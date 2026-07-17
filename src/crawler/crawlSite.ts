@@ -138,8 +138,10 @@ export async function crawlStatic(
   if (!(await fileExists(dist)))
     throw new Error(`Build directory not found: ${dist}`);
   const robotsFile = path.join(dist, "robots.txt");
-  const [robots, files] = await Promise.all([
+  const llmsTxtFile = path.join(dist, "llms.txt");
+  const [robots, llmsTxt, files] = await Promise.all([
     readOptional(robotsFile),
+    readOptional(llmsTxtFile),
     walkFiles(dist),
   ]);
   const declaredSitemap = robots?.match(/^\s*sitemap:\s*(\S+)\s*$/im)?.[1];
@@ -248,6 +250,12 @@ export async function crawlStatic(
       content: robots,
       file: robotsFile,
     },
+    llmsTxt: {
+      url: new URL("/llms.txt", base).toString(),
+      status: llmsTxt === undefined ? 404 : 200,
+      content: llmsTxt,
+      file: llmsTxtFile,
+    },
     sitemap: rootSitemap,
     sitemaps: collected.sitemaps,
     sitemapUrls: sitemapPageUrls(collected.sitemaps),
@@ -328,6 +336,7 @@ export async function crawlHttp(
         queue.push(link.absolute);
   }
   const robots = await artifact(target.origin, base, "/robots.txt", config);
+  const llmsTxt = await artifact(target.origin, base, "/llms.txt", config);
   const declared = robots.content?.match(/^\s*sitemap:\s*(\S+)\s*$/im)?.[1];
   let sitemap = await artifact(
     target.origin,
@@ -363,6 +372,7 @@ export async function crawlHttp(
     publicBaseUrl: base,
     pages,
     robots,
+    llmsTxt,
     sitemap,
     sitemaps: collected.sitemaps,
     sitemapUrls: sitemapPageUrls(collected.sitemaps),

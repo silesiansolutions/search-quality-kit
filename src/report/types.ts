@@ -7,6 +7,7 @@ export type FindingClassification =
   | "cross-channel-metadata"
   | "accessibility-basic"
   | "profile-expectation"
+  | "agentic-readiness"
   /** @deprecated Read legacy v0.3 reports only; new reports use kebab-case values. */
   | "Google requirement"
   /** @deprecated Read legacy v0.3 reports only; new reports use kebab-case values. */
