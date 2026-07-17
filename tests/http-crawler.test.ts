@@ -142,3 +142,50 @@ describe("HTTP orphan detection", () => {
     ).toEqual([expect.objectContaining({ url: `${base}/orphan` })]);
   });
 });
+
+describe("HTTP crawl llms.txt artifact", () => {
+  it("populates content when the server returns 200", async () => {
+    let base = "";
+    ({ base } = await listen((request, response) => {
+      if (request.url === "/llms.txt") {
+        response.writeHead(200).end("# Example\n\nHello.");
+        return;
+      }
+      if (request.url === "/") {
+        response.writeHead(200).end("Home");
+        return;
+      }
+      response.writeHead(404).end();
+    }));
+    const config = configSchema.parse({ site: { baseUrl: base } });
+    const crawl = await crawlHttp(base, config);
+
+    expect(crawl.llmsTxt).toEqual(
+      expect.objectContaining({
+        url: `${base}/llms.txt`,
+        status: 200,
+        content: "# Example\n\nHello.",
+      }),
+    );
+  });
+
+  it("reports a 404 status when the server has no llms.txt", async () => {
+    let base = "";
+    ({ base } = await listen((request, response) => {
+      if (request.url === "/") {
+        response.writeHead(200).end("Home");
+        return;
+      }
+      response.writeHead(404).end();
+    }));
+    const config = configSchema.parse({ site: { baseUrl: base } });
+    const crawl = await crawlHttp(base, config);
+
+    expect(crawl.llmsTxt).toEqual(
+      expect.objectContaining({
+        url: `${base}/llms.txt`,
+        status: 404,
+      }),
+    );
+  });
+});

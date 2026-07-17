@@ -182,7 +182,7 @@ describe("search quality contracts", () => {
       "portfolio.search-quality.config.json",
     );
     expect(contract).toMatchObject({
-      schemaVersion: "0.9",
+      schemaVersion: "0.10",
       type: "portfolio",
       outputDir: "reports",
       portfolio: { failOn: ["error"], failOnNew: true, reportOnly: true },
@@ -229,7 +229,7 @@ describe("search quality contracts", () => {
     expect(json.status, json.stderr).toBe(0);
     expect(
       JSON.parse(await readFile(path.join(root, "contract.json"), "utf8")),
-    ).toMatchObject({ schemaVersion: "0.9", type: "site" });
+    ).toMatchObject({ schemaVersion: "0.10", type: "site" });
     const markdown = spawnSync(
       process.execPath,
       [

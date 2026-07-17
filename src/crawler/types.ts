@@ -31,6 +31,7 @@ export interface CrawlResult {
   publicBaseUrl: string;
   pages: PageArtifact[];
   robots: TextArtifact;
+  llmsTxt: TextArtifact;
   sitemap: TextArtifact;
   sitemaps: TextArtifact[];
   sitemapUrls: string[];

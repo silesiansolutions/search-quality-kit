@@ -31,6 +31,8 @@ export const checkClassifications: Record<string, FindingClassification[]> = {
   accessibility: ["accessibility-basic"],
   performanceHints: ["google-recommendation", "local-heuristic"],
   "performance-hints": ["google-recommendation", "local-heuristic"],
+  agentReadiness: ["agentic-readiness"],
+  "agent-readiness": ["agentic-readiness"],
 };
 
 export const classificationForCheck = (check: string) =>
@@ -46,6 +48,7 @@ const legacyBasis: Record<string, CheckBasis> = {
   "cross-channel-metadata": "local heuristic",
   "accessibility-basic": "local heuristic",
   "profile-expectation": "local heuristic",
+  "agentic-readiness": "local heuristic",
 };
 
 export const legacyBasisForCheck = (check: string) => [

@@ -76,3 +76,69 @@ describe("static crawl route inventory", () => {
     }
   });
 });
+
+describe("static crawl llms.txt artifact", () => {
+  it("reads llms.txt content when present", async () => {
+    const root = await mkdtemp(
+      path.join(tmpdir(), "search-quality-kit-llms-"),
+    );
+    const dist = path.join(root, "dist");
+
+    try {
+      await mkdir(dist, { recursive: true });
+      await writeFile(
+        path.join(dist, "index.html"),
+        "<html><body>Home</body></html>",
+      );
+      await writeFile(path.join(dist, "llms.txt"), "# Example\n\nHello.");
+
+      const config = {
+        ...defaultConfig,
+        site: { ...defaultConfig.site, baseUrl: "https://example.com" },
+      };
+      const crawl = await crawlStatic(root, config);
+
+      expect(crawl.llmsTxt).toEqual(
+        expect.objectContaining({
+          url: "https://example.com/llms.txt",
+          status: 200,
+          content: "# Example\n\nHello.",
+          file: path.join(dist, "llms.txt"),
+        }),
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("reports a 404 status when llms.txt is absent", async () => {
+    const root = await mkdtemp(
+      path.join(tmpdir(), "search-quality-kit-no-llms-"),
+    );
+    const dist = path.join(root, "dist");
+
+    try {
+      await mkdir(dist, { recursive: true });
+      await writeFile(
+        path.join(dist, "index.html"),
+        "<html><body>Home</body></html>",
+      );
+
+      const config = {
+        ...defaultConfig,
+        site: { ...defaultConfig.site, baseUrl: "https://example.com" },
+      };
+      const crawl = await crawlStatic(root, config);
+
+      expect(crawl.llmsTxt).toEqual(
+        expect.objectContaining({
+          url: "https://example.com/llms.txt",
+          status: 404,
+          content: undefined,
+        }),
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});

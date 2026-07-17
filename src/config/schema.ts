@@ -126,6 +126,7 @@ const baseConfigSchema = z.object({
       renderedHtml: z.boolean().default(true),
       accessibility: z.boolean().default(true),
       performanceHints: z.boolean().default(true),
+      agentReadiness: z.boolean().default(true),
     })
     .prefault({}),
   rules: z
@@ -172,6 +173,9 @@ const baseConfigSchema = z.object({
           maxExternalScripts: z.number().int().nonnegative().default(10),
           largeImageBytes: z.number().int().positive().default(500000),
         })
+        .prefault({}),
+      agentReadiness: z
+        .object({ requireLlmsTxt: z.boolean().default(false) })
         .prefault({}),
     })
     .prefault({}),
