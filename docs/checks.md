@@ -8,6 +8,7 @@ Every finding has a stable `code`, severity, location, remediation, tool documen
 - `cross-channel-metadata`: metadata used outside Google Search, currently Open Graph.
 - `accessibility-basic`: a narrow semantic/accessibility check, not WCAG conformance.
 - `profile-expectation`: a site/route-specific expectation configured by the project; not a universal Google requirement.
+- `agentic-readiness`: a deterministic local signal for agentic browsing tooling (llms.txt, WebMCP annotations); not a Google Search requirement or recommendation.
 
 Checks can inherit more than one classification. The sources below are official Google Search Central or Google Crawling Infrastructure documentation, reviewed in July 2026.
 
@@ -84,6 +85,30 @@ Checks basic image alternatives, accessible link/button names, document language
 Classification: `google-recommendation`, `local-heuristic`.
 
 Flags configurable HTML/image size, excessive third-party scripts, missing lazy loading for many distinct non-primary images, and local/staging asset URLs. Responsive candidates from `srcset` and `<picture>` are grouped, repeated groups are deduplicated, and simple `px`/`vw` values in `sizes` are included as context without simulating viewport selection. Google recommends good real-world [Core Web Vitals](https://developers.google.com/search/docs/appearance/core-web-vitals), but these static hints do not measure LCP, INP, or CLS and do not replace Lighthouse or field data.
+
+## agent-readiness
+
+Classification: `agentic-readiness`; a local signal, not a Google Search requirement or recommendation.
+
+Reads a deterministic `/llms.txt` artifact (build output in static mode, origin in HTTP mode) and statically scans delivered HTML forms for declarative WebMCP tool annotations (`toolname`, `tooldescription`, `toolparamdescription`). It does not execute JavaScript and does not detect imperative WebMCP tool registration.
+
+- `agent-readiness.llms-txt-missing` — info, or warning when `rules.agentReadiness.requireLlmsTxt` is enabled: no `/llms.txt` found; add a Markdown `llms.txt` at the site root per [llmstxt.org](https://llmstxt.org/).
+- `agent-readiness.llms-txt-unreadable` — warning: `/llms.txt` responded with a server error or failed to load.
+- `agent-readiness.llms-txt-missing-h1` — warning: the file lacks an H1 (`# Title`).
+- `agent-readiness.llms-txt-missing-links` — warning: the file contains no Markdown links.
+- `agent-readiness.llms-txt-too-short` — warning: content is shorter than 50 characters.
+
+  These three checks replicate Lighthouse's `llms-txt` audit content rules exactly.
+
+- `agent-readiness.llms-txt-missing-summary` — info: no blockquote summary under the H1. This is an llmstxt.org recommendation and intentionally goes beyond the Lighthouse audit.
+- `agent-readiness.webmcp-tool-annotation-incomplete` — warning: a form declares only one of `toolname`/`tooldescription`, so the browser will not register the tool.
+- `agent-readiness.webmcp-tool-name-duplicate` — warning: two annotated forms on the same page share a `toolname`.
+- `agent-readiness.webmcp-param-description-missing` — info: a named field in a tool form has no `toolparamdescription`, associated/wrapping label, or `aria-description`/`aria-describedby`, so the generated input schema has an undescribed parameter.
+- `agent-readiness.webmcp-form-uncovered` — info: a form with user-facing controls carries no WebMCP annotations, mirroring the informative Lighthouse WebMCP form coverage audit.
+
+`rules.agentReadiness.requireLlmsTxt` (default `false`) raises a missing `/llms.txt` from info to warning once a project has committed to publishing one.
+
+Cumulative layout shift, runtime accessibility-tree integrity, and imperative WebMCP tools (`navigator.modelContext.registerTool`) require a real browser; they remain covered by the experimental Lighthouse [Agentic Browsing](https://developer.chrome.com/docs/lighthouse/agentic-browsing) category (Chrome 150+, WebMCP origin trial) and PageSpeed Insights, which this kit deliberately complements, not replaces. See also [WebMCP](https://developer.chrome.com/docs/ai/webmcp) and [llms.txt](https://llmstxt.org/).
 
 ## Broader policy context
 
