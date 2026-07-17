@@ -1,6 +1,6 @@
 {
   "name": "@silesiansolutions/search-quality-kit",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Framework-agnostic CLI for auditing technical Google Search foundations in local builds and CI.",
   "type": "module",
   "bin": {

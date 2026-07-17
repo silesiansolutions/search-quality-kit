@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## [0.10.0] - 2026-07-17
+
+- Add a default-on `agentReadiness` check that audits a new `/llms.txt` crawl artifact (static build output or HTTP origin) and statically scans delivered HTML forms for declarative WebMCP annotations (`toolname`, `tooldescription`, `toolparamdescription`), mirroring the deterministic subset of the experimental Lighthouse Agentic Browsing category.
+- Replicate the Lighthouse `llms-txt` audit content rules exactly (H1, Markdown links, 50-character minimum) and add a blockquote-summary signal per llmstxt.org; emit `webmcp-tool-annotation-incomplete`, `webmcp-tool-name-duplicate`, `webmcp-param-description-missing`, and `webmcp-form-uncovered` findings.
+- Keep all agent-readiness findings `info`/`warning` and classified `agentic-readiness` so the default error gate is unchanged; add `rules.agentReadiness.requireLlmsTxt` to raise a missing `llms.txt` to a warning once a project commits to publishing one.
+- Bump the exported site and portfolio contract schema to `0.10`; the JSON report contract stays schema `0.3` because the change is additive.
+- Add `dawid.dev` as a fourth report-only site in the public portfolio showcase and document the agent-readiness check, its finding codes, and its runtime boundaries (CLS, accessibility tree, imperative WebMCP stay with Lighthouse and PageSpeed Insights).
+
 ## [0.9.0] - 2026-07-12
 
 - Add reviewed suppressions with required reason and owner, optional `YYYY-MM-DD` expiry, glob URL scoping, and `doctor` validation so accepted findings stay visible in JSON, Markdown, SARIF, baseline, and portfolio outputs without failing `ci.failOn`.
