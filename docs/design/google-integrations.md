@@ -6,10 +6,4 @@ A future integration could correlate Search Console performance changes with det
 
 Rich Results Test should not be cloned. Feature eligibility and Google's rendering behavior evolve independently; the core should keep bounded syntax, URL, identity, and consistency checks, then link to official tools for external validation.
 
-The core remains small, offline, CI-first, and usable without a Google account. Proposed v0.6 work is operational rather than Google-dependent:
-
-- GitHub Action wrapper;
-- SARIF and annotation hardening without invented source locations;
-- monorepo and multi-site runner;
-- optional plugin API for project checks;
-- public documentation site.
+The core remains small, offline, CI-first, and usable without a Google account. The operational work once proposed here — the Action wrapper, SARIF hardening, the multi-site runner, and the plugin API — shipped in v0.6–v0.7; current sequencing lives in the [product roadmap](../roadmap.md).

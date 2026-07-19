@@ -1,6 +1,6 @@
 # Portfolio trend storage
 
-Status: design note; v0.7 does not implement a trend database.
+Status: design note; no released version implements a trend database.
 
 ## Options
 
@@ -14,6 +14,6 @@ Status: design note; v0.7 does not implement a trend database.
 
 Public HTTP results can vary because of deployments, temporary network/CDN behavior, redirects, and bounded crawl discovery. Artifacts lack source context unless the workflow records the target revision. A trend can look authoritative while comparing different crawl scopes, config versions, package versions, or baseline policies.
 
-## Recommendation for v0.7
+## Recommendation
 
-Use GitHub Actions artifacts for every showcase run and manually reviewed single-site baselines when regression gating is useful. Record package/config revision with retained snapshots. Do not add an external store, scheduler service, automatic baseline mutation, or ranking dashboard to core.
+Use GitHub Actions artifacts for every showcase run and manually reviewed single-site baselines when regression gating is useful. Record package/config revision with retained snapshots. Do not add an external store, scheduler service, automatic baseline mutation, or ranking dashboard to core. This is a continuous track in the [product roadmap](../roadmap.md).
