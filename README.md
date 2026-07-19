@@ -13,6 +13,7 @@ A framework-agnostic CLI for auditing technical Google Search foundations in loc
 - [Search quality contracts](docs/contracts.md)
 - [CI and rollout](docs/ci.md)
 - [Public portfolio showcase](docs/showcase.md)
+- [Product roadmap](docs/roadmap.md)
 
 It checks technical foundations: crawlability, indexability, sitemap and robots rules, metadata, canonicals, JSON-LD, Open Graph, internal links, delivered HTML, basic accessibility, and lightweight performance risks. It does **not** promise rankings, score content quality, call Google APIs, replace Search Console, Rich Results Test, or Lighthouse.
 
