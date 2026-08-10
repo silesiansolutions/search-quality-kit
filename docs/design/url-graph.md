@@ -31,7 +31,7 @@ The graph is built lazily from a finished `CrawlResult`, never inside `crawlStat
 export type StatusProvenance = "observed" | "assumed" | "unresolved";
 ```
 
-Static-mode page nodes are `assumed`, because `crawlSite.ts:178` hardcodes `status: 200` and `crawlSite.ts:180` hardcodes `headers: {}` for every built page regardless of what a server would actually return. HTTP-mode page nodes are `observed`, taken from a real response. Targets discovered as link or hreflang targets but never crawled are `unresolved`, carrying no status at all. The predicate:
+In static mode **no** node is `observed`, whatever its kind. Page nodes are `assumed` because `crawlSite.ts:178` hardcodes `status: 200` and `crawlSite.ts:180` hardcodes `headers: {}` for every built page regardless of what a server would actually return. Sitemap nodes are `assumed` for the same reason at one remove: a sitemap file present in the build output says nothing about what the origin will serve for that path, so its `200` is as synthetic as a page's. The rule is deliberately stated per mode rather than per node kind — a mode-wide invariant cannot be violated by adding a node kind later, and a per-kind rule can. In HTTP mode both come from a real response and are `observed`. Targets discovered as link, canonical, or hreflang targets but never crawled are `unresolved`, carrying no status at all, in either mode. The predicate:
 
 ```ts
 export function statusIsTrustworthy(node: UrlNode): boolean;
