@@ -9,7 +9,7 @@ portfolio_config="${SQK_PORTFOLIO_CONFIG:-portfolio.search-quality.config.ts}"
 output_directory="${SQK_OUTPUT_DIR:-search-quality-reports}"
 
 case "$package_manager" in
-  npm) package_cli=(npx --no-install search-quality-kit) ;;
+  npm) package_cli=(npx --yes @silesiansolutions/search-quality-kit) ;;
   pnpm) package_cli=(pnpm exec search-quality-kit) ;;
   yarn) package_cli=(yarn exec search-quality-kit) ;;
   *)
