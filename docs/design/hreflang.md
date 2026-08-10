@@ -70,7 +70,9 @@ This forces a rule on message wording. The baseline fingerprint hashes `message`
 
 Beyond the false negatives, `Intl.DisplayNames` answers depend on the ICU build bundled with the user's Node runtime, so the same input could produce different findings on a laptop and in CI — disqualifying for a tool whose first pillar is determinism.
 
-`src/utils/bcp47.ts` therefore vendors ISO 639-1, ISO 3166-1 alpha-2, and UN M.49 macro-regions directly, under 1.5 KB total, carrying a `SUBTAG_TABLE_REVISION`. ISO 15924 script subtags are deliberately not vendored: a 4-letter Title-case subtag is accepted by shape and never reported, because Google's hreflang documentation covers language and region only, and flagging `zh-Hant` as invalid would be inventing a rule Google does not state. UN M.49 macro-regions are needed because `es-419` — Latin American Spanish — is a real, Google-documented hreflang value with a region code that ISO 3166-1 does not define.
+`src/utils/bcp47.ts` therefore vendors ISO 639-1, ISO 3166-1 alpha-2, and UN M.49 macro-regions directly, under 1.5 KB total, carrying a `SUBTAG_TABLE_REVISION`.
+
+The tables carry the current code for a renamed language and not its withdrawn alias: `he` and not `iw`, `id` and not `in`, `yi` and not `ji`. Google's hreflang documentation names ISO 639-1, and those aliases were removed from it, so a site still publishing `iw-IL` is reported. That is a deliberate choice with a real false-positive cost on older sites, pinned by a test so that changing it is a visible decision rather than a silent drift. ISO 15924 script subtags are deliberately not vendored: a 4-letter Title-case subtag is accepted by shape and never reported, because Google's hreflang documentation covers language and region only, and flagging `zh-Hant` as invalid would be inventing a rule Google does not state. UN M.49 macro-regions are needed because `es-419` — Latin American Spanish — is a real, Google-documented hreflang value with a region code that ISO 3166-1 does not define.
 
 ## Crawl truncation bounds what the check can know
 
