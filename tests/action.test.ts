@@ -52,6 +52,58 @@ describe("GitHub Action wrapper", () => {
     expect(action.outputs).toHaveProperty("markdown-report");
   });
 
+  it("publishes Marketplace metadata at the repository root", async () => {
+    const action = parse(
+      await readFile(path.join(root, "action.yml"), "utf8"),
+    ) as {
+      author?: string;
+      branding?: { icon?: string; color?: string };
+      runs: { using: string };
+    };
+    expect(action.runs.using).toBe("composite");
+    expect(action.author).toBeTruthy();
+    expect(action.branding?.icon).toBeTruthy();
+    expect(action.branding?.color).toBeTruthy();
+  });
+
+  it("keeps the root and subdirectory action metadata in sync", async () => {
+    const load = async (file: string) =>
+      parse(await readFile(path.join(root, file), "utf8")) as Record<
+        string,
+        unknown
+      > & { runs: { steps: Array<Record<string, unknown>> } };
+    const rootAction = await load("action.yml"),
+      nested = await load("action/action.yml");
+
+    expect(rootAction.inputs).toEqual(nested.inputs);
+    expect(rootAction.outputs).toEqual(nested.outputs);
+    expect(rootAction.name).toEqual(nested.name);
+    expect(rootAction.description).toEqual(nested.description);
+
+    const script = (action: {
+      runs: { steps: Array<Record<string, unknown>> };
+    }) =>
+      action.runs.steps.map((step) =>
+        typeof step.run === "string"
+          ? step.run.replace("/action/run.sh", "/run.sh")
+          : step.run,
+      );
+    expect(script(rootAction)).toEqual(script(nested));
+  });
+
+  it("resolves run.sh from its own action path in both metadata files", async () => {
+    const runLine = async (file: string) => {
+      const source = await readFile(path.join(root, file), "utf8");
+      return source.split("\n").find((line) => line.includes("run.sh"));
+    };
+    expect(await runLine("action.yml")).toContain(
+      "${{ github.action_path }}/action/run.sh",
+    );
+    expect(await runLine("action/action.yml")).toContain(
+      "${{ github.action_path }}/run.sh",
+    );
+  });
+
   it("passes shell syntax validation", async () => {
     await expect(
       exec("bash", ["-n", path.join(root, "action/run.sh")]),
