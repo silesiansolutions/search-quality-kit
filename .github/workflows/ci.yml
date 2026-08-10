@@ -3,6 +3,8 @@ on:
   pull_request:
   push:
     branches: [master]
+  schedule:
+    - cron: "0 5 * * 1"
 
 permissions:
   contents: read
@@ -19,3 +21,15 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm pack --dry-run
+
+  audit:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
