@@ -205,9 +205,11 @@ Set `mode: portfolio` and `portfolio-config` to upload the complete portfolio re
 
 ## Built-in checks
 
-`sitemap`, `robots`, `indexability`, `metadata`, `canonical`, `structuredData`, `openGraph`, `internalLinks`, `renderedHtml`, `accessibility`, `performanceHints`, and `agentReadiness`.
+`sitemap`, `robots`, `indexability`, `metadata`, `canonical`, `structuredData`, `openGraph`, `internalLinks`, `renderedHtml`, `accessibility`, `performanceHints`, `agentReadiness`, and `hreflang`.
 
 Rules are tied to official areas of [Google Search Central](https://developers.google.com/search/docs/essentials). Project heuristics such as title length, HTML weight, and image size are labeled as heuristics; profile expectations are labeled separately and are not represented as Google requirements or ranking thresholds. `agentReadiness` checks deterministic agent-readiness signals — llms.txt recommendations and declarative WebMCP annotations — aligned with the experimental Lighthouse Agentic Browsing category; runtime audits such as CLS, the accessibility tree, and imperative WebMCP tools stay with Lighthouse and PageSpeed Insights.
+
+`hreflang` validates international targeting across the whole crawl rather than one page at a time: reciprocity, self-reference, ISO 639-1 and ISO 3166-1 subtags, and alternate targets that redirect, 404, or disagree with their own canonical. A monolingual site produces no findings from it. Every code is `warning` or `info`, so the default gate is unchanged; `rules.hreflang.strict` opts into error severity.
 
 ## Custom checks
 
