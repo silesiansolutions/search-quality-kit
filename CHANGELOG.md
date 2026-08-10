@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [0.11.1] - 2026-08-10
+
+- Fix the composite Action failing in any repository that does not already depend on the package. It invoked `npx --no-install search-quality-kit`, which names the bin rather than the package, and modern npm ignores `--no-install` — so npx fell through to the registry, looked up a package literally named `search-quality-kit`, and exited with `E404`. It now invokes `npx --yes @silesiansolutions/search-quality-kit`, which still prefers a locally installed CLI and resolves correctly when there is none. Pin the package in `devDependencies` for reproducible runs; the fallback fetches the latest release.
+
 ## [0.11.0] - 2026-08-10
 
 - Derive a `UrlGraph` from every crawl: a lazily built, memoized projection carrying per-URL status, link, canonical, hreflang-alternate, sitemap and collapsed-redirect edges, reached through a free `urlGraph(crawl)` accessor so `CheckContext`, the engine and the crawler types are unchanged. Every node records whether its status was `observed`, `assumed` or `unresolved`, and `statusIsTrustworthy` is the only sanctioned way to read one — in static mode nothing is trustworthy, whatever the node kind.
@@ -117,6 +121,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.11.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.8.0...v0.9.0

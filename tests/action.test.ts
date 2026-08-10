@@ -282,9 +282,10 @@ fi
       );
       const invocations = await readFile(calls, "utf8");
       expect(invocations).toContain(
-        "--no-install search-quality-kit verify --config search-quality.config.ts",
+        "--yes @silesiansolutions/search-quality-kit verify --config search-quality.config.ts",
       );
       expect(invocations).toContain("search-quality-kit report");
+      expect(invocations).not.toContain("--no-install");
     } finally {
       await rm(temporary, { recursive: true, force: true });
     }
