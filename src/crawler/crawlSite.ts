@@ -195,6 +195,12 @@ export async function crawlStatic(
       assets.set(routeUrl, { url: routeUrl, file, bytes });
       const publicUrl = normalizeUrl(htmlPublicUrls.get(file) ?? routeUrl);
       assets.set(publicUrl, { url: publicUrl, file, bytes });
+      if (routeUrl.endsWith(".html")) {
+        const extensionlessUrl = normalizeUrl(
+          routeUrl.slice(0, -".html".length),
+        );
+        assets.set(extensionlessUrl, { url: extensionlessUrl, file, bytes });
+      }
     }
   }
   for (const page of pages)
