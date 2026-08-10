@@ -74,6 +74,14 @@ Beyond the false negatives, `Intl.DisplayNames` answers depend on the ICU build 
 
 The tables carry the current code for a renamed language and not its withdrawn alias: `he` and not `iw`, `id` and not `in`, `yi` and not `ji`. Google's hreflang documentation names ISO 639-1, and those aliases were removed from it, so a site still publishing `iw-IL` is reported. That is a deliberate choice with a real false-positive cost on older sites, pinned by a test so that changing it is a visible decision rather than a silent drift. ISO 15924 script subtags are deliberately not vendored: a 4-letter Title-case subtag is accepted by shape and never reported, because Google's hreflang documentation covers language and region only, and flagging `zh-Hant` as invalid would be inventing a rule Google does not state. UN M.49 macro-regions are needed because `es-419` — Latin American Spanish — is a real, Google-documented hreflang value with a region code that ISO 3166-1 does not define.
 
+## `x-default` counts as a self-reference, deliberately
+
+An `x-default` entry pointing at the page itself satisfies `missing-self`, even though `x-default` is a fallback annotation rather than a language version and Google's wording — each version must list itself — arguably asks for a language-tagged self-entry as well.
+
+The stricter reading was considered and rejected for v0.11. `missing-self` is a default-on, google-requirement code that `strict` promotes to `error`, and a page whose only self-pointing entry is `x-default` is a legitimate, deliberate pattern rather than an obvious mistake. Firing on it would spend the check's credibility on the least certain rule it has. The narrower reading is the one that survives being wrong.
+
+This is the first thing to revisit when `strict` becomes the default at 1.0, alongside the question of whether a language-tagged self-entry should be required outright.
+
 ## Crawl truncation bounds what the check can know
 
 `crawl.maxPages` (`src/config/schema.ts:55`, default 100) bounds both crawl modes. An hreflang alternate that points outside the crawled set becomes an `unresolved` graph node, and the check reports `unresolved-target` at `info` — the same result whether the target was excluded by configuration, pushed past `maxPages`, or genuinely absent. The check cannot distinguish those three, because the crawler did not fetch the URL in any of them.

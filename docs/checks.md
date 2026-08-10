@@ -110,6 +110,32 @@ Reads a deterministic `/llms.txt` artifact (build output in static mode, origin 
 
 Cumulative layout shift, runtime accessibility-tree integrity, and imperative WebMCP tools (`navigator.modelContext.registerTool`) require a real browser; they remain covered by the experimental Lighthouse [Agentic Browsing](https://developer.chrome.com/docs/lighthouse/agentic-browsing) category (Chrome 150+, WebMCP origin trial) and PageSpeed Insights, which this kit deliberately complements, not replaces. See also [WebMCP](https://developer.chrome.com/docs/ai/webmcp) and [llms.txt](https://llmstxt.org/).
 
+## hreflang
+
+Classification: `google-requirement`, `google-recommendation`, `local-heuristic`.
+
+Validates `<link rel="alternate" hreflang>` annotations across the whole crawl, not one page at a time. Reciprocity is the reason this check needs a cross-page view: Google states that if page X links to page Y, page Y must link back, or the annotations may be ignored. Only ISO 639-1 language codes and ISO 3166-1 alpha-2 region codes are supported, plus UN M.49 macro-regions such as `es-419`.
+
+Annotations delivered through the HTTP `Link:` header or through sitemap `xhtml:link` entries are not read. A site that annotates only that way produces no findings rather than a false `missing-self` on every page.
+
+Every code is `warning` or `info` by default, so the default `ci.failOn: ["error"]` gate is unchanged on upgrade. `rules.hreflang.strict` (default `false`) promotes the Google-requirement codes to `error`.
+
+- `hreflang.invalid-value` — warning: the value is not a parseable language tag, such as `en_US`; use hyphens and a `language[-script][-region]` shape.
+- `hreflang.invalid-language` — warning: the value parses but its language is not ISO 639-1, such as `eng` instead of `en`.
+- `hreflang.invalid-region` — warning: the region is neither ISO 3166-1 alpha-2 nor a UN M.49 macro-region, such as `en-UK` instead of `en-GB`.
+- `hreflang.relative-href` — warning: the `href` is not fully qualified; hreflang targets must be absolute URLs.
+- `hreflang.missing-self` — warning: the page declares alternates but none targets itself.
+- `hreflang.missing-reciprocal` — warning: another crawled page names this one as an alternate and this page does not link back. Reported once against the page that fails to link back, with the declaring pages in `relatedUrls`.
+- `hreflang.duplicate-language` — warning: the same value is declared twice on one page with different targets.
+- `hreflang.broken-target` — warning: an alternate target returned an error status. Emitted only when the status was actually observed, so it never fires in static mode, where the crawler cannot know what the origin will serve.
+- `hreflang.x-default-duplicate` — warning: more than one `x-default` on a page.
+- `hreflang.non-canonical-target` — warning: the target page declares a canonical other than the alternate `href`. Gated by `rules.hreflang.requireCanonicalTargets` (default `true`).
+- `hreflang.lang-mismatch` — warning: the `<html lang>` value disagrees with the page's own self-referencing annotation.
+- `hreflang.unresolved-target` — info: a same-origin alternate target was not crawled, so it could not be checked. Raising `crawl.maxPages` above the site's page count converts this into a decidable result; silence about a URL is never evidence that the URL is fine.
+- `hreflang.missing-x-default` — info: a cluster has two or more language versions and no `x-default`. Emitted only under `rules.hreflang.requireXDefault` (default `false`).
+
+A monolingual site produces no findings from this check at all. An `x-default` entry pointing at the page itself counts as a self-reference. See [Google's localized versions documentation](https://developers.google.com/search/docs/specialty/international/localized-versions) and the [design note](design/hreflang.md).
+
 ## Broader policy context
 
 The tool intentionally does not automate subjective content or spam judgments. Teams should separately follow [Search Essentials](https://developers.google.com/search/docs/essentials), [spam policies](https://developers.google.com/search/docs/essentials/spam-policies), [people-first content guidance](https://developers.google.com/search/docs/fundamentals/creating-helpful-content), [image SEO](https://developers.google.com/search/docs/appearance/google-images), and [favicon requirements](https://developers.google.com/search/docs/appearance/favicon-in-search).
