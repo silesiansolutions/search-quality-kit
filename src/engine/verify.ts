@@ -55,6 +55,7 @@ export async function runVerification(
       } catch (error) {
         throw new Error(
           `build.command failed: ${(error as Error).message}. Run it manually to inspect the build, or fix build.command in the config.`,
+          { cause: error },
         );
       }
     }

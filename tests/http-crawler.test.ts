@@ -34,8 +34,7 @@ afterEach(async () => {
 
 describe("HTTP crawl redirects", () => {
   it("uses the final trailing-slash URL for links and canonical checks", async () => {
-    let base = "";
-    ({ base } = await listen((request, response) => {
+    const { base } = await listen((request, response) => {
       if (request.url === "/") {
         response.writeHead(301, { location: "/section" }).end();
         return;
@@ -67,7 +66,7 @@ describe("HTTP crawl redirects", () => {
         return;
       }
       response.writeHead(404).end();
-    }));
+    });
     const config = configSchema.parse({ site: { baseUrl: base } });
     const crawl = await crawlHttp(base, config);
 
@@ -92,8 +91,7 @@ describe("HTTP crawl redirects", () => {
 
 describe("HTTP orphan detection", () => {
   it("combines recursive sitemap URLs with links, entrypoints, and exclusions", async () => {
-    let base = "";
-    ({ base } = await listen((request, response) => {
+    const { base } = await listen((request, response) => {
       if (request.url === "/") {
         response.writeHead(200).end('<a href="/linked">Linked</a>');
         return;
@@ -128,7 +126,7 @@ describe("HTTP orphan detection", () => {
         return;
       }
       response.writeHead(404).end();
-    }));
+    });
     const config = configSchema.parse({
       site: { baseUrl: base },
       crawl: { exclude: ["/excluded"] },
@@ -145,8 +143,7 @@ describe("HTTP orphan detection", () => {
 
 describe("HTTP crawl llms.txt artifact", () => {
   it("populates content when the server returns 200", async () => {
-    let base = "";
-    ({ base } = await listen((request, response) => {
+    const { base } = await listen((request, response) => {
       if (request.url === "/llms.txt") {
         response.writeHead(200).end("# Example\n\nHello.");
         return;
@@ -156,7 +153,7 @@ describe("HTTP crawl llms.txt artifact", () => {
         return;
       }
       response.writeHead(404).end();
-    }));
+    });
     const config = configSchema.parse({ site: { baseUrl: base } });
     const crawl = await crawlHttp(base, config);
 
@@ -170,14 +167,13 @@ describe("HTTP crawl llms.txt artifact", () => {
   });
 
   it("reports a 404 status when the server has no llms.txt", async () => {
-    let base = "";
-    ({ base } = await listen((request, response) => {
+    const { base } = await listen((request, response) => {
       if (request.url === "/") {
         response.writeHead(200).end("Home");
         return;
       }
       response.writeHead(404).end();
-    }));
+    });
     const config = configSchema.parse({ site: { baseUrl: base } });
     const crawl = await crawlHttp(base, config);
 
