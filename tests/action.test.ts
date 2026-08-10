@@ -44,8 +44,8 @@ describe("GitHub Action wrapper", () => {
       ]),
     );
     expect(action.runs.steps.map((step) => step.uses).filter(Boolean)).toEqual([
-      "actions/setup-node@v6",
-      "actions/setup-node@v6",
+      "actions/setup-node@v7",
+      "actions/setup-node@v7",
       "actions/upload-artifact@v7",
     ]);
     expect(action.outputs).toHaveProperty("json-report");
@@ -80,15 +80,20 @@ describe("GitHub Action wrapper", () => {
     expect(rootAction.name).toEqual(nested.name);
     expect(rootAction.description).toEqual(nested.description);
 
-    const script = (action: {
+    const steps = (action: {
       runs: { steps: Array<Record<string, unknown>> };
     }) =>
       action.runs.steps.map((step) =>
-        typeof step.run === "string"
-          ? step.run.replace("/action/run.sh", "/run.sh")
-          : step.run,
+        Object.fromEntries(
+          Object.entries(step).map(([key, value]) => [
+            key,
+            key === "run" && typeof value === "string"
+              ? value.replace("/action/run.sh", "/run.sh")
+              : value,
+          ]),
+        ),
       );
-    expect(script(rootAction)).toEqual(script(nested));
+    expect(steps(rootAction)).toEqual(steps(nested));
   });
 
   it("resolves run.sh from its own action path in both metadata files", async () => {
