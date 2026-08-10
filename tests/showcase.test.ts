@@ -100,7 +100,7 @@ describe("public showcase", () => {
     expect(workflow.on).toHaveProperty("workflow_dispatch");
     expect(workflow.on).toHaveProperty("schedule");
     const action = workflow.jobs.showcase.steps.find(
-      (step) => step.uses === "./action",
+      (step) => step.uses === "./",
     );
     expect(action?.with).toMatchObject({
       mode: "portfolio",

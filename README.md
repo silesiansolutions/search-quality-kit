@@ -189,7 +189,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: SilesianSolutions/search-quality-kit/action@v0
+      - uses: SilesianSolutions/search-quality-kit@v0
         with:
           node-version-file: .nvmrc
           install-command: npm ci

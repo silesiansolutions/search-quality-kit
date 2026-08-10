@@ -48,7 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: SilesianSolutions/search-quality-kit/action@v0
+      - uses: SilesianSolutions/search-quality-kit@v0
         with:
           node-version: "22"
           package-manager: npm
@@ -64,7 +64,7 @@ jobs:
 Repositories that already pin Node in `.nvmrc`, `.node-version`, or another setup-node-compatible file should use `node-version-file` instead of duplicating the version:
 
 ```yaml
-- uses: SilesianSolutions/search-quality-kit/action@v0
+- uses: SilesianSolutions/search-quality-kit@v0
   with:
     node-version-file: .nvmrc
     package-manager: pnpm
@@ -80,7 +80,7 @@ The default artifact contains `search-quality-report.json` and `search-quality-r
 ### Baseline and fail-on-new
 
 ```yaml
-- uses: SilesianSolutions/search-quality-kit/action@v0
+- uses: SilesianSolutions/search-quality-kit@v0
   with:
     node-version: "22"
     install-command: npm ci
@@ -97,7 +97,7 @@ The default artifact contains `search-quality-report.json` and `search-quality-r
 ### Report-only rollout
 
 ```yaml
-- uses: SilesianSolutions/search-quality-kit/action@v0
+- uses: SilesianSolutions/search-quality-kit@v0
   with:
     install-command: npm ci
     build-command: npm run build
@@ -232,7 +232,7 @@ include contract and handoff files in the same artifact, disable the Action's
 upload step and upload the directory yourself after generating the extra files:
 
 ```yaml
-- uses: SilesianSolutions/search-quality-kit/action@v0
+- uses: SilesianSolutions/search-quality-kit@v0
   with:
     node-version-file: .nvmrc
     package-manager: pnpm
@@ -349,7 +349,7 @@ strategy:
 
 steps:
   - uses: actions/checkout@v7
-  - uses: SilesianSolutions/search-quality-kit/action@v0
+  - uses: SilesianSolutions/search-quality-kit@v0
     with:
       working-directory: ${{ matrix.directory }}
       install-command: npm ci
@@ -368,7 +368,7 @@ This is orchestration, not automatic multi-site discovery. Use portfolio mode wh
 Single-site mode remains the default. For a monorepo or independently deployed portfolio, set `mode: portfolio`:
 
 ```yaml
-- uses: SilesianSolutions/search-quality-kit/action@v0
+- uses: SilesianSolutions/search-quality-kit@v0
   with:
     node-version-file: .nvmrc
     package-manager: npm

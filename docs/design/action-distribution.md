@@ -23,13 +23,17 @@ Package adoption as of 2026-08-10: 83 npm downloads in the last week, 2 GitHub s
 
 **(c) Root metadata plus subdirectory shim.** Chosen. `action.yml` at the repository root becomes the canonical, Marketplace-eligible metadata, carrying `branding:` and `author:`. `action/action.yml` remains in place as a shim so `SilesianSolutions/search-quality-kit/action@v0` keeps resolving.
 
-## Open risk: `uses: ./` resolution
+## How the shim works: no delegation at all
 
-The straightforward shim implementation has the subdirectory `action/action.yml` delegate to the root action with `uses: ./` (or an equivalent relative reference). This pattern has historically resolved relative to the **consumer's** workspace rather than the action's own repository when invoked from a nested composite step context — behavior that has shifted across GitHub Actions runner versions and is not something to assume compatible today.
+The obvious shim has `action/action.yml` delegate to the root action with `uses: ./`. That was rejected. Local `uses:` paths inside a composite action have historically resolved against the consumer's workspace rather than the action's own repository, and the behavior has moved across runner versions — a dependency on undocumented resolution order is not something to build a compatibility guarantee on.
 
-If `uses: ./`-style delegation does not resolve correctly, the fallback is that both metadata files — the root `action.yml` and `action/action.yml` — independently invoke the shared `action/run.sh`, with no delegation between the two `runs:` blocks. A test must assert the two `runs:` blocks stay in sync (same steps, same environment variable mapping) so they cannot drift.
+There is no need for it. Both metadata files invoke the same `action/run.sh`, and `github.action_path` already points at the directory holding the metadata file being executed. The root file calls `${{ github.action_path }}/action/run.sh`; the subdirectory file calls `${{ github.action_path }}/run.sh`. One script, two entry points, no delegation, no runner-version dependency.
 
-Either way, this must be verified against a real workflow run — a workflow in this repository or a scratch repository that exercises both `SilesianSolutions/search-quality-kit@v0` and `SilesianSolutions/search-quality-kit/action@v0` — before merge. It is not something to assume works from reading the composite-action documentation alone.
+The cost is two metadata files that can drift. A test asserts they declare identical inputs, outputs, name and description, and identical `runs` steps once the script path is normalized — so a change to one that is not made to the other fails the suite rather than reaching a consumer.
+
+The root file additionally carries `branding` and `author`, which the subdirectory file does not need and which the sync test deliberately ignores.
+
+Verified against a real workflow run rather than assumed: `.github/workflows/showcase.yml` was switched from `uses: ./action` to `uses: ./`, so the root metadata is exercised by a live four-site audit on every pull request that touches it.
 
 ## Backward compatibility
 

@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./action
+      - uses: ./
         with:
           node-version: "22"
           package-manager: npm
