@@ -33,6 +33,7 @@ export const checkClassifications: Record<string, FindingClassification[]> = {
   "performance-hints": ["google-recommendation", "local-heuristic"],
   agentReadiness: ["agentic-readiness"],
   "agent-readiness": ["agentic-readiness"],
+  hreflang: ["google-requirement", "google-recommendation", "local-heuristic"],
 };
 
 export const classificationForCheck = (check: string) =>

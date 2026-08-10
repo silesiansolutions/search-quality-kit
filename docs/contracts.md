@@ -12,7 +12,7 @@ search-quality-kit contract \
   --output search-quality-contract.json
 ```
 
-The JSON contract uses `schemaVersion: "0.10"` and `type: "site"`. It includes:
+The JSON contract uses `schemaVersion: "0.11"` and `type: "site"`. It includes:
 
 - the production base URL;
 - crawl mode, entrypoints, include/exclude rules, and bounded crawl limits;

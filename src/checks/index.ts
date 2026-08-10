@@ -1,6 +1,7 @@
 import { accessibilityCheck } from "./accessibility.js";
 import { agentReadinessCheck } from "./agentReadiness.js";
 import { canonicalCheck } from "./canonical.js";
+import { hreflangCheck } from "./hreflang.js";
 import { indexabilityCheck } from "./indexability.js";
 import { internalLinksCheck } from "./internalLinks.js";
 import { metadataCheck } from "./metadata.js";
@@ -10,10 +11,7 @@ import { renderedHtmlCheck } from "./renderedHtml.js";
 import { robotsCheck } from "./robots.js";
 import { sitemapCheck } from "./sitemap.js";
 import { structuredDataCheck } from "./structuredData.js";
-import {
-  classificationForCheck,
-  legacyBasisForCheck,
-} from "./types.js";
+import { classificationForCheck, legacyBasisForCheck } from "./types.js";
 export const checks = [
   sitemapCheck,
   robotsCheck,
@@ -27,6 +25,7 @@ export const checks = [
   accessibilityCheck,
   performanceHintsCheck,
   agentReadinessCheck,
+  hreflangCheck,
 ];
 
 export type { CheckBasis } from "./types.js";
@@ -47,6 +46,7 @@ const severities: Record<
   accessibility: ["error", "warning"],
   performanceHints: ["error", "warning"],
   agentReadiness: ["warning", "info"],
+  hreflang: ["error", "warning", "info"],
 };
 
 export const checkCatalog = checks.map((check) => ({
