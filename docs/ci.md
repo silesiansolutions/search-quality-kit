@@ -324,7 +324,7 @@ search-quality-kit report search-quality-report.json \
   --output search-quality-report.sarif
 ```
 
-Each finding becomes a SARIF result, `code` is the rule id, and severities map to `error`, `warning`, and `note`. The URL or known file is used as the artifact URI. The tool deliberately does not invent source line numbers: crawl routes generally cannot be mapped safely to source files.
+Each finding becomes a SARIF result, the rule id is the check-qualified code such as `canonical.non-production-url`, and severities map to `error`, `warning`, and `note`. The rule id is qualified because several checks emit the same bare code; leaving them unqualified merged unrelated findings into a single code-scanning rule. The URL or known file is used as the artifact URI. The tool deliberately does not invent source line numbers: crawl routes generally cannot be mapped safely to source files.
 
 GitHub workflow-command annotations are not emitted for the same reason. Markdown summaries, handoff reports, and SARIF provide bounded, honest review surfaces without pretending that a route has a source line.
 

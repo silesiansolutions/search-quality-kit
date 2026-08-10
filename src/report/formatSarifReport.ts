@@ -1,3 +1,4 @@
+import { findingStableCode } from "../suppressions.js";
 import type { Finding, SearchQualityReport } from "./types.js";
 
 const level = (severity: Finding["severity"]) =>
@@ -5,8 +6,10 @@ const level = (severity: Finding["severity"]) =>
 
 export function formatSarifReport(report: SearchQualityReport) {
   const rules = new Map<string, Finding>();
-  for (const finding of report.findings)
-    if (!rules.has(finding.code)) rules.set(finding.code, finding);
+  for (const finding of report.findings) {
+    const id = findingStableCode(finding);
+    if (!rules.has(id)) rules.set(id, finding);
+  }
 
   return JSON.stringify(
     {
@@ -21,7 +24,7 @@ export function formatSarifReport(report: SearchQualityReport) {
                 "https://github.com/SilesianSolutions/search-quality-kit",
               version: report.version,
               rules: [...rules.values()].map((finding) => ({
-                id: finding.code,
+                id: findingStableCode(finding),
                 name: finding.check,
                 shortDescription: {
                   text: `${finding.check}/${finding.code}`,
@@ -35,7 +38,7 @@ export function formatSarifReport(report: SearchQualityReport) {
             },
           },
           results: report.findings.map((finding) => ({
-            ruleId: finding.code,
+            ruleId: findingStableCode(finding),
             level: level(finding.severity),
             message: {
               text: `${finding.message}\n\nRemediation: ${finding.suggestion}`,

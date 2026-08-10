@@ -153,11 +153,11 @@ describe("report formatters", () => {
     const sarif = JSON.parse(formatSarifReport(report));
     expect(sarif.version).toBe("2.1.0");
     expect(sarif.runs[0].tool.driver.rules[0]).toMatchObject({
-      id: "missing",
+      id: "canonical.missing",
       name: "canonical",
     });
     expect(sarif.runs[0].results[0]).toMatchObject({
-      ruleId: "missing",
+      ruleId: "canonical.missing",
       level: "error",
       locations: [
         {
@@ -174,6 +174,39 @@ describe("report formatters", () => {
     expect(sarif.runs[0].results[0].locations[0].physicalLocation.region).toBe(
       undefined,
     );
+  });
+
+  it("keeps a code shared by several checks as distinct SARIF rules", () => {
+    const shared = (check: string) => ({
+      severity: "warning" as const,
+      check,
+      code: "non-production-url",
+      message: `${check} points at a staging host.`,
+      suggestion: "Publish the production URL.",
+      url: "https://example.com/",
+      docs: "https://example.com/docs",
+      classification: ["local-heuristic" as const],
+      impact: "recommendation" as const,
+    });
+    const sarif = JSON.parse(
+      formatSarifReport({
+        ...report,
+        findings: [
+          shared("canonical"),
+          shared("internal-links"),
+          shared("sitemap"),
+          shared("structured-data"),
+        ],
+      }),
+    );
+    expect(
+      sarif.runs[0].tool.driver.rules.map((r: { id: string }) => r.id),
+    ).toEqual([
+      "canonical.non-production-url",
+      "internal-links.non-production-url",
+      "sitemap.non-production-url",
+      "structured-data.non-production-url",
+    ]);
   });
 
   it("reports plugin errors separately from findings", () => {
