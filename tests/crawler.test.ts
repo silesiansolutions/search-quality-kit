@@ -42,6 +42,38 @@ describe("static crawl route inventory", () => {
     }
   });
 
+  it("resolves extensionless links to flat HTML output", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "search-quality-kit-tags-"));
+    const dist = path.join(root, "dist");
+
+    try {
+      await mkdir(path.join(dist, "tags"), { recursive: true });
+      await writeFile(
+        path.join(dist, "index.html"),
+        '<html><body><a href="/tags/ai">AI</a></body></html>',
+      );
+      await writeFile(
+        path.join(dist, "tags", "ai.html"),
+        "<html><body>Notes tagged ai</body></html>",
+      );
+
+      const config = {
+        ...defaultConfig,
+        site: { ...defaultConfig.site, baseUrl: "https://example.com" },
+      };
+      const crawl = await crawlStatic(root, config);
+      const findings = await internalLinksCheck.run({ config, crawl });
+
+      expect(crawl.assets.has("https://example.com/tags/ai")).toBe(true);
+      expect(crawl.assets.has("https://example.com/tags/ai.html")).toBe(true);
+      expect(
+        findings.some((finding) => finding.code === "missing-static-route"),
+      ).toBe(false);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("uses a same-origin extensionless canonical for flat HTML output", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "search-quality-kit-flat-"));
     const dist = path.join(root, "dist");
@@ -79,9 +111,7 @@ describe("static crawl route inventory", () => {
 
 describe("static crawl llms.txt artifact", () => {
   it("reads llms.txt content when present", async () => {
-    const root = await mkdtemp(
-      path.join(tmpdir(), "search-quality-kit-llms-"),
-    );
+    const root = await mkdtemp(path.join(tmpdir(), "search-quality-kit-llms-"));
     const dist = path.join(root, "dist");
 
     try {

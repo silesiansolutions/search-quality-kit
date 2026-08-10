@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [0.11.2] - 2026-08-10
+
+- Fix `internal-links.missing-static-route` reporting every extensionless link to flat HTML output as a broken route. The static route inventory registered `tags/ai.html` as `/tags/ai.html` and as a directory-index form, but never as `/tags/ai`, so generators that emit flat files — Quartz, SvelteKit's static adapter, Hugo with ugly URLs — produced one error per internal link. A real site measured 2878 of them, all false. The inventory now also registers the extensionless form.
+
 ## [0.11.1] - 2026-08-10
 
 - Fix the composite Action failing in any repository that does not already depend on the package. It invoked `npx --no-install search-quality-kit`, which names the bin rather than the package, and modern npm ignores `--no-install` — so npx fell through to the registry, looked up a package literally named `search-quality-kit`, and exited with `E404`. It now invokes `npx --yes @silesiansolutions/search-quality-kit`, which still prefers a locally installed CLI and resolves correctly when there is none. Pin the package in `devDependencies` for reproducible runs; the fallback fetches the latest release.
@@ -121,6 +125,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.11.2]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.9.0...v0.10.0
