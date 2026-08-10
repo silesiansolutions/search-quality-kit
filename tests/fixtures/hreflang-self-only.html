@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Single language version with a self-referencing annotation</title>
+    <meta
+      name="description"
+      content="A page that declares hreflang for itself before any translation exists, which is the shape common advice produces first."
+    />
+    <link rel="canonical" href="https://example.com/" />
+    <link rel="alternate" hreflang="en" href="https://example.com/" />
+  </head>
+  <body>
+    <h1>Single language version with a self-referencing annotation</h1>
+    <p>
+      This page belongs to no cluster. It annotates its own language and names
+      no other version, so the hreflang check must stay silent about it: the
+      global short-circuit does not apply, because one alternate edge exists.
+    </p>
+    <a href="https://example.com/">Home</a>
+  </body>
+</html>

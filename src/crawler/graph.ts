@@ -130,7 +130,7 @@ function collectPageEdges(
   });
   $("link[hreflang]").each((_, link) => {
     if (!isAlternateRel($(link).attr("rel"))) return;
-    const hreflang = $(link).attr("hreflang") ?? "";
+    const hreflang = ($(link).attr("hreflang") ?? "").trim();
     const href = ($(link).attr("href") ?? "").trim();
     pushResolvableEdge(
       edges,

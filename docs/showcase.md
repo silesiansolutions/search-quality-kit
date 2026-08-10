@@ -65,7 +65,7 @@ decisions have been reviewed.
 
 `portfolio.json` is the stable schema `0.7` machine report. It contains portfolio totals, per-site summaries and report paths, bounded highlights, operational errors, and the final gate decision. Full findings stay in each site's `search-quality-report.json` unless `--include-findings` is requested. `portfolio.md` is a bounded GitHub summary with the gate reason, site table, top findings, resolved items, operational failures, and next actions.
 
-`portfolio-contract.json` is the schema `0.10` contract export. It records the
+`portfolio-contract.json` is the schema `0.11` contract export. It records the
 validated portfolio/site policy without crawling: base URLs, crawl scope,
 profiles, policy packs, suppressions, and gate settings. Use it when a reviewer
 or coding agent needs to understand the quality contract before changing a

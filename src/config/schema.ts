@@ -127,6 +127,7 @@ const baseConfigSchema = z.object({
       accessibility: z.boolean().default(true),
       performanceHints: z.boolean().default(true),
       agentReadiness: z.boolean().default(true),
+      hreflang: z.boolean().default(true),
     })
     .prefault({}),
   rules: z
@@ -176,6 +177,13 @@ const baseConfigSchema = z.object({
         .prefault({}),
       agentReadiness: z
         .object({ requireLlmsTxt: z.boolean().default(false) })
+        .prefault({}),
+      hreflang: z
+        .object({
+          strict: z.boolean().default(false),
+          requireXDefault: z.boolean().default(false),
+          requireCanonicalTargets: z.boolean().default(true),
+        })
         .prefault({}),
     })
     .prefault({}),
