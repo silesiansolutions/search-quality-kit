@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## [0.11.0] - 2026-08-10
+
+- Derive a `UrlGraph` from every crawl: a lazily built, memoized projection carrying per-URL status, link, canonical, hreflang-alternate, sitemap and collapsed-redirect edges, reached through a free `urlGraph(crawl)` accessor so `CheckContext`, the engine and the crawler types are unchanged. Every node records whether its status was `observed`, `assumed` or `unresolved`, and `statusIsTrustworthy` is the only sanctioned way to read one — in static mode nothing is trustworthy, whatever the node kind.
+- Add a default-on `hreflang` check, the first cross-page check in the kit: `invalid-value`, `invalid-language`, `invalid-region`, `relative-href`, `missing-self`, `missing-reciprocal`, `duplicate-language`, `broken-target`, `x-default-duplicate`, `non-canonical-target`, `lang-mismatch`, `unresolved-target`, and `missing-x-default`. Reciprocity is reported once against the page that fails to link back, with the declaring pages in `relatedUrls`.
+- Keep every hreflang finding at `warning` or `info` so the default `ci.failOn: ["error"]` gate is unchanged on upgrade; add `rules.hreflang.strict`, `rules.hreflang.requireXDefault` and `rules.hreflang.requireCanonicalTargets`. A monolingual site produces no hreflang findings at all, held by a corpus sweep over every HTML fixture.
+- Scope hreflang to `<link rel="alternate" hreflang>` in delivered HTML. The HTTP `Link:` header and sitemap `xhtml:link` variants are deferred rather than producing findings that appear in one crawl mode and vanish in the other.
+- Add `src/utils/bcp47.ts`, a zero-import BCP 47 parser with vendored ISO 639-1, ISO 3166-1 alpha-2 and UN M.49 tables (`SUBTAG_TABLE_REVISION` `2026-08-10`). `Intl` is rejected because it normalizes `eng` to `en`, accepts unregistered codes, resolves `UK` as a region, and answers differently depending on the ICU build in the user's Node.
+- Qualify SARIF `ruleId` values with the emitting check. `non-production-url` (four checks) and `missing-lang` (two checks) previously collapsed into single code-scanning rules. Existing alerts close under the old ids and reopen under the qualified ones; the JSON report contract is untouched.
+- Publish Action metadata at the repository root with `branding` and `author` so the composite Action can be listed on the GitHub Marketplace, keeping `action/action.yml` so every documented `uses:` path resolves unchanged. Both entry points invoke the same `action/run.sh`, and a test keeps the two metadata files in sync.
+- Bump the exported contract schema to `0.11` because the config surface grew; the JSON report contract stays schema `0.3` and existing baselines remain valid.
+- Rescope the roadmap: v0.11 is the crawl graph and international targeting, while redirect integrity, canonical-target validation and the `indexability.non-200` split move to v0.12 with the crawler rework they depend on. Correct the claim that all new codes are additive, record why five of six planned sitemap-correlation codes duplicate existing findings, and add design notes for the URL graph, hreflang, finding-code stability, Action distribution and the AI surface.
+- Run `npm audit` as its own scheduled CI job, add Dependabot coverage for npm and the `github-actions` ecosystem, and align the README with the sibling repositories.
+
 ## [0.10.0] - 2026-07-17
 
 - Add a default-on `agentReadiness` check that audits a new `/llms.txt` crawl artifact (static build output or HTTP origin) and statically scans delivered HTML forms for declarative WebMCP annotations (`toolname`, `tooldescription`, `toolparamdescription`), mirroring the deterministic subset of the experimental Lighthouse Agentic Browsing category.
@@ -104,6 +117,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.11.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.7.0...v0.8.0
