@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## [0.11.3] - 2026-09-02
+
+- Refresh the runtime dependencies: `commander` 15.0.0, `zod` 4.5.2 and `fast-xml-parser` 5.11.1. The CLI surface, the config schema and the JSON report contract are unchanged.
+- Pin the transitive `nanoid` to 3.3.18 in the lockfile after GHSA-2v37-7h3g-55p8 (high, reached through `postcss` under Vitest). `npm audit --audit-level=high` is clean again, and the scheduled `audit` job with it.
+- Move the development toolchain to TypeScript 6.0.3, ESLint 10 with typescript-eslint 8.68 and Vitest 4, and drop `baseUrl` from `tsconfig.json` ahead of its removal in TypeScript 7. The only source change comes from the new lint rules: a failing `build.command` now rethrows with the original error attached as `cause`, with the same message as before.
+- Group Dependabot version updates into one pull request per ecosystem with a seven-day cooldown, keep both Action metadata files in one Action bump, and let the composite-action test follow Action bumps without a hand-edited version list.
+
 ## [0.11.2] - 2026-08-10
 
 - Fix `internal-links.missing-static-route` reporting every extensionless link to flat HTML output as a broken route. The static route inventory registered `tags/ai.html` as `/tags/ai.html` and as a directory-index form, but never as `/tags/ai`, so generators that emit flat files — Quartz, SvelteKit's static adapter, Hugo with ugly URLs — produced one error per internal link. A real site measured 2878 of them, all false. The inventory now also registers the extensionless form.
@@ -125,6 +132,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.11.3]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.2...v0.11.3
 [0.11.2]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.0...v0.11.1
 [0.11.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.10.0...v0.11.0
