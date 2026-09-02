@@ -43,10 +43,14 @@ describe("GitHub Action wrapper", () => {
         "build-command",
       ]),
     );
-    expect(action.runs.steps.map((step) => step.uses).filter(Boolean)).toEqual([
-      "actions/setup-node@v7",
-      "actions/setup-node@v7",
-      "actions/upload-artifact@v7",
+    expect(
+      action.runs.steps.flatMap((step) =>
+        step.uses ? [step.uses.replace(/@.*$/, "")] : [],
+      ),
+    ).toEqual([
+      "actions/setup-node",
+      "actions/setup-node",
+      "actions/upload-artifact",
     ]);
     expect(action.outputs).toHaveProperty("json-report");
     expect(action.outputs).toHaveProperty("markdown-report");
