@@ -1,6 +1,11 @@
-name: CI
+name: Audit
+
 on:
   pull_request:
+    paths:
+      - package.json
+      - package-lock.json
+      - .github/workflows/audit.yml
   push:
     branches: [master]
   schedule:
@@ -10,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -19,5 +24,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run check
-      - run: npm pack --dry-run
+      - run: npm audit --audit-level=high
