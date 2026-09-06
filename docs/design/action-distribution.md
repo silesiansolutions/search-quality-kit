@@ -37,12 +37,19 @@ Verified against a real workflow run rather than assumed: `.github/workflows/sho
 
 ## Backward compatibility
 
-Every documented `uses:` path must keep resolving after the move:
+Every documented `uses:` path must keep resolving after the move. Every example teaches the root path today:
 
-- `README.md:192` — `uses: SilesianSolutions/search-quality-kit/action@v0`
-- `docs/ci.md` — the same path, at lines 51, 67, 83, 100, 235, 352, and 371
+- `README.md:192` - `uses: SilesianSolutions/search-quality-kit@v0`
+- `docs/ci.md` - the same path, at lines 51, 67, 83, 100, 235, 352, and 371
+- `examples/ci/` - the same path at `github-action-basic.yml:13`, `github-action-baseline.yml:13` and `github-action-portfolio.yml:11`, all shipped to npm through `files`
 
-`tests/action.test.ts:46` asserts the composite action's step `uses:` list by exact equality (`["actions/setup-node@v6", "actions/setup-node@v6", "actions/upload-artifact@v7"]`). Any structural change to either `runs:` block must keep this assertion — or its root-level equivalent — passing; a shim that changes step order or introduces new steps breaks it.
+No example teaches the subdirectory form any more. Consumers who copied it from an earlier release still run it, so `SilesianSolutions/search-quality-kit/action@v0` has to keep resolving as well.
+
+`tests/action.test.ts:46-54` asserts the composite action's step `uses:` list with the `@ref` stripped. What it pins is the names, order and count of the steps that carry a `uses:` key: `["actions/setup-node", "actions/setup-node", "actions/upload-artifact"]`. Versions sit outside that assertion on purpose, so a Dependabot bump or a move to commit-SHA pins leaves it green.
+
+That makes it a narrower guard than it looks. Dropping, renaming or reordering the three `uses:` steps fails it, so a shim cannot quietly move `upload-artifact` off the end. Two things slip through. A step carrying no `uses:` key is invisible to the assertion. The two `setup-node` entries are interchangeable once the ref is gone.
+
+The root file's step list is covered indirectly, by the sync test at `tests/action.test.ts:73-101`, which compares the two lists including their refs. Its `branding` and `author` have a direct test at `tests/action.test.ts:59-71`.
 
 Per `docs/releasing.md`, the moving `v0` major tag is force-moved to the release commit after each npm publish. Introducing root metadata does not change that procedure, but the tag now has to point at a commit where both the root and subdirectory metadata resolve correctly — the release runbook does not change, the verification bar for what "correct" means at that commit does.
 
