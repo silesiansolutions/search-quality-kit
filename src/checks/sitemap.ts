@@ -1,5 +1,6 @@
 import { XMLValidator } from "fast-xml-parser";
 import { parseSitemap } from "../crawler/sitemaps.js";
+import { loadHtml, metaContent } from "../utils/html.js";
 import {
   isHttpUrl,
   isLocalOrStaging,
@@ -40,6 +41,19 @@ export const sitemapCheck: CheckDefinition = {
           { url: crawl.sitemap.url, file: crawl.sitemap.file, googleDocs: G },
         ),
       );
+
+    const noindexPages = new Map<string, string>();
+    for (const page of crawl.pages) {
+      const $ = loadHtml(page.html);
+      const directives =
+        `${metaContent($, "robots") ?? ""},${metaContent($, "googlebot") ?? ""},${page.headers["x-robots-tag"] ?? ""}`.toLowerCase();
+      if (/(?:^|[,\s])(?:noindex|none)(?:$|[,\s])/.test(directives))
+        try {
+          noindexPages.set(normalizeUrl(page.url), page.url);
+        } catch {
+          // Malformed page URLs are reported elsewhere.
+        }
+    }
 
     for (const artifact of artifacts) {
       const location = {
@@ -170,6 +184,17 @@ export const sitemapCheck: CheckDefinition = {
               "warning",
               `Sitemap contains an excluded URL: ${loc}.`,
               "Remove it or adjust crawl.exclude if the page should be audited.",
+              location,
+            ),
+          );
+        if (parsed.type === "urlset" && noindexPages.has(normalized))
+          out.push(
+            finding(
+              "sitemap",
+              "url-noindex",
+              "warning",
+              `Sitemap lists ${loc}, which is marked noindex.`,
+              "Remove noindex pages from the sitemap, or make the page indexable.",
               location,
             ),
           );
