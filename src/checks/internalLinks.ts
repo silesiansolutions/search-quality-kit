@@ -31,6 +31,7 @@ export const internalLinksCheck: CheckDefinition = {
     );
     for (const p of crawl.pages) {
       const $ = loadHtml(p.html);
+      let internalTargets = 0;
       $("a").each((_, a) => {
         const href = ($(a).attr("href") ?? "").trim(),
           o = { ...pageOptions(p), googleDocs: G };
@@ -75,7 +76,23 @@ export const internalLinksCheck: CheckDefinition = {
               o,
             ),
           );
+        if (
+          u.protocol === "http:" &&
+          new URL(p.url).protocol === "https:" &&
+          u.hostname === new URL(crawl.publicBaseUrl).hostname
+        )
+          out.push(
+            finding(
+              "internal-links",
+              "https-to-http",
+              "warning",
+              `HTTPS page links to the insecure internal URL ${u}.`,
+              "Link to the HTTPS URL directly.",
+              { ...o, relatedUrls: [u.toString()] },
+            ),
+          );
         if (!sameOrigin(u.toString(), crawl.publicBaseUrl)) return;
+        internalTargets += 1;
         const n = normalizeUrl(u.toString());
         if (incoming.has(n)) incoming.set(n, (incoming.get(n) ?? 0) + 1);
         const target = pages.get(n);
@@ -117,6 +134,17 @@ export const internalLinksCheck: CheckDefinition = {
             ),
           );
       });
+      if (p.status === 200 && internalTargets === 0)
+        out.push(
+          finding(
+            "internal-links",
+            "no-outgoing-links",
+            "info",
+            "Page has no crawlable internal links.",
+            "Link to related pages so crawlers can continue from this page.",
+            { ...pageOptions(p), googleDocs: G },
+          ),
+        );
     }
     const entries = new Set(
       config.crawl.entrypoints.map((e) => normalizeUrl(e, crawl.publicBaseUrl)),
