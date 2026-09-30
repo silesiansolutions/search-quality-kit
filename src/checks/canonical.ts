@@ -1,3 +1,4 @@
+import type { PageArtifact } from "../crawler/types.js";
 import { loadHtml } from "../utils/html.js";
 import {
   isHttpUrl,
@@ -9,11 +10,85 @@ import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
 const G =
   "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls";
+
+function exactUrl(value: string) {
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+function canonicalTargets(pages: PageArtifact[]) {
+  const redirecting = new Map<string, PageArtifact>();
+  const byFinal = new Map<string, PageArtifact>();
+  for (const page of pages) {
+    for (const hop of page.redirects ?? []) {
+      const key = exactUrl(hop.url);
+      if (key && !redirecting.has(key)) redirecting.set(key, page);
+    }
+    try {
+      const key = normalizeUrl(page.finalUrl);
+      if (!byFinal.has(key)) byFinal.set(key, page);
+    } catch {
+      // Malformed final URLs cannot be canonical targets.
+    }
+  }
+  return {
+    resolve(canonical: string) {
+      const exact = exactUrl(canonical);
+      const redirected = exact ? redirecting.get(exact) : undefined;
+      if (redirected) return { page: redirected, redirected: true };
+      try {
+        const page = byFinal.get(normalizeUrl(canonical));
+        return page ? { page, redirected: false } : undefined;
+      } catch {
+        return undefined;
+      }
+    },
+  };
+}
+
+function canonicalTargetFinding(
+  canonical: string,
+  target: { page: PageArtifact; redirected: boolean },
+) {
+  const { page } = target;
+  if (page.status >= 400 && page.status < 500)
+    return {
+      code: "target-4xx",
+      message: `Canonical target ${canonical} returns HTTP ${page.status}.`,
+      suggestion: "Point the canonical at a live, indexable URL.",
+    };
+  if (page.status >= 500)
+    return {
+      code: "target-5xx",
+      message: `Canonical target ${canonical} returns HTTP ${page.status}.`,
+      suggestion:
+        "Fix the server error on the target, or point the canonical at a live URL.",
+    };
+  if (page.status === 0)
+    return {
+      code: "target-unreachable",
+      message: `Canonical target ${canonical} did not respond (${page.failure ?? "network"}).`,
+      suggestion: "Point the canonical at a URL that answers with HTTP 200.",
+    };
+  if (target.redirected)
+    return {
+      code: "target-redirect",
+      message: `Canonical target ${canonical} redirects to ${page.finalUrl}.`,
+      suggestion: "Use the final URL as the canonical.",
+    };
+  return undefined;
+}
 export const canonicalCheck: CheckDefinition = {
   name: "canonical",
   description:
     "Checks canonical presence, uniqueness, public URL, and self-consistency.",
   run({ crawl, config }) {
+    const targets = canonicalTargets(crawl.pages);
     const out = [],
       sitemapUrls = new Set(
         crawl.sitemapUrls.flatMap((url) => {
@@ -104,6 +179,21 @@ export const canonicalCheck: CheckDefinition = {
             o,
           ),
         );
+      const target = crawl.mode === "http" ? targets.resolve(c) : undefined;
+      if (target && (target.page !== p || target.redirected)) {
+        const targetFinding = canonicalTargetFinding(c, target);
+        if (targetFinding)
+          out.push(
+            finding(
+              "canonical",
+              targetFinding.code,
+              "warning",
+              targetFinding.message,
+              targetFinding.suggestion,
+              { ...o, relatedUrls: [c] },
+            ),
+          );
+      }
       if (normalizeUrl(c) !== normalizeUrl(p.url))
         out.push(
           finding(
