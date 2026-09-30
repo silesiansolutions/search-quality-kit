@@ -390,6 +390,12 @@ describe("portfolio runner", () => {
             reason: "Reviewed fixture exception.",
             owner: "site-owner",
           },
+          {
+            code: "canonical.multiple",
+            urlPattern: "/legal/**",
+            reason: "Matches nothing in this fixture.",
+            owner: "site-owner",
+          },
         ],
       }),
       "utf8",
@@ -406,8 +412,12 @@ describe("portfolio runner", () => {
     });
     expect(result.report.sites[0]).toMatchObject({
       status: "passed",
-      summary: { suppressedFindings: 1 },
+      summary: { suppressedFindings: 1, unmatchedSuppressions: 1 },
     });
+    expect(
+      parsePortfolioReport(await readFile(result.jsonPath, "utf8")).sites[0]
+        ?.summary.unmatchedSuppressions,
+    ).toBe(1);
     expect(result.report.portfolio.suppressedFindings).toBe(1);
     expect(result.report.gate.failures).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ site: "site-a" })]),
