@@ -11,8 +11,8 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 | `plugins`              | typed custom-check plugins                                                       | none                                 |
 | `suppressions`         | reviewed accepted findings by stable code and route pattern                      | none                                 |
 | `checks`               | one boolean per built-in check, including `agentReadiness`                       | all enabled                          |
-| `rules.title`          | min/max length, duplicate policy                                                 | 10–70, no duplicates                 |
-| `rules.description`    | min/max, missing and duplicate policy                                            | 50–170, required, no duplicates      |
+| `rules.title`          | min/max length, duplicate policy                                                 | 10 to 70, no duplicates              |
+| `rules.description`    | min/max, missing and duplicate policy                                            | 50 to 170, required, no duplicates   |
 | `rules.canonical`      | `required`                                                                       | true                                 |
 | `rules.robots`         | `disallowAllInProduction`                                                        | false                                |
 | `rules.structuredData` | JSON and visible-content switches                                                | syntax validation on                 |
@@ -79,7 +79,9 @@ and copy the path from a finding before writing the pattern.
 A suppression written for a renamed code keeps matching through the alias
 table exported as `codeAliases`. In 0.12, `indexability.non-200` covers the
 split codes `indexability.4xx`, `5xx`, `timeout`, and `unreachable`, and
-`robots.missing` covers `robots.unavailable`.
+`robots.missing` covers `robots.unavailable`. Baselines match through the alias
+only when the message is unchanged, which holds for the indexability codes but
+not for `robots.unavailable`: a baselined 5xx robots.txt reappears once.
 
 The loader rejects suppressions without a reason or owner. It also rejects
 catch-all patterns such as `/`, `/*`, or `/**` unless

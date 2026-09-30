@@ -10,12 +10,18 @@ import { finding, pageOptions } from "./types.js";
 const TG = "https://developers.google.com/search/docs/appearance/title-link",
   DG = "https://developers.google.com/search/docs/appearance/snippet",
   GEN = /^(home|homepage|untitled|new page|document)$/i;
+const DEPRECATED_LANGUAGES = new Set(["in", "iw", "ji", "jw", "mo", "sh"]);
+
 function invalidLang(value: string) {
   const parts = value.split(/[-_]/);
   const language = parts[0] ?? "";
   if (!/^[A-Za-z]{2,8}$/.test(language) || value.includes("_"))
     return "is not a well-formed BCP 47 tag";
-  if (language.length === 2 && !isKnownLanguage(language))
+  if (
+    language.length === 2 &&
+    !isKnownLanguage(language) &&
+    !DEPRECATED_LANGUAGES.has(language.toLowerCase())
+  )
     return `uses the unknown language subtag "${language}"`;
   const region = parts.slice(1).find((part) => /^[A-Za-z]{2}$/.test(part));
   if (region && !isKnownRegion(region))

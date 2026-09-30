@@ -30,7 +30,7 @@ The check also matches URLs against the rules that apply to Googlebot: the `Goog
 
 - `robots.indexable-url-blocked` (warning): a crawled page answered 200 without `noindex` but robots.txt blocks it for Googlebot.
 - `robots.sitemap-url-blocked` (warning): the sitemap lists a URL that robots.txt blocks for Googlebot.
-- `robots.unavailable` (warning): robots.txt answered with a 5xx status or did not respond. Google treats a server error on robots.txt as a reason to stop crawling, unlike a 404. It replaces `robots.missing` for that case and carries an alias to it, so existing suppressions keep matching.
+- `robots.unavailable` (warning): robots.txt answered with a 5xx or 429 status or did not respond. Google treats a server error on robots.txt as a reason to stop crawling, unlike a 404. It replaces `robots.missing` for that case and carries an alias to it, so existing suppressions keep matching.
 
 ## indexability
 

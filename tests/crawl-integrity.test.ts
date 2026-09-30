@@ -448,6 +448,46 @@ describe("v0.12 page checks", () => {
     ).toEqual(["hreflang.missing-reciprocal"]);
   });
 
+  it("keeps commas inside srcset URLs", async () => {
+    const { config, crawl } = context({
+      pages: [
+        page(
+          "https://example.com/",
+          html(
+            '<img src="/a.jpg" srcset="/cdn-cgi/image/width=640,quality=75/a.jpg 640w, /b.jpg 2x,/c.jpg" alt="">',
+          ),
+        ),
+      ],
+      assets: new Map(
+        ["/a.jpg", "/cdn-cgi/image/width=640,quality=75/a.jpg", "/b.jpg"].map(
+          (path) => [
+            `https://example.com${path}`,
+            { url: `https://example.com${path}` },
+          ],
+        ),
+      ),
+    });
+    const found = await assetsCheck.run({ config, crawl });
+    expect(found.map((f) => f.relatedUrls?.[0])).toEqual([
+      "https://example.com/c.jpg",
+    ]);
+  });
+
+  it("ignores sitemap URLs on other origins when matching robots rules", async () => {
+    const { config, crawl } = context({
+      robots: {
+        url: "https://example.com/robots.txt",
+        status: 200,
+        content: "User-agent: *\nDisallow: /x",
+      },
+      sitemapUrls: ["https://blog.example.com/x", "https://example.com/x"],
+    });
+    const found = (await robotsCheck.run({ config, crawl })).filter(
+      (f) => f.code === "sitemap-url-blocked",
+    );
+    expect(found.map((f) => f.url)).toEqual(["https://example.com/x"]);
+  });
+
   it("reports static resources absent from the build", async () => {
     const { config, crawl } = context({
       pages: [

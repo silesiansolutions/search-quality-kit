@@ -1,5 +1,5 @@
 import { loadHtml, metaContent } from "../utils/html.js";
-import { isHttpUrl, isLocalOrStaging } from "../utils/urls.js";
+import { isHttpUrl, isLocalOrStaging, sameOrigin } from "../utils/urls.js";
 import type { CheckContext, CheckDefinition } from "./types.js";
 import { finding } from "./types.js";
 const G =
@@ -102,6 +102,7 @@ function blockedUrlFindings(
   const rules = googlebotRules(groups);
   if (!rules.length || !robotsAllows(rules, "/")) return [];
   const blocked = (url: string) => {
+    if (!sameOrigin(url, crawl.publicBaseUrl)) return false;
     const p = pathOf(url);
     return p !== undefined && !robotsAllows(rules, p);
   };
@@ -143,7 +144,11 @@ export const robotsCheck: CheckDefinition = {
     "Validates robots syntax, site-wide blocking, and sitemap declarations.",
   run({ crawl, config }) {
     const o = { url: crawl.robots.url, file: crawl.robots.file, googleDocs: G };
-    if (crawl.robots.status >= 500 || crawl.robots.failure)
+    if (
+      crawl.robots.status >= 500 ||
+      crawl.robots.status === 429 ||
+      crawl.robots.failure
+    )
       return [
         finding(
           "robots",
