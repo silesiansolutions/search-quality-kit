@@ -263,9 +263,9 @@ describe("finding code aliases", () => {
     expect(applyReviewedSuppressions(findings, config)[0]?.suppressed).toBe(
       true,
     );
-    expect(unmatchedSuppressions(findings, config).map((s) => s.code)).toEqual(
-      ["metadata.title-length"],
-    );
+    expect(unmatchedSuppressions(findings, config).map((s) => s.code)).toEqual([
+      "metadata.title-length",
+    ]);
   });
 });
 
