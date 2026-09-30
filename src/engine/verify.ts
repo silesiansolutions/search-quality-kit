@@ -133,7 +133,9 @@ export async function runVerification(
         warnings: findings.filter((f) => f.severity === "warning").length,
         info: findings.filter((f) => f.severity === "info").length,
         suppressedFindings: reviewedFindings.filter((f) => f.suppressed).length,
-        ...(unmatched.length ? { unmatchedSuppressions: unmatched.length } : {}),
+        ...(unmatched.length
+          ? { unmatchedSuppressions: unmatched.length }
+          : {}),
       },
       findings: reviewedFindings,
       pages: crawl.pages.map(({ url, initialUrl, finalUrl, status, file }) => {

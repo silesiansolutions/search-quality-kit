@@ -5,7 +5,10 @@ export interface ImageCandidate {
   descriptor?: string;
 }
 
-export function srcsetCandidates(value: string, base: string): ImageCandidate[] {
+export function srcsetCandidates(
+  value: string,
+  base: string,
+): ImageCandidate[] {
   return value
     .split(",")
     .map((candidate) => candidate.trim())

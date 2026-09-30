@@ -5,7 +5,8 @@ import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
 
 const FAILURE_SUGGESTIONS: Record<FetchFailure, string> = {
-  timeout: "The request timed out. Make the page respond within crawl.requestTimeoutMs.",
+  timeout:
+    "The request timed out. Make the page respond within crawl.requestTimeoutMs.",
   dns: "The host name did not resolve. Check DNS for the audited origin.",
   "connection-refused":
     "The server refused the connection. Check that the origin is listening.",
@@ -37,7 +38,10 @@ function statusFinding(p: PageArtifact) {
       suggestion: FAILURE_SUGGESTIONS[failure],
     };
   }
-  return { code: "non-200", suggestion: "Serve indexable pages with HTTP 200." };
+  return {
+    code: "non-200",
+    suggestion: "Serve indexable pages with HTTP 200.",
+  };
 }
 
 export const indexabilityCheck: CheckDefinition = {
