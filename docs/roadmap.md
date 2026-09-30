@@ -12,7 +12,7 @@ The kit competes on three properties, and every roadmap item must strengthen at 
 
 The kit is not a second Ahrefs and not a second Lighthouse: no backlink index, no rank tracking, no browser runtime (see [Non-goals](#non-goals)).
 
-## Where the project stands (v0.10)
+## Where the project stands (v0.12)
 
 - deterministic crawl of static output or an HTTP origin, including sitemap indexes, redirects, and orphan detection (v0.2);
 - portable finding baselines with `--fail-on-new` gating, schema-versioned JSON reports, Markdown artifacts, and dependency-free SARIF (v0.3);
@@ -22,35 +22,13 @@ The kit is not a second Ahrefs and not a second Lighthouse: no backlink index, n
 - a multi-config portfolio runner with per-site baselines, aggregated reports, and the report-only public showcase (v0.7);
 - reusable policy packs (personal-brand, company-site, directory, AI-visibility), the `doctor` command, and the public plugin test harness (v0.8);
 - reviewed suppressions with owner/reason/expiry, configurable policy packs, exported `contract` schemas, and handoff reports (v0.9);
-- a default-on agent-readiness check covering `llms.txt` and declarative WebMCP form annotations, kept out of the default error gate (v0.10).
+- a default-on agent-readiness check covering `llms.txt` and declarative WebMCP form annotations, kept out of the default error gate (v0.10);
+- a URL graph derived from every crawl, the hreflang check, and root-level Action metadata for the Marketplace (v0.11);
+- a crawler that follows redirects itself and classifies failed requests, redirect and asset integrity checks, canonical-target validation, robots rule matching, the `indexability.non-200` split behind finding code aliases, sitemap hreflang, and warnings for suppressions that match nothing (v0.12).
 
 ## Research inputs
 
 Three research passes informed this plan: a mapping of the Ahrefs Site Audit issue catalog onto the kit, a survey of free search-data sources, and a broad market scan of SEO/AEO tooling. Verified against v0.10, most market-scan proposals had already shipped (metadata/H1/alt/canonical checks, `init --detect`, `doctor`, policy packs, Astro/Next examples, handoff reports, `llms.txt`); the survey of external data sources confirmed the companion-package boundary rather than new core scope. The durable output is the catalog gaps scheduled below — all implementable from data the crawler already collects or one bounded request away, none requiring a browser.
-
-## v0.11 — crawl graph and international targeting
-
-One internal refactor unlocks most of this roadmap: promote the crawl result to an explicit **URL graph** — every URL with its status, link edges, canonical target, hreflang alternates, and sitemap membership — derived once per run. Checks become pure queries over the graph instead of each re-deriving state from crawl internals. This keeps audits fast while the catalog grows, separates fetching from rule logic, and can later back a richer read-only plugin context. Every node records whether its status was **observed**, **assumed**, or **unresolved**, so a check can never treat static mode's hardcoded `200` as a real response. Redirects appear only as the single collapsed edge the crawler retains today; hop-by-hop history waits for v0.12. See [url-graph.md](design/url-graph.md).
-
-**hreflang** is the graph's first consumer and the release's only new check: `hreflang.invalid-value`, `hreflang.invalid-language`, `hreflang.invalid-region`, `hreflang.relative-href`, `hreflang.missing-self`, `hreflang.missing-reciprocal`, `hreflang.duplicate-language`, `hreflang.broken-target`, `hreflang.x-default-duplicate`, `hreflang.non-canonical-target`, `hreflang.lang-mismatch`, `hreflang.unresolved-target`, `hreflang.missing-x-default`. Reciprocity is an explicitly documented Google requirement rather than practitioner convention, the check is fully decidable from delivered HTML with no additional requests, and it behaves identically in static and HTTP mode — the only planned check with no mode asymmetry. All findings ship at `warning`/`info` so the default error gate is unchanged; `rules.hreflang.strict` opts into error severity. See [hreflang.md](design/hreflang.md).
-
-The release scope is deliberately one refactor and one check. The graph exists to be validated by a real consumer before more checks are built on it, and hreflang is the consumer that needs nothing the crawler does not already collect.
-
-The JSON **report** schema stays `0.3`. The exported **contract** schema bumps with every config-surface change — it went `0.9` to `0.10` in v0.10.0 for exactly that reason, and goes to `0.11` here because `checks.hreflang` is added. Code renames are not additive and are deferred; see [finding-code-stability.md](design/finding-code-stability.md).
-
-## v0.12 — crawler rework, redirect integrity, and resource reach
-
-Everything here depends on one prerequisite: the crawler currently delegates redirect following, so redirect hops are unavailable, and a failed fetch collapses to `{status: 0}`, conflating timeout, DNS failure, connection refused, TLS error, and redirect loop into one undifferentiated state. `fetchPage` stops delegating redirect following, so hops become inspectable and failure modes become distinguishable. That rework lands first; it also shifts existing redirect-derived findings, so it is a migration, not an addition.
-
-- **Redirect integrity** — the largest verified catalog gap, and unavailable until the rework: `redirects.loop`, `redirects.chain`, `redirects.broken`, `redirects.internal-link-to-redirect`.
-- **Canonical target validation**: `canonical.target-redirect`, `canonical.target-4xx`, `canonical.target-5xx`, `canonical.target-unreachable` — resolved from the graph, with no extra requests for already-crawled targets. Structurally HTTP-only: static mode has no observed status to validate against.
-- **Precise indexability codes**: split the blanket non-200 finding into `indexability.4xx` (with 404 detail), `indexability.5xx`, and `indexability.timeout`. This is a rename, not an addition — it invalidates baselines and suppressions and needs the alias mechanism described in [finding-code-stability.md](design/finding-code-stability.md), and `indexability.timeout` cannot be emitted honestly until the rework distinguishes a timeout from a DNS failure.
-- **`sitemap.url-noindex`**: the one genuinely new code from the originally planned sitemap-correlation set; see "Evaluated and rejected" for the five duplicates struck from it.
-- **`<html lang>` BCP 47 validation**: cheap once the v0.11 subtag tables exist, but a second source of new findings, which is why it does not ride along with hreflang.
-- **Sitemap `xhtml:link` hreflang**: one mapper change away in `parseSitemap`, which already parses the attributes and discards them.
-- **Asset integrity** (new check): `assets.broken-image`, `assets.broken-script`, `assets.broken-stylesheet`, `assets.missing-static-asset`. Static mode checks build-output presence; HTTP mode uses bounded requests under the existing crawl limits.
-- **Robots rule matching**: a small REP matcher for `*` and `Googlebot` applied to crawled URLs: `robots.indexable-url-blocked`, `robots.sitemap-url-blocked`, `robots.unavailable` with 5xx/timeout semantics per Google's specification instead of being treated as absence.
-- **Quick wins**: `metadata.multiple-titles`, `metadata.multiple-descriptions`, `internal-links.https-to-http`, `internal-links.no-outgoing-links`.
 
 ## v0.13 — AI visibility and duplicate identity
 
@@ -72,7 +50,6 @@ Everything here depends on one prerequisite: the crawler currently delegates red
 - **Showcase and trend history**: retain every showcase run's reports as workflow artifacts with the package/config revision recorded, per [portfolio trend storage](design/portfolio-trends.md). No external store, scheduler, or automatic baseline mutation.
 - **Spec tracking**: `llms.txt` and declarative WebMCP are young specifications. Standing rule: the kit implements the deterministic subset of a specification once that specification has consumers, tracks published spec changes in minor releases, and does not build against sections marked TODO. See [ai-surface-review.md](design/ai-surface-review.md).
 - **Docs**: in-repository docs stay authoritative; a standalone docs site only when discovery value justifies its maintenance.
-- **Distribution**: the composite Action moves to the repository root, with the existing subdirectory path preserved as a shim, so it can be listed on the GitHub Marketplace. See [action-distribution.md](design/action-distribution.md).
 
 ## Companion packages, not core features
 
@@ -108,7 +85,7 @@ Recorded so they are not re-litigated:
 - `sitemap.url-non-canonical` — duplicates `canonical.sitemap-canonical-mismatch`;
 - `sitemap.url-redirects` — duplicates `canonical.sitemap-final-url-mismatch`, which already reports a sitemap URL whose final URL is not itself in the sitemap;
 - `sitemap.url-4xx` and `sitemap.url-5xx` — duplicate the indexability finding a crawled URL already carries;
-- `sitemap.url-timeout` — not implementable without the v0.12 crawler rework distinguishing timeout from other unreachable states, and even then it duplicates the indexability finding;
+- `sitemap.url-timeout`: duplicates `indexability.timeout`, which a crawled sitemap URL already carries;
 - `canonical.no-incoming-links` — overlaps `internal-links.orphan-page` heavily; the orphan-page check already covers this case;
 - Content Signals (`Content-Signal` robots.txt extension) — Cloudflare's own announcement (2025-09-24) states the signals are non-binding preferences, Google's John Mueller has stated the directive has no effect on any crawler or LLM, and no crawler has shipped support. See [ai-surface-review.md](design/ai-surface-review.md).
 
