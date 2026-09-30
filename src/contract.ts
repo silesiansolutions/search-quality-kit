@@ -8,7 +8,7 @@ import type {
   Severity,
 } from "./report/types.js";
 
-export const CONTRACT_SCHEMA_VERSION = "0.11" as const;
+export const CONTRACT_SCHEMA_VERSION = "0.12" as const;
 
 export interface ContractPluginCheck {
   id: string;
@@ -36,6 +36,7 @@ export interface SiteContractBody {
     maxSitemaps: number;
     maxSitemapDepth: number;
     requestTimeoutMs: number;
+    maxRedirects: number;
   };
   profiles: SearchQualityConfig["profiles"];
   checks: { enabled: string[]; disabled: string[] };
@@ -110,6 +111,7 @@ export function createSiteContractFromConfig(
       maxSitemaps: config.crawl.maxSitemaps,
       maxSitemapDepth: config.crawl.maxSitemapDepth,
       requestTimeoutMs: config.crawl.requestTimeoutMs,
+      maxRedirects: config.crawl.maxRedirects,
     },
     profiles: clone(config.profiles),
     checks: {
