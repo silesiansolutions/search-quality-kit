@@ -85,8 +85,8 @@ export const assetsCheck: CheckDefinition = {
           "assets",
           "request-limit",
           "info",
-          `Resource requests stopped at crawl.maxPages (${config.crawl.maxPages}); the remaining resources were not checked.`,
-          "Raise crawl.maxPages if every resource must be verified.",
+          `Resource requests stopped at crawl.maxResources (${config.crawl.maxResources}); the remaining resources were not checked.`,
+          "Raise crawl.maxResources if every resource must be verified.",
           { url: crawl.publicBaseUrl },
         ),
       );

@@ -37,6 +37,7 @@ export interface SiteContractBody {
     maxSitemapDepth: number;
     requestTimeoutMs: number;
     maxRedirects: number;
+    maxResources: number;
   };
   profiles: SearchQualityConfig["profiles"];
   checks: { enabled: string[]; disabled: string[] };
@@ -112,6 +113,7 @@ export function createSiteContractFromConfig(
       maxSitemapDepth: config.crawl.maxSitemapDepth,
       requestTimeoutMs: config.crawl.requestTimeoutMs,
       maxRedirects: config.crawl.maxRedirects,
+      maxResources: config.crawl.maxResources,
     },
     profiles: clone(config.profiles),
     checks: {

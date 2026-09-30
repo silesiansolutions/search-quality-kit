@@ -182,9 +182,9 @@ Checks same-origin images (`src`, `srcset`, `<picture>` sources), scripts and st
 
 - `assets.missing-static-asset` (static mode): the referenced file is absent from the build output. The query string is ignored for the lookup.
 - `assets.broken-image`, `assets.broken-script`, `assets.broken-stylesheet` (HTTP mode): the resource answers with a 4xx or 5xx status or does not respond.
-- `assets.request-limit` (info, HTTP mode): resource requests stopped at `crawl.maxPages`, so the remaining resources were not checked.
+- `assets.request-limit` (info, HTTP mode): resource requests stopped at `crawl.maxResources`, so the remaining resources were not checked.
 
-HTTP mode makes one request per unique resource, bounded by `crawl.maxPages`. Setting `checks.assets: false` skips these requests entirely.
+HTTP mode makes one request per unique resource, bounded by `crawl.maxResources` (default 500). Setting `checks.assets: false` skips these requests entirely.
 
 ## Broader policy context
 

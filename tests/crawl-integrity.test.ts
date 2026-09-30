@@ -201,6 +201,22 @@ describe("HTTP crawl redirect rework", () => {
     );
   });
 
+  it("stops resource requests at crawl.maxResources and says so", async () => {
+    const calls = stubFetch({
+      "/": {
+        status: 200,
+        body: html('<img src="/1.png" alt=""><img src="/2.png" alt="">'),
+      },
+    });
+    const config = httpConfig({ maxResources: 1 });
+    const crawl = await crawlHttp("https://example.com", config);
+    expect(calls.filter((call) => call.endsWith(".png"))).toEqual(["/1.png"]);
+    expect(codes(await assetsCheck.run({ config, crawl }))).toEqual([
+      "assets.broken-image",
+      "assets.request-limit",
+    ]);
+  });
+
   it("skips resource requests when the assets check is disabled", async () => {
     const calls = stubFetch({
       "/": { status: 200, body: html('<img src="/a.png" alt="">') },

@@ -308,7 +308,7 @@ async function requestResources(
   const resources: ResourceArtifact[] = [];
   let truncated = false;
   for (const [url, entry] of wanted) {
-    if (resources.length >= config.crawl.maxPages) {
+    if (resources.length >= config.crawl.maxResources) {
       truncated = true;
       break;
     }
