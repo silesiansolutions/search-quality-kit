@@ -60,6 +60,7 @@ const baseConfigSchema = z.object({
         .array(z.string())
         .default(["/admin", "/preview", "/api", "/404", "/404.html"]),
       requestTimeoutMs: z.number().int().positive().default(10000),
+      maxRedirects: z.number().int().nonnegative().max(20).default(10),
       userAgent: z.string().min(1).default(`search-quality-kit/${VERSION}`),
     })
     .prefault({}),
@@ -128,6 +129,8 @@ const baseConfigSchema = z.object({
       performanceHints: z.boolean().default(true),
       agentReadiness: z.boolean().default(true),
       hreflang: z.boolean().default(true),
+      redirects: z.boolean().default(true),
+      assets: z.boolean().default(true),
     })
     .prefault({}),
   rules: z

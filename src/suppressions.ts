@@ -1,11 +1,10 @@
 import { matchesRoutePattern } from "./config/profileDefinitions.js";
 import type { SearchQualityConfig } from "./config/schema.js";
+import { legacyFindingCode, stableFindingCode } from "./findingCodes.js";
 import type { Finding, FindingSuppression } from "./report/types.js";
 
 export function findingStableCode(finding: Finding) {
-  return finding.code.includes(".")
-    ? finding.code
-    : `${finding.check}.${finding.code}`;
+  return stableFindingCode(finding);
 }
 
 export function isSuppressionExpired(
@@ -26,6 +25,21 @@ function findingPaths(finding: Finding, baseUrl: string) {
   });
 }
 
+function suppressionMatches(
+  suppression: FindingSuppression,
+  finding: Finding,
+  baseUrl: string,
+) {
+  const code = findingStableCode(finding);
+  return (
+    (suppression.code === code ||
+      suppression.code === legacyFindingCode(code)) &&
+    findingPaths(finding, baseUrl).some((pathname) =>
+      matchesRoutePattern(pathname, suppression.urlPattern),
+    )
+  );
+}
+
 export function applyReviewedSuppressions(
   findings: Finding[],
   config: SearchQualityConfig,
@@ -34,15 +48,10 @@ export function applyReviewedSuppressions(
   const baseUrl = config.site.baseUrl;
   if (!baseUrl || !config.suppressions.length) return findings;
   return findings.map((finding) => {
-    const code = findingStableCode(finding);
-    const paths = findingPaths(finding, baseUrl);
     const suppression = config.suppressions.find(
       (candidate) =>
-        candidate.code === code &&
         !isSuppressionExpired(candidate, today) &&
-        paths.some((pathname) =>
-          matchesRoutePattern(pathname, candidate.urlPattern),
-        ),
+        suppressionMatches(candidate, finding, baseUrl),
     );
     if (!suppression) return finding;
     return {
@@ -51,6 +60,24 @@ export function applyReviewedSuppressions(
       suppression: { ...suppression },
     };
   });
+}
+
+export function unmatchedSuppressions(
+  findings: Finding[],
+  config: SearchQualityConfig,
+  today = new Date().toISOString().slice(0, 10),
+): FindingSuppression[] {
+  const baseUrl = config.site.baseUrl;
+  if (!baseUrl) return [];
+  return config.suppressions
+    .filter(
+      (suppression) =>
+        !isSuppressionExpired(suppression, today) &&
+        !findings.some((finding) =>
+          suppressionMatches(suppression, finding, baseUrl),
+        ),
+    )
+    .map((suppression) => ({ ...suppression }));
 }
 
 export const unsuppressedFindings = (findings: Finding[]) =>

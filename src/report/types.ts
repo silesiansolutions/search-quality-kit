@@ -49,6 +49,7 @@ export interface ReportSummary {
   warnings: number;
   info: number;
   suppressedFindings?: number;
+  unmatchedSuppressions?: number;
 }
 export interface SearchQualityReport {
   schemaVersion: typeof REPORT_SCHEMA_VERSION;
@@ -70,6 +71,8 @@ export interface SearchQualityReport {
     matchedProfilePattern?: string;
   }>;
   durationMs: number;
+  /** Active reviewed suppressions that matched no finding in this run. */
+  unmatchedSuppressions?: FindingSuppression[];
   pluginErrors?: Array<{
     plugin: string;
     check: string;

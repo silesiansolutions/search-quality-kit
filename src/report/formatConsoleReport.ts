@@ -51,6 +51,15 @@ export function formatConsoleReport(r: SearchQualityReport) {
   }
   if (!r.findings.length && !r.pluginErrors?.length)
     lines.push(pc.green("No findings. The configured checks passed."), "");
+  if (r.unmatchedSuppressions?.length) {
+    lines.push(pc.yellow(pc.bold("Unmatched suppressions")));
+    for (const suppression of r.unmatchedSuppressions)
+      lines.push(
+        `${pc.yellow("WARNING")} ${suppression.code} on ${suppression.urlPattern} matched no finding in this run.`,
+        "  Fix: Read the finding URLs in this report, correct the code or route pattern, or remove the suppression.",
+      );
+    lines.push("");
+  }
   if (r.pluginErrors?.length) {
     lines.push(pc.red(pc.bold("Plugin errors")));
     for (const error of r.pluginErrors)

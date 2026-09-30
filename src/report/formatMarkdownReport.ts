@@ -172,6 +172,20 @@ export function formatMarkdownReport(report: SearchQualityReport) {
 
   lines.push(...section("Reviewed suppressions", suppressed));
 
+  if (report.unmatchedSuppressions?.length) {
+    lines.push(
+      "## Unmatched suppressions",
+      "",
+      "These reviewed suppressions matched no finding in this run. Correct the code or route pattern, or remove them.",
+      "",
+    );
+    for (const suppression of report.unmatchedSuppressions)
+      lines.push(
+        `- ${code(suppression.code)} on ${code(suppression.urlPattern)}, owner ${code(suppression.owner)}`,
+      );
+    lines.push("");
+  }
+
   if (report.pluginErrors?.length) {
     lines.push("## Plugin errors", "");
     for (const error of report.pluginErrors)
