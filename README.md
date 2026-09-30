@@ -205,11 +205,13 @@ Set `mode: portfolio` and `portfolio-config` to upload the complete portfolio re
 
 ## ✅ Built-in checks
 
-`sitemap`, `robots`, `indexability`, `metadata`, `canonical`, `structuredData`, `openGraph`, `internalLinks`, `renderedHtml`, `accessibility`, `performanceHints`, `agentReadiness`, and `hreflang`.
+`sitemap`, `robots`, `indexability`, `metadata`, `canonical`, `structuredData`, `openGraph`, `internalLinks`, `renderedHtml`, `accessibility`, `performanceHints`, `agentReadiness`, `hreflang`, `redirects`, and `assets`.
 
 Rules are tied to official areas of [Google Search Central](https://developers.google.com/search/docs/essentials). Project heuristics such as title length, HTML weight, and image size are labeled as heuristics; profile expectations are labeled separately and are not represented as Google requirements or ranking thresholds. `agentReadiness` checks deterministic agent-readiness signals — llms.txt recommendations and declarative WebMCP annotations — aligned with the experimental Lighthouse Agentic Browsing category; runtime audits such as CLS, the accessibility tree, and imperative WebMCP tools stay with Lighthouse and PageSpeed Insights.
 
 `hreflang` validates international targeting across the whole crawl rather than one page at a time: reciprocity, self-reference, ISO 639-1 and ISO 3166-1 subtags, and alternate targets that redirect, 404, or disagree with their own canonical. A monolingual site produces no findings from it. Every code is `warning` or `info`, so the default gate is unchanged; `rules.hreflang.strict` opts into error severity.
+
+In HTTP mode the crawler follows redirects itself and keeps every hop. `redirects` reports chains, loops, redirects that end in an error, and internal links that point at a redirect; `canonical` reports canonical targets that redirect or fail. `assets` reports same-origin images, scripts, and stylesheets that are missing from the build or answer with an error. These new codes are warnings, so the default gate is unchanged on upgrade.
 
 ## 🔌 Custom checks
 
