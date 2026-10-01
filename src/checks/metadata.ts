@@ -4,11 +4,31 @@ import {
   normalizedText,
   textFromSelection,
 } from "../utils/html.js";
+import { isKnownLanguage, isKnownRegion } from "../utils/bcp47.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
 const TG = "https://developers.google.com/search/docs/appearance/title-link",
   DG = "https://developers.google.com/search/docs/appearance/snippet",
   GEN = /^(home|homepage|untitled|new page|document)$/i;
+const DEPRECATED_LANGUAGES = new Set(["in", "iw", "ji", "jw", "mo", "sh"]);
+
+function invalidLang(value: string) {
+  const parts = value.split(/[-_]/);
+  const language = parts[0] ?? "";
+  if (!/^[A-Za-z]{2,8}$/.test(language) || value.includes("_"))
+    return "is not a well-formed BCP 47 tag";
+  if (
+    language.length === 2 &&
+    !isKnownLanguage(language) &&
+    !DEPRECATED_LANGUAGES.has(language.toLowerCase())
+  )
+    return `uses the unknown language subtag "${language}"`;
+  const region = parts.slice(1).find((part) => /^[A-Za-z]{2}$/.test(part));
+  if (region && !isKnownRegion(region))
+    return `uses the unknown region subtag "${region}"`;
+  return undefined;
+}
+
 export const metadataCheck: CheckDefinition = {
   name: "metadata",
   description:
@@ -90,7 +110,44 @@ export const metadataCheck: CheckDefinition = {
             ),
           );
       }
-      if (!$("html").attr("lang")?.trim())
+      const titleCount = $("head title").length;
+      if (titleCount > 1)
+        out.push(
+          finding(
+            "metadata",
+            "multiple-titles",
+            "warning",
+            `Page declares ${titleCount} <title> elements.`,
+            "Keep exactly one <title> in the head.",
+            { ...o, googleDocs: TG },
+          ),
+        );
+      const descriptionCount = $('meta[name="description" i]').length;
+      if (descriptionCount > 1)
+        out.push(
+          finding(
+            "metadata",
+            "multiple-descriptions",
+            "warning",
+            `Page declares ${descriptionCount} meta descriptions.`,
+            "Keep exactly one meta description.",
+            { ...o, googleDocs: DG },
+          ),
+        );
+      const lang = $("html").attr("lang")?.trim();
+      const langProblem = lang ? invalidLang(lang) : undefined;
+      if (langProblem)
+        out.push(
+          finding(
+            "metadata",
+            "invalid-lang",
+            "warning",
+            `The <html> lang "${lang}" ${langProblem}.`,
+            'Use a BCP 47 language tag such as "en", "pl" or "en-GB".',
+            o,
+          ),
+        );
+      if (!lang)
         out.push(
           finding(
             "metadata",

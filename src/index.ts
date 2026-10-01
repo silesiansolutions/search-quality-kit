@@ -58,8 +58,10 @@ export {
   applyReviewedSuppressions,
   findingStableCode,
   isSuppressionExpired,
+  unmatchedSuppressions,
   unsuppressedFindings,
 } from "./suppressions.js";
+export { codeAliases } from "./findingCodes.js";
 export type {
   PluginCheckClassification,
   PluginCheckContext,

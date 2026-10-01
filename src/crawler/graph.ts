@@ -29,7 +29,12 @@ interface EdgeBase {
 export type UrlEdge =
   | (EdgeBase & { kind: "link" })
   | (EdgeBase & { kind: "canonical" })
-  | (EdgeBase & { kind: "alternate"; hreflang: string })
+  | (EdgeBase & {
+      kind: "alternate";
+      hreflang: string;
+      /** Omitted for HTML link elements. */
+      source?: "sitemap";
+    })
   | (EdgeBase & { kind: "sitemap"; sitemapUrl: string; lastmod?: string })
   | (EdgeBase & { kind: "redirect"; detail: "collapsed" });
 
@@ -242,6 +247,20 @@ function buildGraph(crawl: CrawlResult): UrlGraph {
         ...(resolved ? { to: resolved.id } : {}),
         ...(entry.lastmod !== undefined ? { lastmod: entry.lastmod } : {}),
       });
+      if (!resolved) continue;
+      for (const alternate of entry.alternates ?? [])
+        pushResolvableEdge(
+          edges,
+          knownUrls,
+          {
+            kind: "alternate",
+            from: resolved.id,
+            hreflang: alternate.hreflang,
+            source: "sitemap",
+          },
+          alternate.href,
+          resolved.url,
+        );
     }
   }
 

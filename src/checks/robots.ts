@@ -1,15 +1,166 @@
-import { isHttpUrl, isLocalOrStaging } from "../utils/urls.js";
-import type { CheckDefinition } from "./types.js";
+import { loadHtml, metaContent } from "../utils/html.js";
+import { isHttpUrl, isLocalOrStaging, sameOrigin } from "../utils/urls.js";
+import type { CheckContext, CheckDefinition } from "./types.js";
 import { finding } from "./types.js";
 const G =
     "https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec",
   SUPPORTED = new Set(["user-agent", "allow", "disallow", "sitemap"]);
+
+interface Rule {
+  allow: boolean;
+  path: string;
+}
+
+function parseGroups(content: string) {
+  const groups: { agents: string[]; rules: Rule[] }[] = [];
+  let collectingAgents = false;
+  for (const raw of content.split(/\r?\n/)) {
+    const m = raw
+      .replace(/#.*$/, "")
+      .trim()
+      .match(/^([^:]+):(.*)$/);
+    if (!m) continue;
+    const field = m[1]!.trim().toLowerCase(),
+      value = m[2]!.trim();
+    if (field === "user-agent") {
+      if (!collectingAgents || !groups.length)
+        groups.push({ agents: [], rules: [] });
+      groups.at(-1)!.agents.push(value.toLowerCase());
+      collectingAgents = true;
+    } else if (field === "allow" || field === "disallow") {
+      collectingAgents = false;
+      if (groups.length && value)
+        groups.at(-1)!.rules.push({ allow: field === "allow", path: value });
+    }
+  }
+  return groups;
+}
+
+function googlebotRules(groups: ReturnType<typeof parseGroups>) {
+  const own = groups.filter((g) => g.agents.includes("googlebot"));
+  return (
+    own.length ? own : groups.filter((g) => g.agents.includes("*"))
+  ).flatMap((g) => g.rules);
+}
+
+function ruleMatches(pattern: string, path: string) {
+  const anchored = pattern.endsWith("$"),
+    body = anchored ? pattern.slice(0, -1) : pattern,
+    parts = body.split("*");
+  let index = 0;
+  for (const [i, part] of parts.entries()) {
+    if (i === 0) {
+      if (!path.startsWith(part)) return false;
+      index = part.length;
+      continue;
+    }
+    const found =
+      i === parts.length - 1 && anchored
+        ? path.length - part.length >= index && path.endsWith(part)
+          ? path.length - part.length
+          : -1
+        : path.indexOf(part, index);
+    if (found < 0) return false;
+    index = found + part.length;
+  }
+  return !anchored || index === path.length;
+}
+
+export function robotsAllows(rules: Rule[], path: string) {
+  let best: Rule | undefined;
+  for (const rule of rules)
+    if (
+      ruleMatches(rule.path, path) &&
+      (!best ||
+        rule.path.length > best.path.length ||
+        (rule.path.length === best.path.length && rule.allow))
+    )
+      best = rule;
+  return best?.allow ?? true;
+}
+
+function pageNoindex(page: CheckContext["crawl"]["pages"][number]) {
+  const $ = loadHtml(page.html);
+  const directives =
+    `${metaContent($, "robots") ?? ""},${metaContent($, "googlebot") ?? ""},${page.headers["x-robots-tag"] ?? ""}`.toLowerCase();
+  return /(?:^|[,\s])(?:noindex|none)(?:$|[,\s])/.test(directives);
+}
+
+function pathOf(url: string) {
+  try {
+    const u = new URL(url);
+    return `${u.pathname}${u.search}`;
+  } catch {
+    return undefined;
+  }
+}
+
+function blockedUrlFindings(
+  crawl: CheckContext["crawl"],
+  groups: ReturnType<typeof parseGroups>,
+) {
+  const rules = googlebotRules(groups);
+  if (!rules.length || !robotsAllows(rules, "/")) return [];
+  const blocked = (url: string) => {
+    if (!sameOrigin(url, crawl.publicBaseUrl)) return false;
+    const p = pathOf(url);
+    return p !== undefined && !robotsAllows(rules, p);
+  };
+  const out = [];
+  for (const page of crawl.pages)
+    if (page.status === 200 && !pageNoindex(page) && blocked(page.url))
+      out.push(
+        finding(
+          "robots",
+          "indexable-url-blocked",
+          "warning",
+          `robots.txt blocks Googlebot from crawled page ${page.url}.`,
+          "Allow the path in robots.txt, or noindex the page instead of blocking it.",
+          {
+            url: page.url,
+            ...(page.file ? { file: page.file } : {}),
+            googleDocs: G,
+          },
+        ),
+      );
+  for (const url of crawl.sitemapUrls)
+    if (blocked(url))
+      out.push(
+        finding(
+          "robots",
+          "sitemap-url-blocked",
+          "warning",
+          `Sitemap lists ${url}, which robots.txt blocks for Googlebot.`,
+          "Remove the URL from the sitemap, or allow it in robots.txt.",
+          { url, googleDocs: G },
+        ),
+      );
+  return out;
+}
+
 export const robotsCheck: CheckDefinition = {
   name: "robots",
   description:
     "Validates robots syntax, site-wide blocking, and sitemap declarations.",
   run({ crawl, config }) {
     const o = { url: crawl.robots.url, file: crawl.robots.file, googleDocs: G };
+    if (
+      crawl.robots.status >= 500 ||
+      crawl.robots.status === 429 ||
+      crawl.robots.failure
+    )
+      return [
+        finding(
+          "robots",
+          "unavailable",
+          "warning",
+          crawl.robots.status
+            ? `robots.txt returned HTTP ${crawl.robots.status}.`
+            : `robots.txt did not respond (${crawl.robots.failure}).`,
+          "Serve robots.txt with HTTP 200 or 404. Google treats server errors on robots.txt as a reason to stop crawling the site.",
+          o,
+        ),
+      ];
     if (crawl.robots.status !== 200 || crawl.robots.content === undefined)
       return [
         finding(
@@ -124,6 +275,7 @@ export const robotsCheck: CheckDefinition = {
           o,
         ),
       );
+    out.push(...blockedUrlFindings(crawl, parseGroups(crawl.robots.content)));
     return out;
   },
 };

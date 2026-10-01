@@ -2,38 +2,13 @@ import path from "node:path";
 import type { CheerioAPI } from "cheerio";
 import type { AnyNode } from "domhandler";
 import { loadHtml } from "../utils/html.js";
+import { srcsetCandidates, type ImageCandidate } from "../utils/srcset.js";
 import { isLocalOrStaging, normalizeUrl, sameOrigin } from "../utils/urls.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
 
 const G =
   "https://developers.google.com/search/docs/appearance/core-web-vitals";
-
-interface ImageCandidate {
-  url: string;
-  descriptor?: string;
-}
-
-function srcsetCandidates(value: string, base: string): ImageCandidate[] {
-  return value
-    .split(",")
-    .map((candidate) => candidate.trim())
-    .filter(Boolean)
-    .flatMap((candidate) => {
-      const match = candidate.match(/^(\S+)(?:\s+(\d+(?:\.\d+)?[wx]))?$/);
-      if (!match?.[1]) return [];
-      try {
-        return [
-          {
-            url: normalizeUrl(match[1], base),
-            ...(match[2] ? { descriptor: match[2] } : {}),
-          },
-        ];
-      } catch {
-        return [];
-      }
-    });
-}
 
 function basicSizesHint(value?: string) {
   if (!value) return undefined;

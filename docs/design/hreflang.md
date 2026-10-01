@@ -14,7 +14,7 @@ hreflang is fully decidable from delivered HTML, needs zero additional requests,
 | ----------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `<link rel="alternate" hreflang>` in HTML | supported         | Fully decidable from delivered HTML in both modes.                                                                                                                                                                              |
 | HTTP `Link:` header                       | deferred          | `headers` is `{}` in static mode (`crawlSite.ts:180`); a header-only annotation would produce findings that appear in HTTP mode and vanish in static mode — the same dead-code class as `x-robots-tag` at `indexability.ts:47`. |
-| Sitemap `xhtml:link`                      | deferred to v0.12 | One mapper change away: `parseSitemap` (`src/crawler/sitemaps.ts:19`) already parses with `ignoreAttributes: false`, but `sitemaps.ts:38-46` discards everything except `loc` and `lastmod`.                                    |
+| Sitemap `xhtml:link`                      | shipped in 0.12   | One mapper change away: `parseSitemap` (`src/crawler/sitemaps.ts:19`) already parses with `ignoreAttributes: false`, but `sitemaps.ts:38-46` discards everything except `loc` and `lastmod`.                                    |
 
 A site that annotates hreflang only through headers or sitemap entries must stay silent rather than report `missing-self` on every page it cannot see annotations for.
 

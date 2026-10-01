@@ -5,12 +5,15 @@ import { fileExists, readOptional, walkFiles } from "../utils/files.js";
 import { isHtmlRedirect, loadHtml } from "../utils/html.js";
 import { normalizeUrl, pathAllowed, sameOrigin } from "../utils/urls.js";
 import { discoverLinks } from "./discoverUrls.js";
-import { fetchText } from "./fetchPage.js";
+import { fetchStatus, fetchText } from "./fetchPage.js";
+import { pageResources } from "./resources.js";
 import { parseSitemap } from "./sitemaps.js";
 import type {
   AssetArtifact,
   CrawlResult,
   PageArtifact,
+  ResourceArtifact,
+  ResourceKind,
   TextArtifact,
 } from "./types.js";
 function fileUrl(file: string, dist: string, base: string) {
@@ -279,7 +282,50 @@ async function artifact(
     url: new URL(name, base).toString(),
     status: f.status,
     content: f.content,
+    ...(f.failure ? { failure: f.failure } : {}),
   };
+}
+
+async function requestResources(
+  pages: PageArtifact[],
+  target: URL,
+  base: string,
+  config: SearchQualityConfig,
+) {
+  const wanted = new Map<string, { kind: ResourceKind; pages: Set<string> }>();
+  for (const page of pages) {
+    if (page.status < 200 || page.status >= 300) continue;
+    for (const resource of pageResources(page.html, page.url)) {
+      if (!sameOrigin(resource.url, base)) continue;
+      const entry = wanted.get(resource.url) ?? {
+        kind: resource.kind,
+        pages: new Set<string>(),
+      };
+      entry.pages.add(page.url);
+      wanted.set(resource.url, entry);
+    }
+  }
+  const resources: ResourceArtifact[] = [];
+  let truncated = false;
+  for (const [url, entry] of wanted) {
+    if (resources.length >= config.crawl.maxResources) {
+      truncated = true;
+      break;
+    }
+    const publicUrl = new URL(url);
+    const f = await fetchStatus(
+      new URL(`${publicUrl.pathname}${publicUrl.search}`, target).toString(),
+      config,
+    );
+    resources.push({
+      url,
+      kind: entry.kind,
+      status: f.status,
+      ...(f.failure ? { failure: f.failure } : {}),
+      referencedBy: [...entry.pages].sort(),
+    });
+  }
+  return { resources, truncated };
 }
 
 function publicResponseUrl(responseUrl: string, target: URL, base: string) {
@@ -315,8 +361,15 @@ export async function crawlHttp(
       ).toString(),
       f = await fetchText(requestUrl, config),
       html = f.content ?? "",
-      finalUrl = publicResponseUrl(f.finalUrl, target, base);
+      finalUrl = publicResponseUrl(f.finalUrl, target, base),
+      redirects = f.redirects.map((hop) => ({
+        url: publicResponseUrl(hop.url, target, base),
+        status: hop.status,
+        location: publicResponseUrl(hop.location, target, base),
+      }));
     seen.add(normalizeUrl(finalUrl));
+    for (const hop of redirects)
+      if (sameOrigin(hop.url, base)) seen.add(normalizeUrl(hop.url));
     pages.push({
       initialUrl,
       finalUrl,
@@ -326,6 +379,8 @@ export async function crawlHttp(
       html,
       headers: f.headers,
       bytes: Buffer.byteLength(html),
+      ...(redirects.length ? { redirects } : {}),
+      ...(f.failure ? { failure: f.failure } : {}),
     });
     if (f.status < 200 || f.status >= 400) continue;
     for (const link of discoverLinks(
@@ -367,13 +422,23 @@ export async function crawlHttp(
         url: publicUrl.toString(),
         status: f.status,
         content: f.content,
+        ...(f.failure ? { failure: f.failure } : {}),
         parentUrl,
         depth,
       };
     },
   );
+  const requested = config.checks.assets
+    ? await requestResources(pages, target, base, config)
+    : undefined;
   return {
     mode: "http",
+    ...(requested
+      ? {
+          resources: requested.resources,
+          ...(requested.truncated ? { resourcesTruncated: true } : {}),
+        }
+      : {}),
     target: target.origin,
     publicBaseUrl: base,
     pages,

@@ -27,6 +27,7 @@ const summarySchema = z
     newFindings: z.number().int().nonnegative(),
     resolvedFindings: z.number().int().nonnegative(),
     suppressedFindings: z.number().int().nonnegative().default(0),
+    unmatchedSuppressions: z.number().int().nonnegative().optional(),
   })
   .strict();
 

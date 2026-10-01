@@ -1,5 +1,6 @@
 import { accessibilityCheck } from "./accessibility.js";
 import { agentReadinessCheck } from "./agentReadiness.js";
+import { assetsCheck } from "./assets.js";
 import { canonicalCheck } from "./canonical.js";
 import { hreflangCheck } from "./hreflang.js";
 import { indexabilityCheck } from "./indexability.js";
@@ -7,6 +8,7 @@ import { internalLinksCheck } from "./internalLinks.js";
 import { metadataCheck } from "./metadata.js";
 import { openGraphCheck } from "./openGraph.js";
 import { performanceHintsCheck } from "./performanceHints.js";
+import { redirectsCheck } from "./redirects.js";
 import { renderedHtmlCheck } from "./renderedHtml.js";
 import { robotsCheck } from "./robots.js";
 import { sitemapCheck } from "./sitemap.js";
@@ -26,6 +28,8 @@ export const checks = [
   performanceHintsCheck,
   agentReadinessCheck,
   hreflangCheck,
+  redirectsCheck,
+  assetsCheck,
 ];
 
 export type { CheckBasis } from "./types.js";
@@ -35,18 +39,20 @@ const severities: Record<
   readonly ("error" | "warning" | "info")[]
 > = {
   sitemap: ["error", "warning"],
-  robots: ["error", "warning"],
+  robots: ["error", "warning", "info"],
   indexability: ["error"],
   metadata: ["error", "warning"],
   canonical: ["error", "warning"],
   structuredData: ["error", "warning"],
   openGraph: ["error", "warning"],
-  internalLinks: ["error", "warning"],
+  internalLinks: ["error", "warning", "info"],
   renderedHtml: ["error", "warning"],
   accessibility: ["error", "warning"],
   performanceHints: ["error", "warning"],
   agentReadiness: ["warning", "info"],
   hreflang: ["error", "warning", "info"],
+  redirects: ["warning"],
+  assets: ["warning", "info"],
 };
 
 export const checkCatalog = checks.map((check) => ({

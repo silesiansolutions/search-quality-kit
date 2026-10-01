@@ -171,9 +171,7 @@ function webmcpFindings(crawl: CrawlResult) {
               $(control).attr("toolparamdescription"),
             ),
             hasAriaDescription = present($(control).attr("aria-description")),
-            hasAriaDescribedby = present(
-              $(control).attr("aria-describedby"),
-            ),
+            hasAriaDescribedby = present($(control).attr("aria-describedby")),
             hasLabel = hasAssociatedLabel($, control);
           if (
             !hasParamDescription &&

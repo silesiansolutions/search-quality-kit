@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here.
 
+## [0.12.0] - 2026-10-01
+
+- Follow redirects in the crawler instead of delegating to `fetch`, and keep every hop. A failed request now records why it failed: timeout, DNS, refused connection, TLS, redirect loop, a chain longer than the new `crawl.maxRedirects` (default 10), or an unclassified network error.
+- Add a default-on `redirects` check for HTTP crawls: `redirects.chain`, `redirects.loop`, `redirects.broken` and `redirects.internal-link-to-redirect`.
+- Add a default-on `assets` check: `assets.missing-static-asset` in static mode, and `assets.broken-image`, `assets.broken-script` and `assets.broken-stylesheet` in HTTP mode, with one request per unique same-origin resource, bounded by the new `crawl.maxResources` (default 500). `checks.assets: false` skips the requests.
+- Validate canonical targets in HTTP mode against responses the crawl already has: `canonical.target-redirect`, `canonical.target-4xx`, `canonical.target-5xx` and `canonical.target-unreachable`.
+- Match crawled and sitemap URLs against the robots.txt rules that apply to Googlebot: `robots.indexable-url-blocked` and `robots.sitemap-url-blocked`. A 5xx, 429 or unreachable robots.txt is reported as `robots.unavailable` instead of `robots.missing`. Suppressions for `robots.missing` still match it; a baseline entry for that case reappears once, because the message had to change.
+- Split `indexability.non-200` into `indexability.4xx`, `indexability.5xx`, `indexability.timeout` and `indexability.unreachable`. Messages are unchanged and a new `codeAliases` table maps each new code to the old one, so existing baselines and suppressions keep matching. SARIF alerts for these codes close and reopen once under the new rule ids.
+- Add `sitemap.url-noindex`, `metadata.multiple-titles`, `metadata.multiple-descriptions`, `metadata.invalid-lang`, `internal-links.https-to-http` and `internal-links.no-outgoing-links`.
+- Read hreflang alternates from sitemap `xhtml:link` entries for URLs whose HTML declares none.
+- Report reviewed suppressions that matched no finding as `unmatchedSuppressions` in the JSON report and in their own console and Markdown section. They never affect the gate.
+- Every new code is `warning` or `info`, so the default `ci.failOn: ["error"]` gate is unchanged on upgrade. The contract schema moves to `0.12` for `crawl.maxRedirects`, `crawl.maxResources` and the two new checks; the JSON report schema stays `0.3`.
+- Refresh dependencies within their majors, patch the transitive `brace-expansion` advisory, and move the pinned `esbuild` override to 0.28.2. TypeScript stays on 6, because typescript-eslint does not support TypeScript 7 yet.
+
 ## [0.11.3] - 2026-09-02
 
 - Refresh the runtime dependencies: `commander` 15.0.0, `zod` 4.5.2 and `fast-xml-parser` 5.11.1. The CLI surface, the config schema and the JSON report contract are unchanged.
@@ -132,6 +146,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.12.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.3...v0.12.0
 [0.11.3]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.2...v0.11.3
 [0.11.2]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.1...v0.11.2
 [0.11.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.0...v0.11.1

@@ -18,7 +18,7 @@ New reports also include `source`. Built-in findings use `{"type":"core","name":
 
 Classification: `google-recommendation`, `local-heuristic`.
 
-Checks the sitemap declared by `robots.txt` (with conventional fallbacks), detects `<sitemapindex>`, recursively loads child indexes and URL sets, and validates every file at its own URL/file location. It checks valid XML, absolute HTTP(S) URLs, configured origin, production host leaks, duplicates across children, excluded page paths, and valid `lastmod` syntax. Traversal is deduplicated and bounded by `crawl.maxSitemaps` and `crawl.maxSitemapDepth`. Google describes sitemap URL and date requirements in [Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap). A sitemap is a discovery hint, not an indexing guarantee.
+Checks the sitemap declared by `robots.txt` (with conventional fallbacks), detects `<sitemapindex>`, recursively loads child indexes and URL sets, and validates every file at its own URL/file location. It checks valid XML, absolute HTTP(S) URLs, configured origin, production host leaks, duplicates across children, excluded page paths, and valid `lastmod` syntax. Traversal is deduplicated and bounded by `crawl.maxSitemaps` and `crawl.maxSitemapDepth`. `sitemap.url-noindex` (warning) reports a sitemap URL whose crawled page carries `noindex` or `none` in robots metadata or `X-Robots-Tag`. Google describes sitemap URL and date requirements in [Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap). A sitemap is a discovery hint, not an indexing guarantee.
 
 ## robots
 
@@ -26,13 +26,27 @@ Classification: `google-requirement`, `local-heuristic`.
 
 Checks availability, recognized field syntax, root-relative allow/disallow paths, accidental site-wide blocking, absolute sitemap declarations, and local/staging leaks. Based on [Google's robots.txt specification](https://developers.google.com/crawling/docs/robots-txt/robots-txt-spec). robots.txt controls crawling, not reliable de-indexing; use supported `noindex` mechanisms for that purpose.
 
+The check also matches URLs against the rules that apply to Googlebot: the `Googlebot` groups when present, otherwise the `*` groups. Rules support `*` and a trailing `$`; the longest matching rule wins and `Allow` wins a tie. When the root path itself is blocked, per-URL findings are skipped because the site-wide block is already visible.
+
+- `robots.indexable-url-blocked` (warning): a crawled page answered 200 without `noindex` but robots.txt blocks it for Googlebot.
+- `robots.sitemap-url-blocked` (warning): the sitemap lists a URL that robots.txt blocks for Googlebot.
+- `robots.unavailable` (warning): robots.txt answered with a 5xx or 429 status or did not respond. Google treats a server error on robots.txt as a reason to stop crawling, unlike a 404. It replaces `robots.missing` for that case and carries an alias to it, so existing suppressions keep matching.
+
 ## indexability
 
 Classification: `google-requirement`.
 
 Checks that crawled public pages return HTTP 200 and do not carry `noindex`/`none` in robots metadata or `X-Robots-Tag`. These are among Google's [minimum technical requirements](https://developers.google.com/search/docs/essentials/technical) and [robots meta specifications](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag). Passing does not guarantee indexing.
 
-HTTP crawls retain both the initial and final response URL. Normal same-origin redirects, including trailing-slash normalization, are not findings. A redirect from an internal URL outside the configured public origin is reported as `redirect-outside-origin`.
+A page that does not answer 200 is reported under a code that names the status class. All of them are `error`, and the message keeps the pre-0.12 wording, so baselines and suppressions recorded under `indexability.non-200` still match through the code alias.
+
+- `indexability.4xx`: the page returned a 4xx status.
+- `indexability.5xx`: the page returned a 5xx status.
+- `indexability.timeout`: the request timed out after `crawl.requestTimeoutMs`.
+- `indexability.unreachable`: no HTTP response for another reason. The suggestion names the cause: DNS failure, refused connection, TLS failure, redirect loop, or a chain longer than `crawl.maxRedirects`.
+- `indexability.non-200`: any other status, such as a 3xx without a usable `Location`.
+
+HTTP crawls retain the initial URL, every redirect hop, and the final response URL. Redirect quality is reported by the [redirects](#redirects) check. A redirect from an internal URL outside the configured public origin is reported as `redirect-outside-origin`.
 
 Static HTML redirect stubs with `meta http-equiv="refresh"` are treated as navigation artifacts rather than indexable content pages, while their generated route remains available to link resolution.
 
@@ -42,11 +56,21 @@ Classification: `google-recommendation`, `local-heuristic`.
 
 Checks non-empty and non-generic titles, descriptions, duplicates, document language, and viewport metadata. Google's guidance favors descriptive, concise, distinct title text and useful page-specific descriptions: [title links](https://developers.google.com/search/docs/appearance/title-link) and [snippets](https://developers.google.com/search/docs/appearance/snippet). Length ranges are configurable project heuristics, not Google limits.
 
+- `metadata.multiple-titles` (warning): the head contains more than one `<title>`.
+- `metadata.multiple-descriptions` (warning): the page contains more than one meta description.
+- `metadata.invalid-lang` (warning): `<html lang>` is not a well-formed tag, or uses a two-letter language or region subtag missing from the vendored ISO tables. Three-letter languages and variant subtags are accepted without a table lookup.
+
 ## canonical
 
 Classification: `google-recommendation`, `local-heuristic`.
 
 Checks presence when configured, one non-empty absolute production URL, origin consistency, normalized self-reference, sitemap/canonical agreement, and redirected sitemap URLs. In HTTP mode, self-reference is compared with the final response URL after redirects. Based on [canonical URL guidance](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls). A non-self canonical is a warning because legitimate duplicate consolidation exists.
+
+In HTTP mode the canonical target is resolved against responses the crawl already has, without extra requests. A target outside the crawl is not checked.
+
+- `canonical.target-redirect` (warning): the canonical URL redirects. This includes a canonical without the trailing slash the server redirects to.
+- `canonical.target-4xx` and `canonical.target-5xx` (warning): the canonical URL returns an error status.
+- `canonical.target-unreachable` (warning): the canonical URL did not respond.
 
 ## structured-data
 
@@ -67,6 +91,9 @@ Checks `og:title`, `og:description`, `og:url`, `og:type`, optional `og:image`, p
 Classification: `google-recommendation`, `local-heuristic`.
 
 Checks crawlable `href` values, malformed/empty links, local host leaks, known 404s, missing static routes, accessible anchor text, and orphans. Static mode uses the build inventory. HTTP mode combines entrypoints, discovered internal links, and recursively collected sitemap URLs; `crawl.exclude` removes intentionally isolated routes from orphan candidates. Relative links are resolved against the final response URL. Based on Google's [crawlable link best practices](https://developers.google.com/search/docs/crawling-indexing/links-crawlable) and Search Essentials' emphasis on discoverable links.
+
+- `internal-links.https-to-http` (warning): an HTTPS page links to the `http:` form of an internal URL.
+- `internal-links.no-outgoing-links` (info): a page that answered 200 has no same-origin link, so crawling stops there.
 
 ## rendered-html
 
@@ -116,7 +143,7 @@ Classification: `google-requirement`, `google-recommendation`, `local-heuristic`
 
 Validates `<link rel="alternate" hreflang>` annotations across the whole crawl, not one page at a time. Reciprocity is the reason this check needs a cross-page view: Google states that if page X links to page Y, page Y must link back, or the annotations may be ignored. Only ISO 639-1 language codes and ISO 3166-1 alpha-2 region codes are supported, plus UN M.49 macro-regions such as `es-419`.
 
-Annotations delivered through the HTTP `Link:` header or through sitemap `xhtml:link` entries are not read. A site that annotates only that way produces no findings rather than a false `missing-self` on every page.
+Sitemap `xhtml:link` alternates are read too. For each URL the HTML annotations win; the sitemap annotations count only for a URL whose HTML declares none, so a site that uses both methods is not reported twice. Annotations in the HTTP `Link:` header are not read, and a site that annotates only that way produces no findings rather than a false `missing-self` on every page.
 
 Every code is `warning` or `info` by default, so the default `ci.failOn: ["error"]` gate is unchanged on upgrade. `rules.hreflang.strict` (default `false`) promotes the Google-requirement codes to `error`.
 
@@ -135,6 +162,29 @@ Every code is `warning` or `info` by default, so the default `ci.failOn: ["error
 - `hreflang.missing-x-default` — info: a cluster has two or more language versions and no `x-default`. Emitted only under `rules.hreflang.requireXDefault` (default `false`).
 
 A monolingual site produces no findings from this check at all. An `x-default` entry pointing at the page itself counts as a self-reference. See [Google's localized versions documentation](https://developers.google.com/search/docs/specialty/international/localized-versions) and the [design note](design/hreflang.md).
+
+## redirects
+
+Classification: `google-recommendation`, `local-heuristic`. HTTP mode only; a static build has no redirects to observe.
+
+The crawler follows redirects itself, up to `crawl.maxRedirects` hops (default 10), and keeps every hop. Findings point at the URL where the chain starts. All codes are warnings, so the default error gate is unchanged on upgrade. Based on [Google's redirect documentation](https://developers.google.com/search/docs/crawling-indexing/301-redirects).
+
+- `redirects.chain`: the start URL reaches its final URL through more than one redirect.
+- `redirects.loop`: the chain returns to a URL it already visited.
+- `redirects.broken`: the chain ends in a 4xx or 5xx status, gets no response, or exceeds `crawl.maxRedirects`.
+- `redirects.internal-link-to-redirect`: a crawled page links to a URL that redirects. Reported once per page and target.
+
+## assets
+
+Classification: `local-heuristic`.
+
+Checks same-origin images (`src`, `srcset`, `<picture>` sources), scripts and stylesheets referenced by crawled pages. Each resource is reported once, with the first referencing page as the location and the others in `relatedUrls`. Third-party resources are not checked. All codes are warnings or info.
+
+- `assets.missing-static-asset` (static mode): the referenced file is absent from the build output. The query string is ignored for the lookup.
+- `assets.broken-image`, `assets.broken-script`, `assets.broken-stylesheet` (HTTP mode): the resource answers with a 4xx or 5xx status or does not respond.
+- `assets.request-limit` (info, HTTP mode): resource requests stopped at `crawl.maxResources`, so the remaining resources were not checked.
+
+HTTP mode makes one request per unique resource, bounded by `crawl.maxResources` (default 500). Setting `checks.assets: false` skips these requests entirely.
 
 ## Broader policy context
 

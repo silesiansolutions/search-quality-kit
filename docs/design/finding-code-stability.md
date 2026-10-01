@@ -1,6 +1,6 @@
 # Finding code stability
 
-Finding codes are an identity contract. `indexability.non-200` is not split in v0.11.
+Finding codes are an identity contract. This note records why `indexability.non-200` was not split in v0.11. The split shipped in 0.12 behind `codeAliases` in `src/findingCodes.ts`, as described below; see the 0.12.0 entry in the changelog.
 
 ## Codes are identity, not labels
 

@@ -103,12 +103,20 @@ export const hreflangCheck: CheckDefinition = {
     "Validates hreflang alternates: subtag validity, self-reference, reciprocity, and target resolution.",
   run({ crawl, config }) {
     const graph = urlGraph(crawl);
-    const alternateEdges = graph.edges.filter(
+    const declared = graph.edges.filter(
       (e): e is AlternateEdge => e.kind === "alternate",
+    );
+    const htmlDeclarers = new Set(
+      declared.filter((e) => !e.source).map((e) => e.from),
+    );
+    const alternateEdges = declared.filter(
+      (e) => !e.source || !htmlDeclarers.has(e.from),
     );
     if (alternateEdges.length === 0) return [];
     const outgoingAlternates = (id: string) =>
-      graph.outgoing("alternate", id) as AlternateEdge[];
+      alternateEdges.filter((e) => e.from === id);
+    const incomingAlternates = (id: string) =>
+      alternateEdges.filter((e) => e.to === id);
 
     const strict = config.rules.hreflang.strict;
     const out: Finding[] = [];
@@ -299,14 +307,13 @@ export const hreflangCheck: CheckDefinition = {
     for (const yid of clusterIds) {
       const yNode = graph.node(yid);
       if (!yNode || yNode.kind !== "page") continue;
-      const incoming = graph
-        .incoming("alternate", yid)
-        .filter((e) => e.from !== yid && graph.node(e.from)?.kind === "page");
+      const incoming = incomingAlternates(yid).filter(
+        (e) => e.from !== yid && graph.node(e.from)?.kind === "page",
+      );
       const zIds = [...new Set(incoming.map((e) => e.from))];
       if (zIds.length === 0) continue;
       const outgoingTargets = new Set(
-        graph
-          .outgoing("alternate", yid)
+        outgoingAlternates(yid)
           .map((e) => e.to)
           .filter((to): to is string => Boolean(to)),
       );

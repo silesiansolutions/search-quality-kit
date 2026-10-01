@@ -17,6 +17,7 @@ import { runCommand, startCommand, waitForUrl } from "../utils/process.js";
 import { VERSION } from "../version.js";
 import {
   applyReviewedSuppressions,
+  unmatchedSuppressions,
   unsuppressedFindings,
 } from "../suppressions.js";
 export interface VerifyOptions {
@@ -118,6 +119,7 @@ export async function runVerification(
         a.message.localeCompare(b.message),
     );
     const reviewedFindings = applyReviewedSuppressions(findings, config);
+    const unmatched = unmatchedSuppressions(findings, config);
     const report: SearchQualityReport = {
       schemaVersion: REPORT_SCHEMA_VERSION,
       tool: "search-quality-kit",
@@ -131,6 +133,9 @@ export async function runVerification(
         warnings: findings.filter((f) => f.severity === "warning").length,
         info: findings.filter((f) => f.severity === "info").length,
         suppressedFindings: reviewedFindings.filter((f) => f.suppressed).length,
+        ...(unmatched.length
+          ? { unmatchedSuppressions: unmatched.length }
+          : {}),
       },
       findings: reviewedFindings,
       pages: crawl.pages.map(({ url, initialUrl, finalUrl, status, file }) => {
@@ -151,6 +156,7 @@ export async function runVerification(
         };
       }),
       durationMs: Date.now() - start,
+      ...(unmatched.length ? { unmatchedSuppressions: unmatched } : {}),
       ...(pluginResult.errors.length
         ? { pluginErrors: pluginResult.errors }
         : {}),

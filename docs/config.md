@@ -2,26 +2,26 @@
 
 The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, or `.json`. Pass another file with `--config`. Every nested section accepts partial values and receives defaults.
 
-| Section                | Important fields                                                        | Defaults                         |
-| ---------------------- | ----------------------------------------------------------------------- | -------------------------------- |
-| `site`                 | `baseUrl`, `localUrl`, `stagingHosts`                                   | common local/preview host tokens |
-| `build`                | `command`, `startCommand`, `distDir`, `startupTimeoutMs`                | `dist`, 30 seconds               |
-| `crawl`                | `mode`, entrypoints, page/sitemap limits, `include`, `exclude`, timeout | `auto`, `/`, 100 pages           |
-| `profiles`             | default site type and ordered route overrides                           | `generic`, no route overrides    |
-| `plugins`              | typed custom-check plugins                                              | none                             |
-| `suppressions`         | reviewed accepted findings by stable code and route pattern             | none                             |
-| `checks`               | one boolean per built-in check, including `agentReadiness`              | all enabled                      |
-| `rules.title`          | min/max length, duplicate policy                                        | 10–70, no duplicates             |
-| `rules.description`    | min/max, missing and duplicate policy                                   | 50–170, required, no duplicates  |
-| `rules.canonical`      | `required`                                                              | true                             |
-| `rules.robots`         | `disallowAllInProduction`                                               | false                            |
-| `rules.structuredData` | JSON and visible-content switches                                       | syntax validation on             |
-| `rules.openGraph`      | `requireImage`                                                          | false                            |
-| `rules.renderedHtml`   | main/H1 policy and minimum visible text                                 | main and H1 required, 80 chars   |
-| `rules.performance`    | HTML, script, and image thresholds                                      | 500 KiB HTML/image, 10 scripts   |
-| `rules.agentReadiness` | `requireLlmsTxt`                                                        | false                             |
-| `output`               | default format (`console`, `json`, `markdown`, `sarif`) and filenames   | console                          |
-| `ci`                   | `failOn`, `warnOnly`                                                    | fail on error                    |
+| Section                | Important fields                                                                 | Defaults                             |
+| ---------------------- | -------------------------------------------------------------------------------- | ------------------------------------ |
+| `site`                 | `baseUrl`, `localUrl`, `stagingHosts`                                            | common local/preview host tokens     |
+| `build`                | `command`, `startCommand`, `distDir`, `startupTimeoutMs`                         | `dist`, 30 seconds                   |
+| `crawl`                | `mode`, entrypoints, page/sitemap/redirect limits, `include`, `exclude`, timeout | `auto`, `/`, 100 pages, 10 redirects |
+| `profiles`             | default site type and ordered route overrides                                    | `generic`, no route overrides        |
+| `plugins`              | typed custom-check plugins                                                       | none                                 |
+| `suppressions`         | reviewed accepted findings by stable code and route pattern                      | none                                 |
+| `checks`               | one boolean per built-in check, including `agentReadiness`                       | all enabled                          |
+| `rules.title`          | min/max length, duplicate policy                                                 | 10 to 70, no duplicates              |
+| `rules.description`    | min/max, missing and duplicate policy                                            | 50 to 170, required, no duplicates   |
+| `rules.canonical`      | `required`                                                                       | true                                 |
+| `rules.robots`         | `disallowAllInProduction`                                                        | false                                |
+| `rules.structuredData` | JSON and visible-content switches                                                | syntax validation on                 |
+| `rules.openGraph`      | `requireImage`                                                                   | false                                |
+| `rules.renderedHtml`   | main/H1 policy and minimum visible text                                          | main and H1 required, 80 chars       |
+| `rules.performance`    | HTML, script, and image thresholds                                               | 500 KiB HTML/image, 10 scripts       |
+| `rules.agentReadiness` | `requireLlmsTxt`                                                                 | false                                |
+| `output`               | default format (`console`, `json`, `markdown`, `sarif`) and filenames            | console                              |
+| `ci`                   | `failOn`, `warnOnly`                                                             | fail on error                        |
 
 Length and byte thresholds are regression heuristics, not Google ranking limits. Tune them to the project instead of disabling unrelated checks.
 
@@ -30,6 +30,8 @@ Paths in `include`, `exclude`, and `entrypoints` are URL paths. Exclusions apply
 `crawl.mode` is `auto`, `static`, or `http`. `auto` preserves the original target selection: prefer `site.localUrl`, otherwise use an existing `build.distDir`, otherwise crawl `site.baseUrl`. Official static presets use `static`, so a missing output directory fails clearly instead of silently auditing production. `nextHybrid()` uses `http` and defaults `site.localUrl` to `http://localhost:3000`.
 
 `crawl.maxSitemaps` defaults to 50 and `crawl.maxSitemapDepth` defaults to 3. They bound recursive sitemap-index traversal in both static and HTTP modes. A truncated traversal produces `sitemap/fetch-limit`; raise the limits only when the site intentionally needs a larger sitemap tree.
+
+`crawl.maxRedirects` defaults to 10, the hop limit Googlebot follows, and accepts 0 to 20. HTTP crawls follow redirects themselves and record every hop; a longer chain ends as `indexability.unreachable` plus `redirects.broken`. `checks.redirects` and `checks.assets` enable the two checks added in 0.12. Disabling `checks.assets` also stops the HTTP resource requests. `crawl.maxResources` (default 500, up to 10000) caps those requests at one per unique same-origin resource; a truncated run reports `assets.request-limit`.
 
 Baseline behavior is controlled by CLI flags rather than config: use `--baseline <report.json> --fail-on-new`. The gate still reads severity policy from `ci.failOn`, while `ci.warnOnly` and `--report-only` suppress finding-based failure. Report and SARIF output are presentation formats and do not alter finding identity or gate behavior.
 
@@ -66,6 +68,20 @@ custom plugin findings already use namespaced codes such as
 syntax as route profiles. `reason` and `owner` are required. `expires` is
 optional, but when present must be `YYYY-MM-DD`; expired suppressions are still
 reported and no longer affect the gate.
+
+An active suppression that matches no finding in a run is listed under
+`unmatchedSuppressions` in the JSON report, with a count in the summary, and in
+its own section of the console and Markdown output. It never affects the gate.
+The usual cause is a route pattern written for the wrong URL shape: static
+crawls report built files such as `/legal/terms.html`, so run the audit once
+and copy the path from a finding before writing the pattern.
+
+A suppression written for a renamed code keeps matching through the alias
+table exported as `codeAliases`. In 0.12, `indexability.non-200` covers the
+split codes `indexability.4xx`, `5xx`, `timeout`, and `unreachable`, and
+`robots.missing` covers `robots.unavailable`. Baselines match through the alias
+only when the message is unchanged, which holds for the indexability codes but
+not for `robots.unavailable`: a baselined 5xx robots.txt reappears once.
 
 The loader rejects suppressions without a reason or owner. It also rejects
 catch-all patterns such as `/`, `/*`, or `/**` unless
@@ -125,7 +141,10 @@ strings, and route options are the same root-relative globs used by route
 profiles.
 
 ```ts
-import { defineConfig, policyPacks } from "@silesiansolutions/search-quality-kit";
+import {
+  defineConfig,
+  policyPacks,
+} from "@silesiansolutions/search-quality-kit";
 
 export default defineConfig({
   site: { baseUrl: "https://example.com" },

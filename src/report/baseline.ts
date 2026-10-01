@@ -1,3 +1,4 @@
+import { legacyFindingCode, stableFindingCode } from "../findingCodes.js";
 import { normalizeUrl } from "../utils/urls.js";
 import {
   REPORT_SCHEMA_VERSION,
@@ -26,10 +27,18 @@ const normalizedLocation = (finding: Finding, target?: string) => {
   return normalize(file);
 };
 
+function fingerprintCode(finding: Finding) {
+  const stable = stableFindingCode(finding);
+  const legacy = legacyFindingCode(stable);
+  if (legacy === stable) return finding.code;
+  const prefix = `${finding.check}.`;
+  return legacy.startsWith(prefix) ? legacy.slice(prefix.length) : legacy;
+}
+
 export function findingFingerprint(finding: Finding, target?: string) {
   return [
     normalize(finding.check),
-    normalize(finding.code),
+    normalize(fingerprintCode(finding)),
     normalize(finding.severity),
     normalizedUrl(finding.url),
     normalizedLocation(finding, target),
