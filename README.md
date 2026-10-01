@@ -19,7 +19,7 @@ It checks technical foundations: crawlability, indexability, sitemap and robots 
 
 ## Quick start
 
-Requires Node.js 20.11 or newer.
+Requires Node.js 24 or newer.
 
 ```bash
 npm install --save-dev @silesiansolutions/search-quality-kit

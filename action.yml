@@ -12,7 +12,7 @@ inputs:
     default: site
   node-version:
     description: Node.js version used by the project and CLI.
-    default: "22"
+    default: "24"
   node-version-file:
     description: Optional path to a Node.js version file such as .nvmrc. Takes precedence over node-version.
     default: ""

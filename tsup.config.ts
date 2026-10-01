@@ -6,5 +6,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   splitting: false,
-  target: "node20",
+  target: "node24",
 });

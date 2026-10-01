@@ -50,7 +50,7 @@ jobs:
 
       - uses: SilesianSolutions/search-quality-kit@v0
         with:
-          node-version: "22"
+          node-version: "24"
           package-manager: npm
           install-command: npm ci
           build-command: npm run build
@@ -82,7 +82,7 @@ The default artifact contains `search-quality-report.json` and `search-quality-r
 ```yaml
 - uses: SilesianSolutions/search-quality-kit@v0
   with:
-    node-version: "22"
+    node-version: "24"
     install-command: npm ci
     build-command: npm run build
     config: search-quality.config.ts
@@ -188,7 +188,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - run: npm ci
