@@ -11,6 +11,11 @@ export function normalizeUrl(value: string, base?: string) {
   if (u.pathname !== "/") u.pathname = u.pathname.replace(/\/+$/, "");
   return u.toString();
 }
+export function normalizeUrlWithoutQuery(value: string, base?: string) {
+  const u = base ? new URL(value, base) : new URL(value);
+  u.search = "";
+  return normalizeUrl(u.toString());
+}
 export function isHttpUrl(value: string) {
   try {
     const u = new URL(value);

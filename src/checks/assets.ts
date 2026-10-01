@@ -1,6 +1,6 @@
 import { pageResources } from "../crawler/resources.js";
 import type { ResourceKind } from "../crawler/types.js";
-import { normalizeUrl, sameOrigin } from "../utils/urls.js";
+import { normalizeUrlWithoutQuery, sameOrigin } from "../utils/urls.js";
 import type { CheckDefinition } from "./types.js";
 import { finding } from "./types.js";
 
@@ -9,12 +9,6 @@ const BROKEN_CODE: Record<ResourceKind, string> = {
   script: "broken-script",
   stylesheet: "broken-stylesheet",
 };
-
-function withoutQuery(url: string) {
-  const parsed = new URL(url);
-  parsed.search = "";
-  return normalizeUrl(parsed.toString());
-}
 
 function pageList(pages: string[]) {
   return pages.length === 1 ? "1 page" : `${pages.length} pages`;
@@ -36,7 +30,7 @@ export const assetsCheck: CheckDefinition = {
           if (!sameOrigin(resource.url, crawl.publicBaseUrl)) continue;
           let key: string;
           try {
-            key = withoutQuery(resource.url);
+            key = normalizeUrlWithoutQuery(resource.url);
           } catch {
             continue;
           }

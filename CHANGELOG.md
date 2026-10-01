@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- Ignore the query string when a static crawl resolves an internal link. Links such as `/category/nis2?page=2` or `./contact?source=home` were reported as `internal-links.missing-static-route` although the file exists. They also did not count as incoming links, so a page reached only through them could get `internal-links.orphan-page`. Both lookups now drop the query, as `assets.missing-static-asset` already did. HTTP crawls are unchanged. Messages are unchanged, so baselines keep matching.
 - Require Node.js 24 or newer. `engines.node` moves from `>=20.11` to `>=24`. The old floor was already wrong: `commander` 15 (since 0.11.3) needs Node 22.12, and `doctor` reported Node 20 as supported. On Node 22 the CLI still starts, the package manager warns about the unsupported engine and `doctor` exits with an error.
 - The GitHub Action defaults `node-version` to `"24"`. The default also sets the Node that runs `install-command` and `build-command`. A workflow that passes `node-version` or `node-version-file` keeps its own version, so a pin to 22 must move to 24. The CI workflows, the `docs/ci.md` snippets and the files in `examples/ci/` use Node 24.
 - Correct the docs for the Action's `package-manager` input. `docs/ci.md` still described `npx --no-install`, which 0.11.1 replaced with `npx --yes @silesiansolutions/search-quality-kit`. With npm and no local install, the Action runs the latest release from npm. The README and the input description say so too.

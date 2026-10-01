@@ -74,6 +74,60 @@ describe("static crawl route inventory", () => {
     }
   });
 
+  it("ignores the query string when resolving links to static routes", async () => {
+    const root = await mkdtemp(
+      path.join(tmpdir(), "search-quality-kit-query-"),
+    );
+    const dist = path.join(root, "dist");
+
+    try {
+      await mkdir(path.join(dist, "category"), { recursive: true });
+      await writeFile(
+        path.join(dist, "index.html"),
+        '<html><body><a href="/category/nis2?page=2">Next</a><a href="./contact?source=home">Contact</a><a href="/missing?page=2">Missing</a></body></html>',
+      );
+      await writeFile(
+        path.join(dist, "category", "nis2.html"),
+        '<html><head><link rel="canonical" href="https://example.com/category/nis2"></head><body>NIS2</body></html>',
+      );
+      await writeFile(
+        path.join(dist, "contact.html"),
+        '<html><head><link rel="canonical" href="https://example.com/contact"></head><body>Contact</body></html>',
+      );
+
+      const config = {
+        ...defaultConfig,
+        site: { ...defaultConfig.site, baseUrl: "https://example.com" },
+      };
+      const crawl = await crawlStatic(root, config);
+      const findings = await internalLinksCheck.run({ config, crawl });
+      const missing = findings.filter(
+        (finding) => finding.code === "missing-static-route",
+      );
+
+      expect(missing.map((finding) => finding.relatedUrls)).toEqual([
+        ["https://example.com/missing?page=2"],
+      ]);
+      expect(
+        findings
+          .filter((finding) => finding.code === "orphan-page")
+          .map((finding) => finding.url),
+      ).not.toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/\/(category\/nis2|contact)$/),
+        ]),
+      );
+      expect(crawl.pages.map((page) => page.url)).toEqual(
+        expect.arrayContaining([
+          "https://example.com/category/nis2",
+          "https://example.com/contact",
+        ]),
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("uses a same-origin extensionless canonical for flat HTML output", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "search-quality-kit-flat-"));
     const dist = path.join(root, "dist");
