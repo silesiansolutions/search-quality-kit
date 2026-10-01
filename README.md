@@ -199,7 +199,7 @@ jobs:
           summary: "true"
 ```
 
-The composite Action calls the repository's pinned local CLI and exposes the CLI options instead of replacing them. It writes JSON/Markdown reports and preserves the CLI exit code. Manual CLI workflows remain supported. See [CI usage](docs/ci.md).
+The composite Action calls the repository's pinned local CLI and exposes the CLI options instead of replacing them. It writes JSON/Markdown reports first, then preserves the CLI exit code. Manual CLI workflows remain supported. See [CI usage](docs/ci.md).
 
 Set `mode: portfolio` and `portfolio-config` to upload the complete portfolio report directory and put `portfolio.md` in the workflow summary. Single-site mode remains the default.
 
@@ -207,7 +207,7 @@ Set `mode: portfolio` and `portfolio-config` to upload the complete portfolio re
 
 `sitemap`, `robots`, `indexability`, `metadata`, `canonical`, `structuredData`, `openGraph`, `internalLinks`, `renderedHtml`, `accessibility`, `performanceHints`, `agentReadiness`, `hreflang`, `redirects`, and `assets`.
 
-Rules are tied to official areas of [Google Search Central](https://developers.google.com/search/docs/essentials). Project heuristics such as title length, HTML weight, and image size are labeled as heuristics. Profile expectations are labeled separately. Neither is represented as a Google requirement or a ranking threshold.
+Rules are tied to official areas of [Google Search Central](https://developers.google.com/search/docs/essentials). Project heuristics such as title length, HTML weight, and image size are labeled as heuristics. Profile expectations are labeled separately and are not represented as Google requirements or ranking thresholds.
 
 `agentReadiness` checks deterministic agent-readiness signals: llms.txt recommendations and declarative WebMCP annotations. They are aligned with the experimental Lighthouse Agentic Browsing category. Runtime audits such as CLS, the accessibility tree, and imperative WebMCP tools stay with Lighthouse and PageSpeed Insights.
 

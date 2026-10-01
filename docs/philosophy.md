@@ -6,7 +6,7 @@ It complements rather than replaces Google Search Console, Rich Results Test, UR
 
 The tool must remain useful locally and in CI, configurable per project, framework-independent, and able to run its core checks without internet access. Validation logic lives centrally in this repository. Target applications keep only configuration and workflow glue.
 
-Rules distinguish hard technical failures from recommendations and heuristics. A malformed sitemap or localhost canonical can be an error. Approximate title length, HTML weight, heading structure, and lazy-loading opportunities are warnings. Context matters, and Google does not define universal thresholds for them.
+Rules distinguish hard technical failures from recommendations and heuristics. A malformed sitemap or localhost canonical can be an error. Approximate title length, HTML weight, heading structure, and lazy-loading opportunities are warnings, because context matters. Google does not define universal thresholds for them.
 
 The first version optimizes for explainable regression detection, not crawler scale. It favors stable findings, actionable remediation, offline fixtures, and a small dependency graph over browser automation or opaque scoring.
 

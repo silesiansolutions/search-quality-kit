@@ -4,11 +4,11 @@ Promote crawl output into an explicit URL graph, derived on demand, as the enabl
 
 ## Why a graph
 
-Checks currently re-derive the same crawl state independently and incompatibly. Link edges are discarded after `discoverLinks` runs once during the crawl (`src/crawler/crawlSite.ts:325`). They are then rebuilt with `loadHtml(p.html)` in `internalLinks.ts:33`, `accessibility.ts:48`, `structuredData.ts:626`, and `plugins/context.ts:42`, about eleven `loadHtml` calls per page across a full run.
+Checks currently re-derive the same crawl state independently and incompatibly. Link edges are discarded after `discoverLinks` runs once during the crawl (`src/crawler/crawlSite.ts:325`). They are then rebuilt with `loadHtml(p.html)` in `internalLinks.ts:33`, `accessibility.ts:48`, `structuredData.ts:626`, and `plugins/context.ts:42`. Together that is about eleven `loadHtml` calls per page across a full run.
 
 Sitemap membership is rebuilt twice, incompatibly. `canonical.ts:18-26` builds a normalized `Set` from `crawl.sitemapUrls`. `internalLinks.ts:23-28` builds a `Map` keyed the same way but filtered by origin and path allowlist. Redirect hops collapse to a single `initialUrl`/`finalUrl` pair with no intermediate structure.
 
-The duplication stems from the absence of a shared model. Cross-page questions such as hreflang reciprocity, canonical target resolution, and sitemap correlation are edge queries over the crawl. Edge queries have no home in `CrawlResult` today.
+This duplication is not accidental complexity to clean up. It is the absence of a shared model. Cross-page questions such as hreflang reciprocity, canonical target resolution, and sitemap correlation are edge queries over the crawl. Edge queries have no home in `CrawlResult` today.
 
 ## Threading mechanism
 

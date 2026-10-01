@@ -78,7 +78,7 @@ ISO 15924 script subtags are deliberately not vendored. A 4-letter Title-case su
 
 ## `x-default` counts as a self-reference, deliberately
 
-An `x-default` entry pointing at the page itself satisfies `missing-self`. This holds even though `x-default` is a fallback annotation rather than a language version. Google's wording (each version must list itself) arguably asks for a language-tagged self-entry as well.
+An `x-default` entry pointing at the page itself satisfies `missing-self`. This holds even though `x-default` is a fallback annotation rather than a language version, and Google's wording (each version must list itself) arguably asks for a language-tagged self-entry as well.
 
 The stricter reading was considered and rejected for v0.11. `missing-self` is a default-on, google-requirement code that `strict` promotes to `error`. A page whose only self-pointing entry is `x-default` is a legitimate, deliberate pattern rather than an obvious mistake. Firing on it would spend the check's credibility on the least certain rule it has. The narrower reading is the one that survives being wrong.
 

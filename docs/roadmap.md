@@ -24,7 +24,7 @@ The kit is not a second Ahrefs and not a second Lighthouse: no backlink index, n
 - reviewed suppressions with owner/reason/expiry, configurable policy packs, exported `contract` schemas, and handoff reports (v0.9);
 - a default-on agent-readiness check covering `llms.txt` and declarative WebMCP form annotations, kept out of the default error gate (v0.10);
 - a URL graph derived from every crawl, the hreflang check, and root-level Action metadata for the Marketplace (v0.11);
-- a crawler that follows redirects itself and classifies failed requests, redirect and asset integrity checks, canonical-target validation, and robots rule matching. The release also adds the `indexability.non-200` split behind finding code aliases, sitemap hreflang, and warnings for suppressions that match nothing (v0.12).
+- a crawler that follows redirects itself and classifies failed requests, redirect and asset integrity checks, canonical-target validation, robots rule matching, the `indexability.non-200` split behind finding code aliases, sitemap hreflang, and warnings for suppressions that match nothing (v0.12).
 
 ## Research inputs
 

@@ -33,7 +33,7 @@ The cost is two metadata files that can drift. A test asserts they declare ident
 
 The root file additionally carries `branding` and `author`, which the subdirectory file does not need and which the sync test deliberately ignores.
 
-This was verified against a real workflow run rather than assumed. `.github/workflows/showcase.yml` was switched from `uses: ./action` to `uses: ./`. The root metadata is now exercised by a live four-site audit on every pull request that touches it.
+This was verified against a real workflow run rather than assumed. `.github/workflows/showcase.yml` was switched from `uses: ./action` to `uses: ./`, so the root metadata is exercised by a live four-site audit on every pull request that touches it.
 
 ## Backward compatibility
 
@@ -51,7 +51,7 @@ That makes it a narrower guard than it looks. Dropping, renaming or reordering t
 
 The root file's step list is covered indirectly, by the sync test at `tests/action.test.ts:73-101`, which compares the two lists including their refs. Its `branding` and `author` have a direct test at `tests/action.test.ts:59-71`.
 
-Per `docs/releasing.md`, the moving `v0` major tag is force-moved to the release commit after each npm publish. Introducing root metadata does not change that procedure. The tag now has to point at a commit where both the root and subdirectory metadata resolve correctly. The release runbook does not change. The verification bar for what "correct" means at that commit does.
+Per `docs/releasing.md`, the moving `v0` major tag is force-moved to the release commit after each npm publish. Introducing root metadata does not change that procedure. But the tag now has to point at a commit where both the root and subdirectory metadata resolve correctly. The release runbook stays the same. What changes is the verification bar for what "correct" means at that commit.
 
 ## npm package unaffected
 

@@ -48,7 +48,7 @@ The one new candidate. It was [announced on the Google Developers Blog](https://
 
 It is a static file at a well-known path, exactly the shape this kit already audits for `llms.txt` and `robots.txt`. Its institutional backing (Linux Foundation working group, multi-vendor co-authorship) is far stronger than `llms.txt` ever had. Adoption is currently near zero.
 
-**Record it as watched, not scheduled.** The trigger that promotes it to a scheduled check is measured adoption, not further announcements from the working group or its co-authors. Concretely: a published survey of at least 10,000 domains showing adoption above the level `llms.txt` reached before this note judged it not worth further investment. That level is about 10% overall, and zero among the highest-traffic segment, which is where `llms.txt` flatlined. It is re-checked once per minor release. Stating a number is the point. Without one, "adoption" is a word two people can disagree about indefinitely, which is exactly what this note exists to prevent.
+**Record it as watched, not scheduled.** The trigger that promotes it to a scheduled check is measured adoption, not further announcements from the working group or its co-authors. Concretely: a published survey of at least 10,000 domains showing adoption above the level `llms.txt` reached before this note judged it not worth further investment. That level is about 10% overall, and zero among the highest-traffic segment, which is where `llms.txt` flatlined. Adoption is re-checked once per minor release. Stating a number is the point. Without one, "adoption" is a word two people can disagree about indefinitely, which is exactly what this note exists to prevent.
 
 ## Standing rule
 

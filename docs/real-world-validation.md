@@ -55,7 +55,7 @@ The remaining CyberKatalog warnings are reviewable existing-site signals. They a
 The v0.3 candidate was built first, then exercised against clean current clones using each site's committed config and build output. JSON and Markdown were generated separately, and each JSON report was reused with `--baseline ... --fail-on-new` without `--report-only`.
 
 - `SilesianSolutions/silesiansolutions.com` at `133b905`: installed with locked pnpm 11.7.0, built on Node 24.18, then audited 40 pages with 0 errors and 84 warnings. The matching baseline classified all 84 as existing, 0 as new, and 0 as resolved; exit code was `0`.
-- `dawidrylko/dawidrylko.com` at `698fff1`: installed with locked pnpm 10.33.0 and built 74 generated routes and 1,234 image variants. It then audited 73 content pages with 0 errors and 58 warnings. The matching baseline classified all 58 as existing, 0 as new, and 0 as resolved; exit code was `0`.
+- `dawidrylko/dawidrylko.com` at `698fff1`: installed with locked pnpm 10.33.0 and built 74 generated routes and 1,234 image variants. The kit then audited 73 content pages with 0 errors and 58 warnings. The matching baseline classified all 58 as existing, 0 as new, and 0 as resolved; exit code was `0`.
 
 Reports are `/tmp/search-quality-silesiansolutions-v03.{json,md}` and `/tmp/search-quality-dawidrylko-v03.{json,md}`; baseline comparison reports use the `-baseline.{json,md}` suffix. Totals match the v0.2 candidate rerun, so the report schema, classification metadata, and portable baseline identity did not introduce finding churn.
 
@@ -73,7 +73,12 @@ Result: 42 content pages, 6 errors, 85 warnings.
 - Heuristics requiring editorial review: title/description lengths are not Google limits and should not be treated as automatic defects.
 - Needed config: none to run; a production CI config should explicitly exclude the intentionally non-indexable legal routes.
 
-Recommended site follow-up: repair four article hrefs, connect the orphaned article, and optimize the largest image assets. Make case-study titles distinct, review heading hierarchy, and record intentional `noindex` exclusions.
+Recommended site follow-up:
+
+- repair four article hrefs and connect the orphaned article;
+- optimize the largest image assets;
+- make case-study titles distinct and review heading hierarchy;
+- record intentional `noindex` exclusions.
 
 ### v0.2 candidate rerun
 
@@ -97,7 +102,12 @@ Result after central fixes: 73 content pages, 0 errors, 58 warnings.
 - Editorial heuristics: 22 title/description length warnings need human review, not mechanical truncation.
 - Needed config: public `baseUrl`, `pnpm build`, and `distDir: "dist"`.
 
-Recommended site follow-up: populate old article descriptions once at the content/data layer so meta and JSON-LD agree. Specialize pagination descriptions or allow that duplicate pattern intentionally. Review three heading outlines, and inspect the nine heavy image candidates with browser metrics.
+Recommended site follow-up:
+
+- populate old article descriptions once at the content/data layer so meta and JSON-LD agree;
+- specialize pagination descriptions or allow that duplicate pattern intentionally;
+- review three heading outlines;
+- inspect the nine heavy image candidates with browser metrics.
 
 ### v0.2 candidate rerun
 
