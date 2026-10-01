@@ -5,8 +5,8 @@ checks. They use the same plugin API as custom checks, so findings work with
 JSON, Markdown, SARIF, baselines, `ci.failOn`, and source attribution.
 
 They are intentionally small. A policy pack does not call Google APIs, launch a
-browser, score content quality, measure Core Web Vitals, require private contact
-data, or claim special requirements for AI Overviews or AI Mode.
+browser, score content quality, or measure Core Web Vitals. It does not require
+private contact data or claim special requirements for AI Overviews or AI Mode.
 
 ## Usage
 
@@ -198,8 +198,8 @@ export default defineConfig({
 });
 ```
 
-Use `profile-expectation` findings as project policy: review them, fix real
-issues, document historical debt in a baseline, or add a narrow reviewed
+Use `profile-expectation` findings as project policy. Review them and fix real
+issues. Document historical debt in a baseline, or add a narrow reviewed
 suppression when the finding is an accepted decision with a clear owner. Keep
 custom project rules in your own plugin when they depend on private business
 logic.

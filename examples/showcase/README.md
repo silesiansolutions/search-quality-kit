@@ -32,6 +32,6 @@ node dist/cli/index.js report \
 
 The manifest is report-only by default because public sites can change independently of this package. Results are examples of deterministic technical checks at crawl time, not an SEO score or ranking.
 
-No baseline is committed initially. To adopt reviewed per-site baselines, add a safe `baseline` path to each site entry, run `portfolio baseline`, review each single-site JSON file, and commit only snapshots the maintainers intentionally accept. Existing files require `--force` before replacement.
+No baseline is committed initially. To adopt reviewed per-site baselines, add a safe `baseline` path to each site entry and run `portfolio baseline`. Review each single-site JSON file, then commit only snapshots the maintainers intentionally accept. Existing files require `--force` before replacement.
 
 See [the full showcase guide](../../docs/showcase.md) and [`snapshots/README.md`](snapshots/README.md).

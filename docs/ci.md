@@ -1,6 +1,6 @@
 # Continuous integration
 
-The CLI has three exit codes: `0` when the configured gate passes, `1` when findings match `ci.failOn`, and `2` for CLI, config, baseline, or runtime errors. `--report-only` always suppresses the finding gate, but it does not hide operational errors.
+The CLI has three exit codes: `0` when the configured gate passes, `1` when findings match `ci.failOn`, and `2` for CLI, config, baseline, or runtime errors. `--report-only` always suppresses the finding gate. It does not hide operational errors.
 
 Pin a released package version in `devDependencies` and start with `--report-only` while the team reviews the first report. Existing repositories should normally adopt the baseline workflow below instead of weakening checks globally.
 
@@ -24,13 +24,13 @@ For portfolio mode:
 ```
 
 Doctor exits `2` for setup/config problems and never applies the SEO finding
-gate. It is useful for catching missing baselines, missing static output,
-unsafe output paths, plugin registration failures, and portfolio path mistakes
-before the audit spends time crawling.
+gate. It catches missing baselines, missing static output, unsafe output
+paths, plugin registration failures, and portfolio path mistakes before the
+audit spends time crawling.
 
 ## Official GitHub Action
 
-The official composite Action sets up Node, optionally runs explicit install/build commands, invokes the pinned local `search-quality-kit` binary, creates JSON and Markdown reports, and then preserves the CLI exit code. It does not guess a package manager, build command, config, baseline, or deployment behavior.
+The official composite Action sets up Node and optionally runs explicit install/build commands. It invokes the pinned local `search-quality-kit` binary, creates JSON and Markdown reports, and then preserves the CLI exit code. It does not guess a package manager, build command, config, baseline, or deployment behavior.
 
 ### Basic workflow
 
@@ -142,9 +142,9 @@ capture a baseline and gate new findings with `--fail-on-new`.
 
 ## Reviewed suppressions in CI
 
-Reviewed suppressions are part of config, so they work the same in local CLI,
-the official Action, baseline mode, SARIF, portfolio reports, contracts, and
-handoff reports.
+Reviewed suppressions are part of config. They work the same in local CLI, the
+official Action, baseline mode, SARIF, portfolio reports, contracts, and handoff
+reports.
 
 Use them for accepted findings that should stay visible but should not fail the
 gate:
@@ -166,12 +166,12 @@ export default defineConfig({
 ```
 
 Do not use suppressions as a replacement for fixing real errors. Keep each
-entry narrow, include a human reason and owner, and run `doctor` in CI so
+entry narrow and include a human reason and owner. Run `doctor` in CI so
 expired, duplicate, or broad suppressions are visible before the audit.
 
 ## Manual CLI workflow
 
-Use the manual form when the repository needs custom job ordering, separate permissions, SARIF upload, or nonstandard report handling. This workflow writes JSON during the audit, reformats it as Markdown even when the gate fails, appends Markdown to the workflow summary, and uploads both files.
+Use the manual form when the repository needs custom job ordering, separate permissions, SARIF upload, or nonstandard report handling. This workflow writes JSON during the audit and reformats it as Markdown even when the gate fails. It appends the Markdown to the workflow summary and uploads both files.
 
 ```yaml
 name: Search Quality
@@ -227,9 +227,9 @@ Remove `npm run build` and `--skip-build` when `build.command` in `search-qualit
 
 ## Contract and handoff artifacts
 
-The Action uploads its artifact before later workflow steps run. If a job should
-include contract and handoff files in the same artifact, disable the Action's
-upload step and upload the directory yourself after generating the extra files:
+The Action uploads its artifact before later workflow steps run. To include
+contract and handoff files in the same artifact, disable the Action's upload
+step and upload the directory yourself after generating the extra files:
 
 ```yaml
 - uses: SilesianSolutions/search-quality-kit@v0

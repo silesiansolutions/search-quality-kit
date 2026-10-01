@@ -4,7 +4,7 @@
 
 The supported plugin surface is exported from `@silesiansolutions/search-quality-kit`: `defineCheck`, `definePlugin`, and the `Plugin*` TypeScript types. The documented fields of `PluginCheckContext`, `PluginPage`, `PluginFinding`, `PluginCheckDefinition`, and `PluginDefinition` are public. Additive optional fields may be introduced in minor releases.
 
-The config `plugins` array, plugin source attribution, and top-level `pluginErrors` report field are also supported contracts. The report remains schema `0.3`; these fields are additive and parsers must continue accepting older reports without them.
+The config `plugins` array, plugin source attribution, and top-level `pluginErrors` report field are also supported contracts. The report remains schema `0.3`. These fields are additive, and parsers must continue accepting older reports without them.
 
 ## Internal API
 

@@ -1,10 +1,14 @@
 # Rollout guide
 
-The safe rollout pattern is: generate a narrow config, run `doctor`, observe
-current findings, review intent, add only narrow reviewed suppressions where a
-finding is an accepted decision, record a baseline, then fail only new
-regressions. Do not turn every historical warning into a blocking migration
-project.
+The safe rollout pattern:
+
+1. Generate a narrow config and run `doctor`.
+2. Observe current findings and review intent.
+3. Add only narrow reviewed suppressions where a finding is an accepted decision.
+4. Record a baseline.
+5. Fail only new regressions.
+
+Do not turn every historical warning into a blocking migration project.
 
 ## 1. Install and choose a preset
 
@@ -178,7 +182,7 @@ Gatsby repositories deserve an extra check for stale `public/` artifacts. Clean 
 - Personal/blog: raise `maxPages` above the post count; review duplicate descriptions caused by old content templates and pagination.
 - Company: explicitly review legal-page noindex policy, case-study title duplication, and staging-host leaks.
 - Directory: set `maxPages` above the generated entity count, preserve category/detail entrypoints, and avoid blanket exclusions for dynamic-looking routes.
-- SPA: remember that the tool inspects delivered HTML and does not execute JavaScript. An app-shell warning is a deployment/rendering signal, not a request to weaken `renderedHtml` blindly.
+- SPA: the tool inspects delivered HTML and does not execute JavaScript. An app-shell warning is a deployment/rendering signal, not a request to weaken `renderedHtml` blindly.
 
 ## Rolling out across several repositories
 
@@ -190,11 +194,11 @@ For monorepos, use one config, baseline, and report path per site as described i
 
 Choose the execution model deliberately:
 
-- **Single-site audit:** one deployable and one config; use `verify`.
-- **Monorepo matrix:** sites need parallel runners, separate builds/caches, or independent ownership; use one `verify` job per site.
-- **Portfolio runner:** sites can run sequentially and need one bounded report/gate while retaining isolated configs, baselines, and artifacts.
-- **Public HTTP showcase:** read-only production observation; default to report-only because target state is external to the package release.
-- **Local build showcase:** production-equivalent checkouts/builds; stronger reproducibility, but local source and build inputs must be available.
+- Single-site audit: one deployable and one config; use `verify`.
+- Monorepo matrix: sites need parallel runners, separate builds/caches, or independent ownership; use one `verify` job per site.
+- Portfolio runner: sites can run sequentially and need one bounded report/gate while retaining isolated configs, baselines, and artifacts.
+- Public HTTP showcase: read-only production observation; default to report-only because target state is external to the package release.
+- Local build showcase: production-equivalent checkouts/builds; stronger reproducibility, but local source and build inputs must be available.
 
 For portfolio adoption, first run `portfolio verify --report-only`, triage operational errors before findings, and confirm every site's crawl scope. Add reviewed single-site baseline paths only where existing debt requires regression-only gating. Then enable `failOnNew`, keep `failOn: ["error"]`, and remove report-only for internal deterministic targets. Do not automatically regenerate baselines in CI.
 

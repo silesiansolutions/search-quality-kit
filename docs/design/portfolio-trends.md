@@ -4,11 +4,11 @@ Status: design note; no released version implements a trend database.
 
 ## Options
 
-1. **Workflow artifacts:** keep each run's `portfolio.json` and site reports under GitHub's retention policy. This is cheap, contextual, and already supported, but cross-run queries require downloading artifacts.
-2. **Reviewed committed snapshots:** commit selected baselines or release snapshots. Diffs are visible and portable, but automatic report commits create noise and can accept transient production state accidentally.
-3. **GitHub Pages:** publish a small static history derived from reviewed artifacts. This improves discovery but adds a build, retention policy, and public presentation layer.
-4. **Separate demo repository:** decouple demo/history releases from the package when generated content or multi-version testing becomes large. It adds compatibility and review drift today.
-5. **External object/database storage:** retain structured history and query trends at scale. It introduces credentials, cost, privacy, lifecycle, and operational ownership that do not belong in the lightweight core.
+1. Workflow artifacts: keep each run's `portfolio.json` and site reports under GitHub's retention policy. This is cheap, contextual, and already supported. Cross-run queries require downloading artifacts.
+2. Reviewed committed snapshots: commit selected baselines or release snapshots. Diffs are visible and portable. Automatic report commits create noise and can accept transient production state accidentally.
+3. GitHub Pages: publish a small static history derived from reviewed artifacts. This improves discovery but adds a build, retention policy, and public presentation layer.
+4. Separate demo repository: decouple demo/history releases from the package when generated content or multi-version testing becomes large. It adds compatibility and review drift today.
+5. External object/database storage: retain structured history and query trends at scale. It introduces credentials, cost, privacy, lifecycle, and operational ownership that do not belong in the lightweight core.
 
 ## Risks
 

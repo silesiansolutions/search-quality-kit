@@ -1,6 +1,6 @@
 # Public portfolio showcase
 
-The public showcase runs the portfolio runner against `https://dawidrylko.com`, `https://silesiansolutions.com`, `https://cyberkatalog.pl`, and `https://dawid.dev`. It demonstrates the package's public npm API, HTTP crawler, site profiles, configurable policy packs, reviewed suppressions, contract export, handoff reports, isolated reports, and one aggregate gate without requiring access to the sites' source repositories.
+The public showcase runs the portfolio runner against `https://dawidrylko.com`, `https://silesiansolutions.com`, `https://cyberkatalog.pl`, and `https://dawid.dev`. It demonstrates the package's public npm API, HTTP crawler, site profiles, configurable policy packs, reviewed suppressions, contract export, handoff reports, isolated reports, and one aggregate gate. It needs no access to the sites' source repositories.
 
 ## What this demonstrates
 
@@ -55,7 +55,7 @@ The manual and weekly workflow is [`.github/workflows/showcase.yml`](../.github/
 
 Use synthetic static fixtures in the regular test suite for the hard gate. Use the public workflow to demonstrate current production behavior.
 
-To copy the pattern into a real repository, keep the same shape: run the
+To copy the pattern into a real repository, keep the same shape. Run the
 official Action, export the contract, render a handoff report from the JSON
 report, and upload the completed report directory as one artifact. For internal
 deterministic targets, remove report-only after the baseline and suppression
@@ -107,7 +107,7 @@ search-quality-kit portfolio baseline \
   --config examples/showcase/portfolio.search-quality.config.ts
 ```
 
-The command writes normal single-site JSON reports and refuses to replace an existing snapshot without `--force`. Review baseline diffs as accepted technical debt, not as an “ideal” or ranking benchmark. A configured missing or invalid baseline becomes an operational error for that site while the runner continues with the rest.
+The command writes normal single-site JSON reports and refuses to replace an existing snapshot without `--force`. Review baseline diffs as accepted technical debt, not as an "ideal" or ranking benchmark. A configured missing or invalid baseline becomes an operational error for that site while the runner continues with the rest.
 
 ## Public HTTP versus local build
 
@@ -115,6 +115,6 @@ The committed showcase uses `crawl.mode: "http"` against production and needs no
 
 ## What this is not
 
-The showcase is not an SEO ranking, content score, Core Web Vitals measurement, Rich Results Test, Search Console replacement, or claim that one site is “better” than another. It reports deterministic technical foundations visible to the configured crawl at that moment.
+The showcase is not an SEO ranking, content score, Core Web Vitals measurement, Rich Results Test, Search Console replacement, or claim that one site is "better" than another. It reports deterministic technical foundations visible to the configured crawl at that moment.
 
 If the project grows into a public demo/docs site with significant generated history, it can move to a dedicated repository later. Until then, package-aligned configs plus workflow artifacts are the lower-drift design.

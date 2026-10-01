@@ -2,7 +2,7 @@
 
 Profiles add page-context to deterministic technical checks. They let a personal homepage expect `Person`, a company homepage expect `Organization`, a blog route expect `Article` or `BlogPosting`, and directory routes distinguish list pages from entries.
 
-Profiles do not score content, predict rankings, prove rich-result eligibility, require private data, call Google APIs, or replace Rich Results Test, Search Console, or a schema.org validator. Technical findings such as invalid JSON, invalid URLs, local/staging leaks, broken canonicals, and conflicting identities remain visible under every profile.
+Profiles do not score content, predict rankings, prove rich-result eligibility, require private data, or call Google APIs. They do not replace Rich Results Test, Search Console, or a schema.org validator. Technical findings such as invalid JSON, invalid URLs, local/staging leaks, broken canonicals, and conflicting identities remain visible under every profile.
 
 ## Finding classifications
 

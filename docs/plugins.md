@@ -2,7 +2,7 @@
 
 Plugins let a project enforce deterministic organization-specific rules without forking the crawler or adding those rules to core. Good examples are placeholder brand names, required navigation links, or a reviewed site-profile expectation. Plugins run after the built-in checks against the same crawl snapshot and produce normal findings for JSON, Markdown, SARIF, baseline comparison, and `ci.failOn`.
 
-Plugins should not start browsers, call Google APIs, mutate build output, fetch unbounded external resources, score content quality, or depend on time, randomness, locale, network timing, or machine-specific paths. Put heavyweight or stateful integrations in a separate tool or package.
+Plugins should not start browsers, call Google APIs, mutate build output, fetch unbounded external resources, or score content quality. They should not depend on time, randomness, locale, network timing, or machine-specific paths. Put heavyweight or stateful integrations in a separate tool or package.
 
 Use [policy packs](policy-packs.md) before writing a custom plugin when the
 rule is a common personal-site, company-site, directory, or AI-visibility safety
@@ -133,11 +133,11 @@ One finding per page/policy is usually more useful than one finding per matching
 
 ## Writing useful remediation
 
-Say what should change, where the owner should change it, and what success looks like. Prefer “Replace the placeholder in the shared company footer with the approved legal name” over “Fix branding.” Do not claim rankings or Google requirements unless the cited protocol or feature documentation actually requires the behavior.
+Say what should change, where the owner should change it, and what success looks like. Prefer "Replace the placeholder in the shared company footer with the approved legal name" over "Fix branding." Do not claim rankings or Google requirements unless the cited protocol or feature documentation requires the behavior.
 
 ## Classification
 
-- `google-requirement`: a documented minimum protocol or applicable Google feature requirement. It is not shorthand for “important.”
+- `google-requirement`: a documented minimum protocol or applicable Google feature requirement. It is not shorthand for "important."
 - `google-recommendation`: current official guidance without a ranking or display guarantee.
 - `local-heuristic`: a deterministic project rule or approximation, such as forbidden placeholder copy.
 - `profile-expectation`: a requirement chosen by the site/profile configuration, such as expecting a contact link on company pages. It is not universal Google guidance.

@@ -25,7 +25,7 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 
 Length and byte thresholds are regression heuristics, not Google ranking limits. Tune them to the project instead of disabling unrelated checks.
 
-Paths in `include`, `exclude`, and `entrypoints` are URL paths. Exclusions apply to sitemap scope and crawling. Use `exclude` for routes that are outside the audit scope, such as generated 404 aliases or private preview/admin routes. Do not exclude a public route just to hide a finding; use a narrow reviewed suppression or a policy-pack allow-list when the route should remain visible in reports.
+Paths in `include`, `exclude`, and `entrypoints` are URL paths. Exclusions apply to sitemap scope and crawling. Use `exclude` for routes that are outside the audit scope, such as generated 404 aliases or private preview/admin routes. Do not exclude a public route just to hide a finding. Use a narrow reviewed suppression or a policy-pack allow-list when the route should remain visible in reports.
 
 `crawl.mode` is `auto`, `static`, or `http`. `auto` preserves the original target selection: prefer `site.localUrl`, otherwise use an existing `build.distDir`, otherwise crawl `site.baseUrl`. Official static presets use `static`, so a missing output directory fails clearly instead of silently auditing production. `nextHybrid()` uses `http` and defaults `site.localUrl` to `http://localhost:3000`.
 
@@ -70,17 +70,17 @@ optional, but when present must be `YYYY-MM-DD`; expired suppressions are still
 reported and no longer affect the gate.
 
 An active suppression that matches no finding in a run is listed under
-`unmatchedSuppressions` in the JSON report, with a count in the summary, and in
-its own section of the console and Markdown output. It never affects the gate.
-The usual cause is a route pattern written for the wrong URL shape: static
-crawls report built files such as `/legal/terms.html`, so run the audit once
+`unmatchedSuppressions` in the JSON report, with a count in the summary. It also
+appears in its own section of the console and Markdown output. It never affects
+the gate. The usual cause is a route pattern written for the wrong URL shape.
+Static crawls report built files such as `/legal/terms.html`. Run the audit once
 and copy the path from a finding before writing the pattern.
 
 A suppression written for a renamed code keeps matching through the alias
 table exported as `codeAliases`. In 0.12, `indexability.non-200` covers the
 split codes `indexability.4xx`, `5xx`, `timeout`, and `unreachable`, and
 `robots.missing` covers `robots.unavailable`. Baselines match through the alias
-only when the message is unchanged, which holds for the indexability codes but
+only when the message is unchanged. That holds for the indexability codes but
 not for `robots.unavailable`: a baselined 5xx robots.txt reappears once.
 
 The loader rejects suppressions without a reason or owner. It also rejects
@@ -246,7 +246,7 @@ Hugo uses the neutral preset with its conventional output override: start from `
 
 ## Validation errors
 
-Configuration failures exit `2` and identify the field plus a fix. `site.baseUrl` is required by the CLI even for a local static build because reports and canonical checks need the production origin. Static mode requires `build.distDir` to exist after any configured build. `build.startCommand` requires `site.localUrl`; `site.localUrl` conflicts with `crawl.mode: "static"`; excluding `/` is rejected because it removes the whole audit scope; and invalid/duplicate plugin definitions are rejected before the build or crawl starts.
+Configuration failures exit `2` and identify the field plus a fix. `site.baseUrl` is required by the CLI even for a local static build because reports and canonical checks need the production origin. Static mode requires `build.distDir` to exist after any configured build. `build.startCommand` requires `site.localUrl`, and `site.localUrl` conflicts with `crawl.mode: "static"`. Excluding `/` is rejected because it removes the whole audit scope. Invalid/duplicate plugin definitions are rejected before the build or crawl starts.
 
 ## Doctor
 

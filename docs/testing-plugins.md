@@ -1,9 +1,9 @@
 # Testing plugins
 
 Use the public test harness when a plugin or policy pack can be tested from a
-small HTML fixture and a typed plugin context. It avoids the crawler, build
-commands, local servers, and report formatting while keeping the same plugin
-definition and finding validation used by the CLI.
+small HTML fixture and a typed plugin context. It skips the crawler, build
+commands, local servers, and report formatting. The plugin definition and
+finding validation stay the same as in the CLI.
 
 ```ts
 import { policyPacks } from "@silesiansolutions/search-quality-kit";
@@ -27,7 +27,7 @@ const { findings, errors } = await runPluginForTest(
 );
 ```
 
-`errors` is the same plugin-error model used by the CLI. Assert it explicitly
+`errors` is the same plugin-error model the CLI uses. Assert it explicitly
 when testing thrown checks or invalid findings.
 
 ## `createPluginTestContext`
@@ -67,11 +67,11 @@ const ctx = createPluginTestContext({
 ```
 
 The helper parses title, description, canonical, robots, language, Open Graph,
-links, JSON-LD, and visible text from `html`. Per-page overrides let tests pin
-edge cases without depending on parser details.
+links, JSON-LD, and visible text from `html`. Per-page overrides pin edge
+cases. Tests then do not depend on parser details.
 
-The returned context is deeply frozen and excludes `plugins` from
-`ctx.config`, matching normal plugin execution.
+The returned context is deeply frozen. It excludes `plugins` from
+`ctx.config`, as in normal plugin execution.
 
 ## `runCheckForTest`
 
@@ -80,9 +80,9 @@ const { findings, errors } = await runCheckForTest(check, ctx);
 ```
 
 Use this for unit-testing a single `defineCheck` result. The helper wraps the
-check in a temporary plugin and validates returned findings exactly like normal
+check in a temporary plugin. It validates returned findings exactly like normal
 plugin execution. For `custom.*` checks the temporary plugin name is
-`test-plugin`; for namespaced checks it uses the namespace before the first dot.
+`test-plugin`. For namespaced checks it uses the namespace before the first dot.
 
 Pass `pluginName` only when the test needs a specific plugin source:
 
@@ -97,6 +97,6 @@ const { findings, errors } = await runPluginForTest(plugin, ctx);
 ```
 
 Use this for plugin-level behavior: duplicate pages, aggregate checks, policy
-packs, and error handling. It does not run built-in core checks and does not
-write reports. Run one end-to-end `search-quality-kit verify --report-only`
-smoke test separately when adopting a plugin in a real site.
+packs, and error handling. It does not run built-in core checks. It does not
+write reports. When adopting a plugin in a real site, run one end-to-end
+`search-quality-kit verify --report-only` smoke test separately.
