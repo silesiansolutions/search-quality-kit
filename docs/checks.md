@@ -32,6 +32,24 @@ The check also matches URLs against the rules that apply to Googlebot: the `Goog
 - `robots.sitemap-url-blocked` (warning): the sitemap lists a URL that robots.txt blocks for Googlebot.
 - `robots.unavailable` (warning): robots.txt answered with a 5xx or 429 status or did not respond. Google treats a server error on robots.txt as a reason to stop crawling, unlike a 404. It replaces `robots.missing` for that case and carries an alias to it, so existing suppressions keep matching.
 
+### AI crawler access
+
+Since 0.13 the check evaluates the same rules for AI user agents. Group selection is identical: the groups that name the agent, otherwise the `*` groups. A named group does not inherit anything from `*`. The kit reports the consequence of the policy and never says whether blocking is right. Blocking training crawlers is a legitimate policy.
+
+The agent list comes from a vendored copy of [ai.robots.txt](https://github.com/ai-robots-txt/ai.robots.txt) (MIT, 180 agents at the pinned commit). Twelve tokens carry a category, each from the operator's own documentation:
+
+- answer engine: `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot`;
+- training: `GPTBot`, `ClaudeBot`, `Google-Extended`, `Applebot-Extended`, `CCBot`, `meta-externalagent`;
+- user-triggered fetcher: `ChatGPT-User`, `Claude-User`, `Perplexity-User`.
+
+These twelve are always evaluated. Any other roster agent is evaluated only when robots.txt names it in its own group. The checked paths are the root path and every crawled page with status 200 and no `noindex`. When `*` blocks the whole site, `robots.disallow-all` already reports it, and agents that follow `*` get no AI finding. Each finding points at robots.txt and lists up to ten blocked pages in `relatedUrls`. The message carries no counts, so baselines stay stable when pages are added. The roster reports what it claims about an agent. The kit does not verify that an agent is live.
+
+- `robots.ai-search-blocked` (warning): an answer-engine agent cannot fetch some or all crawled indexable pages, so those pages cannot be cited in that answer engine.
+- `robots.ai-crawler-blocked` (info): a training crawler, a user-triggered fetcher or another roster agent is blocked. For an agent the roster marks as not honoring robots.txt, the message says the block is a request it may ignore.
+- `robots.named-group-ignores-wildcard` (info): a named group exists while `*` has Disallow rules the named group does not apply, so the named agent may fetch those paths. A named group replaces `*` for that agent and silently skips every Disallow added to `*` later. It is not reported when `*` disallows `/`, because an allow list after a full block is deliberate.
+
+List intended blocks in `rules.robots.aiCrawlers.blockedByPolicy` to silence the first two codes for those agents. Details and sources: [AI crawler access audit](design/ai-crawler-access.md).
+
 ## indexability
 
 Classification: `google-requirement`.
@@ -185,6 +203,17 @@ Checks same-origin images (`src`, `srcset`, `<picture>` sources), scripts and st
 - `assets.request-limit` (info, HTTP mode): resource requests stopped at `crawl.maxResources`, so the remaining resources were not checked.
 
 HTTP mode makes one request per unique resource, bounded by `crawl.maxResources` (default 500). Setting `checks.assets: false` skips these requests entirely.
+
+## duplicates
+
+Classification: `google-recommendation`.
+
+Groups pages by a SHA-256 of their normalized main text: the single `<main>` element, otherwise `<body>` without `header`, `nav`, `footer` and `aside`. Scripts, styles and markup do not count, whitespace is collapsed and case is kept. Only pages with status 200 and no `noindex` take part, and empty pages are skipped. Identical documents only: there is no similarity threshold. Based on [Google's guidance on consolidating duplicate URLs](https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls).
+
+- `duplicates.exact-without-canonical` (warning): the page has identical main content to other crawled pages and declares no canonical.
+- `duplicates.conflicting-canonicals` (warning): every copy declares a canonical, but the copies do not all point at the same URL.
+
+Findings are per page, with the other copies in `relatedUrls`. Copies that all point at the same canonical produce no finding. Details: [Exact-duplicate detection](design/exact-duplicates.md).
 
 ## Broader policy context
 

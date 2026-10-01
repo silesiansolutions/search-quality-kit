@@ -25,6 +25,8 @@ The vendored roster answers "is this token a known AI agent, and who operates it
 | training | GPTBot, ClaudeBot, Google-Extended, Applebot-Extended, CCBot, meta-externalagent |
 | user-triggered fetcher | ChatGPT-User, Claude-User, Perplexity-User |
 
+On 2026-10-01 every token above was confirmed on its operator's own page, including the four that [ai-surface-review.md](ai-surface-review.md) had confirmed only through aggregators. The same Meta page also documents `meta-webindexer` (Meta AI search) and `meta-externalfetcher` (user-requested fetches). They stay outside the overlay in v0.13 and are listed in the roadmap as candidates.
+
 Every other roster token is "other AI agent" and carries the roster's operator text. The overlay is hand-maintained, but it is twelve entries, each tied to an operator URL, and it changes when an operator publishes a new token, not weekly. Legacy tokens such as `anthropic-ai` stay in the roster as "other AI agent". The kit reports what the roster claims and never asserts that an agent is live.
 
 ## Evaluation

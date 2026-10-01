@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { format } from "prettier";
 import { argv, stdout } from "node:process";
 import { fileURLToPath } from "node:url";
@@ -7,6 +7,9 @@ const repository = "ai-robots-txt/ai.robots.txt";
 const ref = argv[2] ?? "main";
 const target = fileURLToPath(
   new globalThis.URL("../src/data/aiRobotsRoster.ts", import.meta.url),
+);
+const notices = fileURLToPath(
+  new globalThis.URL("../THIRD_PARTY_NOTICES.md", import.meta.url),
 );
 
 async function get(url, as = "json") {
@@ -70,6 +73,13 @@ ${entries.join("\n")}
 `;
 
 await writeFile(target, await format(source, { parser: "typescript" }));
+const notice = await readFile(notices, "utf8");
+if (!notice.includes(copyright))
+  throw new Error(`THIRD_PARTY_NOTICES.md lacks "${copyright}"`);
+await writeFile(
+  notices,
+  notice.replace(/^- Commit: `[0-9a-f]+`$/m, `- Commit: \`${sha}\``),
+);
 stdout.write(
   `Wrote ${Object.keys(roster).length} agents from ${repository}@${sha.slice(0, 12)} to ${target}\n`,
 );

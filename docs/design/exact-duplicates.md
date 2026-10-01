@@ -39,7 +39,7 @@ Both are `warning`, following the policy since 0.10 that new codes stay out of t
 
 ## Config and cost
 
-A new check, `checks.duplicates`, default on. That grows the config surface, so the contract schema moves to `0.13`. Cost: one HTML parse and one hash per page, with no requests. The check builds its groups from `CrawlResult` and does not touch the URL graph.
+A new check, `checks.duplicates`, default on. That grows the config surface, so the contract schema moves to `0.13`. Cost: one HTML parse and one hash per page, with no requests. The check reads canonical targets and meta-robots `noindex` from the URL graph, which the canonical and hreflang checks already build, so the graph adds no parse. It reads `X-Robots-Tag` from the page headers, because the graph does not carry headers.
 
 ## Not in scope
 

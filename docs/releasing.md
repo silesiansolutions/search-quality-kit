@@ -17,7 +17,7 @@ The package is public and the repository URL in `package.json` must continue to 
 
 ## Create a release
 
-1. Update `CHANGELOG.md` if the release warrants it.
+1. Update `CHANGELOG.md` if the release warrants it. For a minor release, refresh the AI crawler roster first with `node scripts/update-ai-roster.mjs` (Node 24, network access). The script writes `src/data/aiRobotsRoster.ts` from the upstream head and updates the pinned commit in `THIRD_PARTY_NOTICES.md`. Pass a commit sha to pin it. Review the diff, and if an operator documented a new token, decide whether it belongs in `src/data/aiCrawlerCategories.ts`.
 2. Bump the package version without creating a tag:
 
    ```bash
