@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- Require Node.js 24 or newer. `engines.node` moves from `>=20.11` to `>=24`. The old floor was already wrong: `commander` 15 (since 0.11.3) needs Node 22.12, and `doctor` reported Node 20 as supported. On Node 22 the CLI still starts, the package manager warns about the unsupported engine and `doctor` exits with an error.
+- The GitHub Action defaults `node-version` to `"24"`. The default also sets the Node that runs `install-command` and `build-command`. A workflow that passes `node-version` or `node-version-file` keeps its own version, so a pin to 22 must move to 24. The CI workflows, the `docs/ci.md` snippets and the files in `examples/ci/` use Node 24.
+
 ## [0.13.0] - 2026-10-01
 
 - Audit AI crawler access in the `robots` check. robots.txt rules are evaluated per agent against a vendored copy of the ai.robots.txt roster (180 agents, MIT, pinned commit `987266f`). Twelve tokens documented by their operators carry a category: answer engine, training crawler or user-triggered fetcher. New codes: `robots.ai-search-blocked` (warning) and `robots.ai-crawler-blocked` (info), classified `local-heuristic`. An unnamed token that follows `*` is evaluated only when Googlebot has its own group, so one `*` rule does not repeat as a dozen findings. Roster text stays out of the message, so a roster update does not reopen baselined findings. The kit reports the consequence of a block and never rates the policy.

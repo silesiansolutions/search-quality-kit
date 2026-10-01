@@ -38,7 +38,7 @@
     "check": "npm run typecheck && npm run lint && npm test && npm run build"
   },
   "engines": {
-    "node": ">=20.11"
+    "node": ">=24"
   },
   "keywords": [
     "seo",
