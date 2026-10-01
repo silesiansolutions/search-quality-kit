@@ -18,7 +18,7 @@ Markup, attributes and images do not count. Two pages that differ only in an ima
 
 Pages with HTTP 200 and no noindex. In static mode every built page counts as 200, as everywhere else in the kit. A noindexed duplicate is already consolidated in the way that matters for search, so it never forms or joins a group.
 
-Two exclusions came out of review. Pages whose main text is shorter than `rules.renderedHtml.minTextLength` are skipped, so loading shells and soft 404s served with 200 do not group; `rendered-html` reports them. Pages linked to each other by reciprocal hreflang alternates are regional variants. Google recommends a self-canonical on each, so the advice to share one canonical would break hreflang. They are removed from the group before canonicals are compared, and copies outside the hreflang cluster are still reported.
+Two exclusions came out of review. Pages whose main text is shorter than `rules.renderedHtml.minTextLength` are skipped, so loading shells and soft 404s served with 200 do not group; `rendered-html` reports them. Pages linked to each other by reciprocal hreflang alternates are regional variants. Google recommends a self-canonical on each, so the advice to share one canonical would break hreflang. The cluster is never compared with itself. It collapses into one consolidated target: its members and their canonicals. A copy outside the cluster is still reported, even a single one: without a canonical it gets `exact-without-canonical`, and with a canonical outside the cluster it gets `conflicting-canonicals`. A canonical that points into the cluster is consolidated.
 
 ## Canonical resolution
 

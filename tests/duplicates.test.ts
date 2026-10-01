@@ -132,35 +132,53 @@ describe("duplicates exclusions", () => {
     ).toEqual([]);
   });
 
-  it("does not group regional variants linked by reciprocal hreflang", async () => {
-    const alternates =
-      '<link rel="alternate" hreflang="en-us" href="https://example.com/us/"><link rel="alternate" hreflang="en-gb" href="https://example.com/gb/">';
-    const found = await run([
-      page(
-        doc("Same", canonical("https://example.com/us/") + alternates),
-        "https://example.com/us/",
-      ),
-      page(
-        doc("Same", canonical("https://example.com/gb/") + alternates),
-        "https://example.com/gb/",
-      ),
-      page(doc("Same"), "https://example.com/copy"),
-    ]);
-    expect(found).toEqual([]);
+  const alternates =
+    '<link rel="alternate" hreflang="en-us" href="https://example.com/us/"><link rel="alternate" hreflang="en-gb" href="https://example.com/gb/">';
+  const variants = [
+    page(
+      doc("Same", canonical("https://example.com/us/") + alternates),
+      "https://example.com/us/",
+    ),
+    page(
+      doc("Same", canonical("https://example.com/gb/") + alternates),
+      "https://example.com/gb/",
+    ),
+  ];
+
+  it("does not compare regional variants linked by reciprocal hreflang", async () => {
+    expect(await run(variants)).toEqual([]);
+    expect(
+      await run([
+        ...variants,
+        page(
+          doc("Same", canonical("https://example.com/us/")),
+          "https://example.com/copy",
+        ),
+      ]),
+    ).toEqual([]);
   });
 
-  it("keeps reporting copies outside the hreflang cluster", async () => {
-    const alternates =
-      '<link rel="alternate" hreflang="en-us" href="https://example.com/us/"><link rel="alternate" hreflang="en-gb" href="https://example.com/gb/">';
-    const found = await run([
-      page(doc("Same", alternates), "https://example.com/us/"),
-      page(doc("Same", alternates), "https://example.com/gb/"),
+  it("still reports a single copy outside the hreflang cluster", async () => {
+    const bare = await run([
+      ...variants,
       page(doc("Same"), "https://example.com/copy"),
-      page(doc("Same"), "https://example.com/copy-2"),
     ]);
-    expect(found.map((f) => f.url)).toEqual([
-      "https://example.com/copy",
-      "https://example.com/copy-2",
+    expect(pairs(bare)).toEqual([
+      [
+        "exact-without-canonical",
+        "https://example.com/copy",
+        ["https://example.com/gb/", "https://example.com/us/"],
+      ],
+    ]);
+    const self = await run([
+      ...variants,
+      page(
+        doc("Same", canonical("https://example.com/copy")),
+        "https://example.com/copy",
+      ),
+    ]);
+    expect(pairs(self).map(([code, url]) => [code, url])).toEqual([
+      ["conflicting-canonicals", "https://example.com/copy"],
     ]);
   });
 });

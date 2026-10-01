@@ -97,9 +97,9 @@ export const duplicatesCheck: CheckDefinition = {
       if (group.length < 2) continue;
       const variants = hreflangVariants(graph, group);
       const members = group.filter((member) => !variants.has(member.id));
-      if (members.length < 2) continue;
+      if (!members.length) continue;
       const related = (page: PageArtifact) =>
-        members
+        group
           .filter((member) => member.page !== page)
           .map((member) => member.page.url)
           .sort()
@@ -125,9 +125,17 @@ export const duplicatesCheck: CheckDefinition = {
           );
         continue;
       }
-      const targets = new Set(members.map((member) => member.canonical));
-      if (targets.size < 2) continue;
-      for (const { page } of members)
+      const cluster = new Set(
+        group
+          .filter((member) => variants.has(member.id))
+          .flatMap((member) => [member.id, member.canonical ?? member.id]),
+      );
+      const conflicting = cluster.size
+        ? members.filter((member) => !cluster.has(member.canonical!))
+        : new Set(members.map((member) => member.canonical)).size < 2
+          ? []
+          : members;
+      for (const { page } of conflicting)
         out.push(
           finding(
             "duplicates",
