@@ -201,12 +201,14 @@ function aiAccessFindings(
     rulesForAgent(groups, "*").rules,
     "/",
   );
+  const googlebotNamed = rulesForAgent(groups, "googlebot").named;
   const rootUrl = new URL("/", crawl.publicBaseUrl).toString();
   const out = [];
   for (const token of aiAgentsToEvaluate(groups)) {
     if (byPolicy.has(token.toLowerCase())) continue;
     const { named, rules } = rulesForAgent(groups, token);
-    if (!rules.length || (!named && wildcardBlocksSite)) continue;
+    if (!rules.length || (!named && (!googlebotNamed || wildcardBlocksSite)))
+      continue;
     const rootBlocked = !robotsAllows(rules, "/");
     const blockedPages = indexable
       .filter((page) => !robotsAllows(rules, pathOf(page.url)!))
@@ -218,10 +220,12 @@ function aiAccessFindings(
     const roster = aiRoster[token];
     const operator =
       roster && !/^unclear/i.test(roster.operator) ? roster.operator : "";
-    const subject = `${token} (${categoryLabel[category]}${operator ? `, ${operator}` : ""})`;
+    const operatorNote = operator
+      ? `${token} is operated by ${operator}. `
+      : "";
     const ignores =
       roster?.respect === "no"
-        ? " The ai.robots.txt roster marks this agent as not honoring robots.txt, so the block is a request it may ignore."
+        ? "The ai.robots.txt roster marks this agent as not honoring robots.txt, so the block is a request it may ignore. "
         : "";
     const consequence =
       category === "answer-engine"
@@ -234,8 +238,8 @@ function aiAccessFindings(
           ? "ai-search-blocked"
           : "ai-crawler-blocked",
         category === "answer-engine" ? "warning" : "info",
-        `robots.txt blocks ${subject} from ${whole ? "every crawled indexable page" : "some crawled indexable pages"}.${consequence}${ignores}`,
-        `If this block is intended, list ${token} in rules.robots.aiCrawlers.blockedByPolicy. Otherwise allow it in robots.txt.`,
+        `robots.txt blocks ${token} (${categoryLabel[category]}) from ${whole ? "every crawled indexable page" : "some crawled indexable pages"}.${consequence}`,
+        `${operatorNote}${ignores}If this block is intended, list ${token} in rules.robots.aiCrawlers.blockedByPolicy. Otherwise allow it in robots.txt.`,
         {
           url: o.url,
           ...(o.file ? { file: o.file } : {}),

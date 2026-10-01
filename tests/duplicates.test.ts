@@ -8,8 +8,10 @@ import { formatMarkdownReport } from "../src/report/formatMarkdownReport.js";
 import type { Finding, SearchQualityReport } from "../src/report/types.js";
 import { context, page } from "./helpers.js";
 
+const PAD =
+  " This sentence pads the main content past the default minimum text length of eighty characters.";
 const doc = (main: string, head = "", chrome = "") =>
-  `<html><head>${head}</head><body>${chrome}<main>${main}</main></body></html>`;
+  `<html><head>${head}</head><body>${chrome}<main>${main}${PAD}</main></body></html>`;
 const canonical = (href: string) => `<link rel="canonical" href="${href}">`;
 
 async function run(pages: ReturnType<typeof page>[]) {
@@ -38,7 +40,9 @@ describe("main content hash", () => {
         "<html><body><header>Z</header><p>Body text</p><script>1</script></body></html>",
       ),
     );
-    expect(mainContentHash(doc("   "))).toBeUndefined();
+    expect(
+      mainContentHash("<html><body><main>   </main></body></html>"),
+    ).toBeUndefined();
   });
 });
 
@@ -114,6 +118,50 @@ describe("duplicates check", () => {
         { ...page(doc("Same"), "https://example.com/e"), status: 404 },
       ]),
     ).toEqual([]);
+  });
+});
+
+describe("duplicates exclusions", () => {
+  it("skips pages below rules.renderedHtml.minTextLength", async () => {
+    const shell = "<html><body><main>Loading...</main></body></html>";
+    expect(
+      await run([
+        page(shell, "https://example.com/a"),
+        page(shell, "https://example.com/b"),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("does not group regional variants linked by reciprocal hreflang", async () => {
+    const alternates =
+      '<link rel="alternate" hreflang="en-us" href="https://example.com/us/"><link rel="alternate" hreflang="en-gb" href="https://example.com/gb/">';
+    const found = await run([
+      page(
+        doc("Same", canonical("https://example.com/us/") + alternates),
+        "https://example.com/us/",
+      ),
+      page(
+        doc("Same", canonical("https://example.com/gb/") + alternates),
+        "https://example.com/gb/",
+      ),
+      page(doc("Same"), "https://example.com/copy"),
+    ]);
+    expect(found).toEqual([]);
+  });
+
+  it("keeps reporting copies outside the hreflang cluster", async () => {
+    const alternates =
+      '<link rel="alternate" hreflang="en-us" href="https://example.com/us/"><link rel="alternate" hreflang="en-gb" href="https://example.com/gb/">';
+    const found = await run([
+      page(doc("Same", alternates), "https://example.com/us/"),
+      page(doc("Same", alternates), "https://example.com/gb/"),
+      page(doc("Same"), "https://example.com/copy"),
+      page(doc("Same"), "https://example.com/copy-2"),
+    ]);
+    expect(found.map((f) => f.url)).toEqual([
+      "https://example.com/copy",
+      "https://example.com/copy-2",
+    ]);
   });
 });
 

@@ -10,13 +10,15 @@ Every page with HTML gets a SHA-256 of its normalized main text:
 2. Drop `script`, `style`, `noscript`, `template` and `svg`.
 3. Take the text, apply Unicode NFC, and collapse every run of whitespace to one space.
 
-Case is kept. "Contact" and "contact" are different documents. Pages whose normalized text is empty are skipped: an empty shell is a rendering problem that `rendered-html` already reports, not a duplicate.
+Case is kept. "Contact" and "contact" are different documents. Pages whose normalized text is empty or short are skipped, see below.
 
 Markup, attributes and images do not count. Two pages that differ only in an image are identical documents to a reader and to a search engine extracting text, and that is the case the check exists for.
 
 ## Which pages take part
 
 Pages with HTTP 200 and no noindex. In static mode every built page counts as 200, as everywhere else in the kit. A noindexed duplicate is already consolidated in the way that matters for search, so it never forms or joins a group.
+
+Two exclusions came out of review. Pages whose main text is shorter than `rules.renderedHtml.minTextLength` are skipped, so loading shells and soft 404s served with 200 do not group; `rendered-html` reports them. Pages linked to each other by reciprocal hreflang alternates are regional variants. Google recommends a self-canonical on each, so the advice to share one canonical would break hreflang. They are removed from the group before canonicals are compared, and copies outside the hreflang cluster are still reported.
 
 ## Canonical resolution
 

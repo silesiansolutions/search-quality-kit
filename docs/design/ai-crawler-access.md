@@ -35,14 +35,15 @@ The check reuses the robots matcher (`robotsAllows` in `src/checks/robots.ts`). 
 
 Evaluated agents:
 
-- every overlay token, always. Most sites do not name them, so their access follows `*`;
+- every overlay token that robots.txt names in its own group;
+- every unnamed overlay token, which follows `*`, but only when Googlebot has its own group. When Googlebot also follows `*`, the same rules already produce `robots.indexable-url-blocked`, and twelve more findings for one cause would be noise. This narrowing came out of review;
 - every other roster token that robots.txt names in its own group. An unnamed roster agent follows `*`, exactly like Googlebot, and the existing robots findings already cover that case.
 
 Evaluated paths: the root path and every crawled page with status 200 and no noindex, the same set `robots.indexable-url-blocked` uses. When `*` blocks the root path, the block is site-wide and not specific to AI, and a literal `Disallow: /` already fires `robots.disallow-all` as an error. The AI findings are then suppressed for agents that follow `*`, so one cause does not produce a dozen findings.
 
 ## Findings
 
-One finding per agent, never one per agent and URL. The finding URL is robots.txt, `relatedUrls` lists up to ten blocked pages. The message names the agent, its category, its operator, and whether the block covers the whole site or part of it. It carries no counts, because counts would change the baseline fingerprint on every content change.
+One finding per agent, never one per agent and URL. The finding URL is robots.txt, `relatedUrls` lists up to ten blocked pages. The message names the agent, its category, and whether the block covers every crawled indexable page or some of them. It carries no counts and no roster text, because both would change the baseline fingerprint without any change on the site. The operator and the roster's compliance note go into the suggestion, which the fingerprint does not include. The two access codes are classified `local-heuristic` and carry no Google documentation link.
 
 | Code | Severity | When |
 |---|---|---|

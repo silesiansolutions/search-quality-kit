@@ -8,7 +8,7 @@ const G =
   "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls";
 const RELATED_LIMIT = 10;
 
-export function mainContentHash(html: string) {
+export function mainContentText(html: string) {
   const $ = loadHtml(html);
   const main = $("main");
   let root = main;
@@ -17,13 +17,37 @@ export function mainContentHash(html: string) {
     root.find("header,nav,footer,aside").remove();
   }
   root.find("script,style,noscript,template,svg").remove();
-  const text = normalizedText(
+  return normalizedText(
     textFromSelection(root, {
       maxChars: Number.POSITIVE_INFINITY,
       maxNodes: Number.POSITIVE_INFINITY,
     }).normalize("NFC"),
   );
+}
+
+export function mainContentHash(html: string) {
+  const text = mainContentText(html);
   return text ? createHash("sha256").update(text).digest("hex") : undefined;
+}
+
+function hreflangVariants(
+  graph: ReturnType<typeof urlGraph>,
+  members: readonly { id: string }[],
+) {
+  const ids = new Set(members.map((member) => member.id));
+  const variants = new Set<string>();
+  for (const { id } of members)
+    for (const edge of graph.outgoing("alternate", id))
+      if (
+        edge.to &&
+        edge.to !== id &&
+        ids.has(edge.to) &&
+        graph.outgoing("alternate", edge.to).some((back) => back.to === id)
+      ) {
+        variants.add(id);
+        variants.add(edge.to);
+      }
+  return variants;
 }
 
 function headerNoindex(page: PageArtifact) {
@@ -36,29 +60,32 @@ export const duplicatesCheck: CheckDefinition = {
   name: "duplicates",
   description:
     "Groups pages with identical main content and checks that each group declares one canonical.",
-  run({ crawl }) {
+  run({ crawl, config }) {
     const graph = urlGraph(crawl);
+    const minLength = config.rules.renderedHtml.minTextLength;
     const groups = new Map<
       string,
-      { page: PageArtifact; canonical?: string }[]
+      { page: PageArtifact; id: string; canonical?: string }[]
     >();
     for (const page of crawl.pages) {
       if (page.status !== 200 || headerNoindex(page)) continue;
       const node = graph.node(page.url);
       if (!node || node.noindex) continue;
-      let hash: string | undefined;
+      let text: string;
       try {
-        hash = mainContentHash(page.html);
+        text = mainContentText(page.html);
       } catch {
-        hash = undefined;
+        continue;
       }
-      if (!hash) continue;
+      if (!text || text.length < minLength) continue;
+      const hash = createHash("sha256").update(text).digest("hex");
       const canonicalEdge = graph
         .outgoing("canonical", node.id)
         .find((edge) => edge.to);
       const members = groups.get(hash) ?? [];
       members.push({
         page,
+        id: node.id,
         ...(node.canonicalHref
           ? { canonical: canonicalEdge?.to ?? node.canonicalHref }
           : {}),
@@ -66,7 +93,10 @@ export const duplicatesCheck: CheckDefinition = {
       groups.set(hash, members);
     }
     const out = [];
-    for (const members of groups.values()) {
+    for (const group of groups.values()) {
+      if (group.length < 2) continue;
+      const variants = hreflangVariants(graph, group);
+      const members = group.filter((member) => !variants.has(member.id));
       if (members.length < 2) continue;
       const related = (page: PageArtifact) =>
         members

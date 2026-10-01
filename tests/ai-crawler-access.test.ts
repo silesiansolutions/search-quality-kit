@@ -57,8 +57,10 @@ describe("AI crawler access audit", () => {
     ]);
     const search = found.find((f) => f.code === "ai-search-blocked")!;
     expect(search.message).toContain(
-      "(answer engine, OpenAI) from every crawled indexable page.",
+      "(answer engine) from every crawled indexable page.",
     );
+    expect(search.message).not.toContain("OpenAI");
+    expect(search.suggestion).toContain("OAI-SearchBot is operated by OpenAI.");
     expect(search.url).toBe("https://example.com/robots.txt");
     expect(search.classification).toEqual(["local-heuristic"]);
     expect(search.googleDocs).toBeUndefined();
@@ -78,11 +80,16 @@ describe("AI crawler access audit", () => {
     expect(search.relatedUrls).toEqual(["https://example.com/blog/post"]);
   });
 
-  it("evaluates unnamed classified agents against the * group", async () => {
-    const found = await run("User-agent: *\nDisallow: /blog");
-    expect(ai(found).map(([, , subject]) => subject)).toContain(
+  it("evaluates unnamed classified agents only when Googlebot has its own group", async () => {
+    const own = await run(
+      "User-agent: *\nDisallow: /blog\n\nUser-agent: Googlebot\nAllow: /",
+    );
+    expect(ai(own).map(([, , subject]) => subject)).toContain(
       "robots.txt blocks PerplexityBot",
     );
+    const shared = await run("User-agent: *\nDisallow: /blog");
+    expect(ai(shared)).toEqual([]);
+    expect(shared.some((f) => f.code === "indexable-url-blocked")).toBe(true);
   });
 
   it("stays silent when * blocks the whole site, which disallow-all reports", async () => {
@@ -99,8 +106,9 @@ describe("AI crawler access audit", () => {
       f.message.startsWith("robots.txt blocks Bytespider"),
     )!;
     expect(bytespider.code).toBe("ai-crawler-blocked");
-    expect(bytespider.message).toContain("(AI agent, ByteDance)");
-    expect(bytespider.message).toContain("not honoring robots.txt");
+    expect(bytespider.message).toContain("Bytespider (AI agent)");
+    expect(bytespider.suggestion).toContain("operated by ByteDance");
+    expect(bytespider.suggestion).toContain("not honoring robots.txt");
     expect(found.some((f) => f.message.includes("NotARosterBot"))).toBe(false);
   });
 
