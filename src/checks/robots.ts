@@ -237,7 +237,9 @@ function aiAccessFindings(
         `robots.txt blocks ${subject} from ${whole ? "every crawled indexable page" : "some crawled indexable pages"}.${consequence}${ignores}`,
         `If this block is intended, list ${token} in rules.robots.aiCrawlers.blockedByPolicy. Otherwise allow it in robots.txt.`,
         {
-          ...o,
+          url: o.url,
+          ...(o.file ? { file: o.file } : {}),
+          classification: ["local-heuristic"],
           relatedUrls: (blockedPages.length ? blockedPages : [rootUrl]).slice(
             0,
             RELATED_LIMIT,
@@ -250,8 +252,7 @@ function aiAccessFindings(
 }
 
 function samplePath(pattern: string) {
-  const end = pattern.search(/[*$]/);
-  return end < 0 ? pattern : pattern.slice(0, end);
+  return pattern.replace(/\$$/, "").replace(/\*/g, "x");
 }
 
 function namedGroupFindings(
@@ -260,11 +261,9 @@ function namedGroupFindings(
 ) {
   const wildcard = rulesForAgent(groups, "*");
   if (!wildcard.named) return [];
-  const disallows = wildcard.rules.filter(
-    (rule) => !rule.allow && samplePath(rule.path) !== "",
-  );
-  if (!disallows.length || disallows.some((rule) => rule.path === "/"))
-    return [];
+  if (!robotsAllows(wildcard.rules, "/")) return [];
+  const disallows = wildcard.rules.filter((rule) => !rule.allow);
+  if (!disallows.length) return [];
   const out = [],
     seen = new Set<string>();
   for (const group of groups) {
@@ -275,7 +274,11 @@ function namedGroupFindings(
     seen.add(key);
     const { rules } = rulesForAgent(groups, agents[0]!);
     const exempt = disallows
-      .filter((rule) => robotsAllows(rules, samplePath(rule.path)))
+      .filter(
+        (rule) =>
+          !rules.some((own) => !own.allow && own.path === rule.path) &&
+          robotsAllows(rules, samplePath(rule.path)),
+      )
       .map((rule) => rule.path);
     if (!exempt.length) continue;
     out.push(

@@ -38,7 +38,7 @@ Evaluated agents:
 - every overlay token, always. Most sites do not name them, so their access follows `*`;
 - every other roster token that robots.txt names in its own group. An unnamed roster agent follows `*`, exactly like Googlebot, and the existing robots findings already cover that case.
 
-Evaluated paths: the root path and every crawled page with status 200 and no noindex, the same set `robots.indexable-url-blocked` uses. When `*` blocks the whole site, `robots.disallow-all` already fires as an error. The AI findings are then suppressed for agents that follow `*`, so one cause does not produce a dozen findings.
+Evaluated paths: the root path and every crawled page with status 200 and no noindex, the same set `robots.indexable-url-blocked` uses. When `*` blocks the root path, the block is site-wide and not specific to AI, and a literal `Disallow: /` already fires `robots.disallow-all` as an error. The AI findings are then suppressed for agents that follow `*`, so one cause does not produce a dozen findings.
 
 ## Findings
 

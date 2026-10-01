@@ -60,6 +60,8 @@ describe("AI crawler access audit", () => {
       "(answer engine, OpenAI) from every crawled indexable page.",
     );
     expect(search.url).toBe("https://example.com/robots.txt");
+    expect(search.classification).toEqual(["local-heuristic"]);
+    expect(search.googleDocs).toBeUndefined();
     expect(search.relatedUrls).toEqual([
       "https://example.com/",
       "https://example.com/blog/post",
@@ -128,12 +130,26 @@ describe("named group trap", () => {
     ]);
   });
 
+  it("reports a pattern rule the named group does not cover", async () => {
+    const found = (
+      await run(
+        "User-agent: *\nDisallow: /*.pdf$\n\nUser-agent: GPTBot\nAllow: /",
+      )
+    ).filter((f) => f.code === "named-group-ignores-wildcard");
+    expect(found.map((f) => f.message)).toEqual([
+      "The robots.txt group for gptbot does not inherit Disallow rules from the * group, so it may fetch /*.pdf$.",
+    ]);
+  });
+
   it("stays silent when the named group repeats the rule or * has none", async () => {
     for (const content of [
       "User-agent: *\nDisallow: /private\n\nUser-agent: GPTBot\nDisallow: /private",
       "User-agent: *\nDisallow: /private\n\nUser-agent: GPTBot\nDisallow: /",
       "User-agent: *\nAllow: /\n\nUser-agent: GPTBot\nAllow: /",
       "User-agent: *\nDisallow: /\n\nUser-agent: Googlebot\nAllow: /",
+      "User-agent: *\nDisallow: /*\n\nUser-agent: Googlebot\nAllow: /",
+      "User-agent: *\nDisallow: /*.pdf$\n\nUser-agent: GPTBot\nDisallow: /*.pdf$",
+      "User-agent: *\nDisallow: /*?sid=\n\nUser-agent: Googlebot\nDisallow: /*?sid=",
     ])
       expect(
         (await run(content)).filter(
