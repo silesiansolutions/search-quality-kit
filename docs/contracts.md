@@ -44,8 +44,8 @@ and each site's name, enabled state, root, config path, baseline path, output
 directory, and validated site-contract summary. Site configs are loaded but no
 site is built or crawled.
 
-Portfolio contracts are useful before a coding agent edits one site in a group:
-the agent can see the intended crawl scope, profiles, policy packs, baselines,
+Portfolio contracts are useful before a coding agent edits one site in a group.
+The agent can see the intended crawl scope, profiles, policy packs, baselines,
 suppressions, and gate policy for every configured site without running the
 portfolio audit.
 
@@ -67,7 +67,7 @@ deterministic for the same resolved config and intentionally omit timestamps.
 ## Contract versus handoff
 
 Use a contract before changing code: it explains the rules that must remain
-true. Use a handoff report after an audit: it explains which findings need
+true. Use a handoff report after an audit. It explains which findings need
 action, which findings are reviewed suppressions, which findings are baseline
 debt, and which findings were resolved.
 

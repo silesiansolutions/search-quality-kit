@@ -1,6 +1,6 @@
 # Check catalog
 
-Every finding has a stable `code`, severity, location, remediation, tool documentation link, classification, and—where relevant—an official Google reference. Classifications are machine-readable in JSON, printed by `list-checks`, and shown in Markdown reports:
+Every finding has a stable `code`, severity, location, remediation, tool documentation link, classification, and an official Google reference where relevant. Classifications are machine-readable in JSON, printed by `list-checks`, and shown in Markdown reports:
 
 - `google-requirement`: a minimum technical or documented protocol requirement.
 - `google-recommendation`: official guidance, not a ranking guarantee.
@@ -18,7 +18,7 @@ New reports also include `source`. Built-in findings use `{"type":"core","name":
 
 Classification: `google-recommendation`, `local-heuristic`.
 
-Checks the sitemap declared by `robots.txt` (with conventional fallbacks), detects `<sitemapindex>`, recursively loads child indexes and URL sets, and validates every file at its own URL/file location. It checks valid XML, absolute HTTP(S) URLs, configured origin, production host leaks, duplicates across children, excluded page paths, and valid `lastmod` syntax. Traversal is deduplicated and bounded by `crawl.maxSitemaps` and `crawl.maxSitemapDepth`. `sitemap.url-noindex` (warning) reports a sitemap URL whose crawled page carries `noindex` or `none` in robots metadata or `X-Robots-Tag`. Google describes sitemap URL and date requirements in [Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap). A sitemap is a discovery hint, not an indexing guarantee.
+Checks the sitemap declared by `robots.txt` (with conventional fallbacks) and detects `<sitemapindex>`. It recursively loads child indexes and URL sets, and validates every file at its own URL/file location. It checks valid XML, absolute HTTP(S) URLs, configured origin, production host leaks, duplicates across children, excluded page paths, and valid `lastmod` syntax. Traversal is deduplicated and bounded by `crawl.maxSitemaps` and `crawl.maxSitemapDepth`. `sitemap.url-noindex` (warning) reports a sitemap URL whose crawled page carries `noindex` or `none` in robots metadata or `X-Robots-Tag`. Google describes sitemap URL and date requirements in [Build and submit a sitemap](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap). A sitemap is a discovery hint, not an indexing guarantee.
 
 ## robots
 
@@ -111,55 +111,55 @@ Checks basic image alternatives, accessible link/button names, document language
 
 Classification: `google-recommendation`, `local-heuristic`.
 
-Flags configurable HTML/image size, excessive third-party scripts, missing lazy loading for many distinct non-primary images, and local/staging asset URLs. Responsive candidates from `srcset` and `<picture>` are grouped, repeated groups are deduplicated, and simple `px`/`vw` values in `sizes` are included as context without simulating viewport selection. Google recommends good real-world [Core Web Vitals](https://developers.google.com/search/docs/appearance/core-web-vitals), but these static hints do not measure LCP, INP, or CLS and do not replace Lighthouse or field data.
+Flags configurable HTML/image size, excessive third-party scripts, missing lazy loading for many distinct non-primary images, and local/staging asset URLs. Responsive candidates from `srcset` and `<picture>` are grouped, repeated groups are deduplicated, and simple `px`/`vw` values in `sizes` are included as context without simulating viewport selection. Google recommends good real-world [Core Web Vitals](https://developers.google.com/search/docs/appearance/core-web-vitals). These static hints do not measure LCP, INP, or CLS and do not replace Lighthouse or field data.
 
 ## agent-readiness
 
 Classification: `agentic-readiness`; a local signal, not a Google Search requirement or recommendation.
 
-Reads a deterministic `/llms.txt` artifact (build output in static mode, origin in HTTP mode) and statically scans delivered HTML forms for declarative WebMCP tool annotations (`toolname`, `tooldescription`, `toolparamdescription`). It does not execute JavaScript and does not detect imperative WebMCP tool registration.
+Reads a deterministic `/llms.txt` artifact (build output in static mode, origin in HTTP mode). It also statically scans delivered HTML forms for declarative WebMCP tool annotations (`toolname`, `tooldescription`, `toolparamdescription`). It does not execute JavaScript and does not detect imperative WebMCP tool registration.
 
-- `agent-readiness.llms-txt-missing` — info, or warning when `rules.agentReadiness.requireLlmsTxt` is enabled: no `/llms.txt` found; add a Markdown `llms.txt` at the site root per [llmstxt.org](https://llmstxt.org/).
-- `agent-readiness.llms-txt-unreadable` — warning: `/llms.txt` responded with a server error or failed to load.
-- `agent-readiness.llms-txt-missing-h1` — warning: the file lacks an H1 (`# Title`).
-- `agent-readiness.llms-txt-missing-links` — warning: the file contains no Markdown links.
-- `agent-readiness.llms-txt-too-short` — warning: content is shorter than 50 characters.
+- `agent-readiness.llms-txt-missing` - info, or warning when `rules.agentReadiness.requireLlmsTxt` is enabled: no `/llms.txt` found; add a Markdown `llms.txt` at the site root per [llmstxt.org](https://llmstxt.org/).
+- `agent-readiness.llms-txt-unreadable` - warning: `/llms.txt` responded with a server error or failed to load.
+- `agent-readiness.llms-txt-missing-h1` - warning: the file lacks an H1 (`# Title`).
+- `agent-readiness.llms-txt-missing-links` - warning: the file contains no Markdown links.
+- `agent-readiness.llms-txt-too-short` - warning: content is shorter than 50 characters.
 
   These three checks replicate Lighthouse's `llms-txt` audit content rules exactly.
 
-- `agent-readiness.llms-txt-missing-summary` — info: no blockquote summary under the H1. This is an llmstxt.org recommendation and intentionally goes beyond the Lighthouse audit.
-- `agent-readiness.webmcp-tool-annotation-incomplete` — warning: a form declares only one of `toolname`/`tooldescription`, so the browser will not register the tool.
-- `agent-readiness.webmcp-tool-name-duplicate` — warning: two annotated forms on the same page share a `toolname`.
-- `agent-readiness.webmcp-param-description-missing` — info: a named field in a tool form has no `toolparamdescription`, associated/wrapping label, or `aria-description`/`aria-describedby`, so the generated input schema has an undescribed parameter.
-- `agent-readiness.webmcp-form-uncovered` — info: a form with user-facing controls carries no WebMCP annotations, mirroring the informative Lighthouse WebMCP form coverage audit.
+- `agent-readiness.llms-txt-missing-summary` - info: no blockquote summary under the H1. This is an llmstxt.org recommendation and intentionally goes beyond the Lighthouse audit.
+- `agent-readiness.webmcp-tool-annotation-incomplete` - warning: a form declares only one of `toolname`/`tooldescription`, so the browser will not register the tool.
+- `agent-readiness.webmcp-tool-name-duplicate` - warning: two annotated forms on the same page share a `toolname`.
+- `agent-readiness.webmcp-param-description-missing` - info: a named field in a tool form has no `toolparamdescription`, associated/wrapping label, or `aria-description`/`aria-describedby`. The generated input schema then has an undescribed parameter.
+- `agent-readiness.webmcp-form-uncovered` - info: a form with user-facing controls carries no WebMCP annotations, mirroring the informative Lighthouse WebMCP form coverage audit.
 
 `rules.agentReadiness.requireLlmsTxt` (default `false`) raises a missing `/llms.txt` from info to warning once a project has committed to publishing one.
 
-Cumulative layout shift, runtime accessibility-tree integrity, and imperative WebMCP tools (`navigator.modelContext.registerTool`) require a real browser; they remain covered by the experimental Lighthouse [Agentic Browsing](https://developer.chrome.com/docs/lighthouse/agentic-browsing) category (Chrome 150+, WebMCP origin trial) and PageSpeed Insights, which this kit deliberately complements, not replaces. See also [WebMCP](https://developer.chrome.com/docs/ai/webmcp) and [llms.txt](https://llmstxt.org/).
+Cumulative layout shift, runtime accessibility-tree integrity, and imperative WebMCP tools (`navigator.modelContext.registerTool`) require a real browser. They remain covered by the experimental Lighthouse [Agentic Browsing](https://developer.chrome.com/docs/lighthouse/agentic-browsing) category (Chrome 150+, WebMCP origin trial) and PageSpeed Insights, which this kit deliberately complements and does not replace. See also [WebMCP](https://developer.chrome.com/docs/ai/webmcp) and [llms.txt](https://llmstxt.org/).
 
 ## hreflang
 
 Classification: `google-requirement`, `google-recommendation`, `local-heuristic`.
 
-Validates `<link rel="alternate" hreflang>` annotations across the whole crawl, not one page at a time. Reciprocity is the reason this check needs a cross-page view: Google states that if page X links to page Y, page Y must link back, or the annotations may be ignored. Only ISO 639-1 language codes and ISO 3166-1 alpha-2 region codes are supported, plus UN M.49 macro-regions such as `es-419`.
+Validates `<link rel="alternate" hreflang>` annotations across the whole crawl, not one page at a time. Reciprocity is the reason this check needs a cross-page view. Google states that if page X links to page Y, page Y must link back, or the annotations may be ignored. Only ISO 639-1 language codes and ISO 3166-1 alpha-2 region codes are supported, plus UN M.49 macro-regions such as `es-419`.
 
-Sitemap `xhtml:link` alternates are read too. For each URL the HTML annotations win; the sitemap annotations count only for a URL whose HTML declares none, so a site that uses both methods is not reported twice. Annotations in the HTTP `Link:` header are not read, and a site that annotates only that way produces no findings rather than a false `missing-self` on every page.
+Sitemap `xhtml:link` alternates are read too. For each URL the HTML annotations win; the sitemap annotations count only for a URL whose HTML declares none, so a site that uses both methods is not reported twice. Annotations in the HTTP `Link:` header are not read. A site that annotates only that way produces no findings rather than a false `missing-self` on every page.
 
 Every code is `warning` or `info` by default, so the default `ci.failOn: ["error"]` gate is unchanged on upgrade. `rules.hreflang.strict` (default `false`) promotes the Google-requirement codes to `error`.
 
-- `hreflang.invalid-value` — warning: the value is not a parseable language tag, such as `en_US`; use hyphens and a `language[-script][-region]` shape.
-- `hreflang.invalid-language` — warning: the value parses but its language is not ISO 639-1, such as `eng` instead of `en`.
-- `hreflang.invalid-region` — warning: the region is neither ISO 3166-1 alpha-2 nor a UN M.49 macro-region, such as `en-UK` instead of `en-GB`.
-- `hreflang.relative-href` — warning: the `href` is not fully qualified; hreflang targets must be absolute URLs.
-- `hreflang.missing-self` — warning: the page declares alternates but none targets itself.
-- `hreflang.missing-reciprocal` — warning: another crawled page names this one as an alternate and this page does not link back. Reported once against the page that fails to link back, with the declaring pages in `relatedUrls`.
-- `hreflang.duplicate-language` — warning: the same value is declared twice on one page with different targets.
-- `hreflang.broken-target` — warning: an alternate target returned an error status. Emitted only when the status was actually observed, so it never fires in static mode, where the crawler cannot know what the origin will serve.
-- `hreflang.x-default-duplicate` — warning: more than one `x-default` on a page.
-- `hreflang.non-canonical-target` — warning: the target page declares a canonical other than the alternate `href`. Gated by `rules.hreflang.requireCanonicalTargets` (default `true`).
-- `hreflang.lang-mismatch` — warning: the `<html lang>` value disagrees with the page's own self-referencing annotation.
-- `hreflang.unresolved-target` — info: a same-origin alternate target was not crawled, so it could not be checked. Raising `crawl.maxPages` above the site's page count converts this into a decidable result; silence about a URL is never evidence that the URL is fine.
-- `hreflang.missing-x-default` — info: a cluster has two or more language versions and no `x-default`. Emitted only under `rules.hreflang.requireXDefault` (default `false`).
+- `hreflang.invalid-value` - warning: the value is not a parseable language tag, such as `en_US`; use hyphens and a `language[-script][-region]` shape.
+- `hreflang.invalid-language` - warning: the value parses but its language is not ISO 639-1, such as `eng` instead of `en`.
+- `hreflang.invalid-region` - warning: the region is neither ISO 3166-1 alpha-2 nor a UN M.49 macro-region, such as `en-UK` instead of `en-GB`.
+- `hreflang.relative-href` - warning: the `href` is not fully qualified; hreflang targets must be absolute URLs.
+- `hreflang.missing-self` - warning: the page declares alternates but none targets itself.
+- `hreflang.missing-reciprocal` - warning: another crawled page names this one as an alternate and this page does not link back. Reported once against the page that fails to link back, with the declaring pages in `relatedUrls`.
+- `hreflang.duplicate-language` - warning: the same value is declared twice on one page with different targets.
+- `hreflang.broken-target` - warning: an alternate target returned an error status. Emitted only when the status was actually observed, so it never fires in static mode, where the crawler cannot know what the origin will serve.
+- `hreflang.x-default-duplicate` - warning: more than one `x-default` on a page.
+- `hreflang.non-canonical-target` - warning: the target page declares a canonical other than the alternate `href`. Gated by `rules.hreflang.requireCanonicalTargets` (default `true`).
+- `hreflang.lang-mismatch` - warning: the `<html lang>` value disagrees with the page's own self-referencing annotation.
+- `hreflang.unresolved-target` - info: a same-origin alternate target was not crawled, so it could not be checked. Raising `crawl.maxPages` above the site's page count converts this into a decidable result; silence about a URL is never evidence that the URL is fine.
+- `hreflang.missing-x-default` - info: a cluster has two or more language versions and no `x-default`. Emitted only under `rules.hreflang.requireXDefault` (default `false`).
 
 A monolingual site produces no findings from this check at all. An `x-default` entry pointing at the page itself counts as a self-reference. See [Google's localized versions documentation](https://developers.google.com/search/docs/specialty/international/localized-versions) and the [design note](design/hreflang.md).
 
