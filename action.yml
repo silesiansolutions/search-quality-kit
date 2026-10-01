@@ -17,7 +17,7 @@ inputs:
     description: Optional path to a Node.js version file such as .nvmrc. Takes precedence over node-version.
     default: ""
   package-manager:
-    description: Package manager used to execute the local CLI (npm, pnpm, or yarn).
+    description: Package manager that runs the CLI (npm, pnpm, or yarn). pnpm and yarn need the package installed; npm falls back to the latest release.
     default: npm
   install-command:
     description: Optional explicit dependency installation command. Nothing is installed when empty.
