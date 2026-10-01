@@ -342,6 +342,16 @@ describe("robots rule matching", () => {
     expect(found.some((f) => f.code.endsWith("-blocked"))).toBe(false);
   });
 
+  it("reports a rate-limited robots.txt as unavailable, not missing", async () => {
+    const { config, crawl } = context({
+      mode: "http",
+      robots: { url: "https://example.com/robots.txt", status: 429 },
+    });
+    const found = await robotsCheck.run({ config, crawl });
+    expect(codes(found)).toEqual(["robots.unavailable"]);
+    expect(found[0]!.message).toBe("robots.txt returned HTTP 429.");
+  });
+
   it("reports a server error on robots.txt as unavailable", async () => {
     const { config, crawl } = context({
       mode: "http",
@@ -386,6 +396,21 @@ describe("v0.12 page checks", () => {
       ["invalid-lang", "https://example.com/a"],
       ["invalid-lang", "https://example.com/d"],
     ]);
+  });
+
+  it("accepts deprecated but registered language subtags in html lang", async () => {
+    const { config, crawl } = context({
+      pages: ["iw", "in", "iw-IL", "xq"].map((lang) =>
+        page(
+          `https://example.com/${lang}`,
+          `<html lang="${lang}"><head><title>Language page title</title></head></html>`,
+        ),
+      ),
+    });
+    const found = (await metadataCheck.run({ config, crawl })).filter(
+      (f) => f.code === "invalid-lang",
+    );
+    expect(found.map((f) => f.url)).toEqual(["https://example.com/xq"]);
   });
 
   it("reports https-to-http links and pages without internal links", async () => {
