@@ -8,7 +8,7 @@ import type {
   Severity,
 } from "./report/types.js";
 
-export const CONTRACT_SCHEMA_VERSION = "0.12" as const;
+export const CONTRACT_SCHEMA_VERSION = "0.13" as const;
 
 export interface ContractPluginCheck {
   id: string;

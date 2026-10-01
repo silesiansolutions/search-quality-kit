@@ -2,6 +2,7 @@ import { accessibilityCheck } from "./accessibility.js";
 import { agentReadinessCheck } from "./agentReadiness.js";
 import { assetsCheck } from "./assets.js";
 import { canonicalCheck } from "./canonical.js";
+import { duplicatesCheck } from "./duplicates.js";
 import { hreflangCheck } from "./hreflang.js";
 import { indexabilityCheck } from "./indexability.js";
 import { internalLinksCheck } from "./internalLinks.js";
@@ -30,6 +31,7 @@ export const checks = [
   hreflangCheck,
   redirectsCheck,
   assetsCheck,
+  duplicatesCheck,
 ];
 
 export type { CheckBasis } from "./types.js";
@@ -53,6 +55,7 @@ const severities: Record<
   hreflang: ["error", "warning", "info"],
   redirects: ["warning"],
   assets: ["warning", "info"],
+  duplicates: ["warning"],
 };
 
 export const checkCatalog = checks.map((check) => ({
