@@ -7,6 +7,7 @@ All notable changes to this project are documented here.
 - Require Node.js 24 or newer. `engines.node` moves from `>=20.11` to `>=24`. The old floor was already wrong: `commander` 15 (since 0.11.3) needs Node 22.12, and `doctor` reported Node 20 as supported. On Node 22 the CLI still starts, the package manager warns about the unsupported engine and `doctor` exits with an error.
 - The GitHub Action defaults `node-version` to `"24"`. The default also sets the Node that runs `install-command` and `build-command`. A workflow that passes `node-version` or `node-version-file` keeps its own version, so a pin to 22 must move to 24. The CI workflows, the `docs/ci.md` snippets and the files in `examples/ci/` use Node 24.
 - Correct the docs for the Action's `package-manager` input. `docs/ci.md` still described `npx --no-install`, which 0.11.1 replaced with `npx --yes @silesiansolutions/search-quality-kit`. With npm and no local install, the Action runs the latest release from npm. The README and the input description say so too.
+- Add `tests/node-floor.test.ts`. It checks that the lockfile root repeats `engines.node`. It also checks that every Node version in the Action default, the workflows, `examples/`, the README and `docs/` has the same major as that range. So do the README requirement line and the tsup build target.
 
 ## [0.13.0] - 2026-10-01
 
