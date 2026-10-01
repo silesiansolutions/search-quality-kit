@@ -1,5 +1,10 @@
 import { loadHtml, normalizedText, textFromSelection } from "../utils/html.js";
-import { normalizeUrl, pathAllowed, sameOrigin } from "../utils/urls.js";
+import {
+  normalizeUrl,
+  normalizeUrlWithoutQuery,
+  pathAllowed,
+  sameOrigin,
+} from "../utils/urls.js";
 import type { CheckDefinition } from "./types.js";
 import { finding, pageOptions } from "./types.js";
 const G =
@@ -94,7 +99,10 @@ export const internalLinksCheck: CheckDefinition = {
         if (!sameOrigin(u.toString(), crawl.publicBaseUrl)) return;
         internalTargets += 1;
         const n = normalizeUrl(u.toString());
-        if (incoming.has(n)) incoming.set(n, (incoming.get(n) ?? 0) + 1);
+        const routeKey =
+          crawl.mode === "static" ? normalizeUrlWithoutQuery(u.toString()) : n;
+        if (incoming.has(routeKey))
+          incoming.set(routeKey, (incoming.get(routeKey) ?? 0) + 1);
         const target = pages.get(n);
         if (target && target.status >= 400)
           out.push(
@@ -107,7 +115,11 @@ export const internalLinksCheck: CheckDefinition = {
               { ...o, relatedUrls: [u.toString()] },
             ),
           );
-        else if (crawl.mode === "static" && pageLike(u) && !crawl.assets.has(n))
+        else if (
+          crawl.mode === "static" &&
+          pageLike(u) &&
+          !crawl.assets.has(routeKey)
+        )
           out.push(
             finding(
               "internal-links",

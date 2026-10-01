@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [0.13.1] - 2026-10-01
+
+- Ignore the query string when a static crawl resolves an internal link. Links such as `/category/nis2?page=2` or `./contact?source=home` were reported as `internal-links.missing-static-route` although the file exists. They also did not count as incoming links, so a page reached only through them could get `internal-links.orphan-page`. Both lookups now drop the query, as `assets.missing-static-asset` already did. HTTP crawls are unchanged. Messages are unchanged, so baselines keep matching.
+
 ## [0.13.0] - 2026-10-01
 
 - Audit AI crawler access in the `robots` check. robots.txt rules are evaluated per agent against a vendored copy of the ai.robots.txt roster (180 agents, MIT, pinned commit `987266f`). Twelve tokens documented by their operators carry a category: answer engine, training crawler or user-triggered fetcher. New codes: `robots.ai-search-blocked` (warning) and `robots.ai-crawler-blocked` (info), classified `local-heuristic`. An unnamed token that follows `*` is evaluated only when Googlebot has its own group, so one `*` rule does not repeat as a dozen findings. Roster text stays out of the message, so a roster update does not reopen baselined findings. The kit reports the consequence of a block and never rates the policy.
