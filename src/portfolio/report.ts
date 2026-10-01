@@ -28,6 +28,8 @@ const summarySchema = z
     resolvedFindings: z.number().int().nonnegative(),
     suppressedFindings: z.number().int().nonnegative().default(0),
     unmatchedSuppressions: z.number().int().nonnegative().optional(),
+    urlsWithErrors: z.number().int().nonnegative().optional(),
+    errorFreeUrlRate: z.number().int().min(0).max(100).optional(),
   })
   .strict();
 
@@ -56,6 +58,8 @@ export const portfolioReportSchema = z
         warnings: z.number().int().nonnegative(),
         infos: z.number().int().nonnegative(),
         operationalErrors: z.number().int().nonnegative(),
+        urlsWithErrors: z.number().int().nonnegative().optional(),
+        errorFreeUrlRate: z.number().int().min(0).max(100).optional(),
       })
       .strict(),
     sites: z.array(
@@ -190,7 +194,7 @@ export function formatPortfolioMarkdownReport(report: PortfolioReport) {
     const reportLink = site.markdownReportPath
       ? `[Markdown](${site.markdownReportPath})`
       : "—";
-    return `| ${escapeCell(site.name)} | ${displayStatus(site.status)} | ${site.summary.checkedPages} | ${site.summary.errors} | ${site.summary.warnings} | ${site.summary.suppressedFindings} | ${site.summary.newFindings} | ${site.summary.resolvedFindings} | ${reportLink} |`;
+    return `| ${escapeCell(site.name)} | ${displayStatus(site.status)} | ${site.summary.checkedPages} | ${site.summary.errorFreeUrlRate === undefined ? "—" : `${site.summary.errorFreeUrlRate}%`} | ${site.summary.errors} | ${site.summary.warnings} | ${site.summary.suppressedFindings} | ${site.summary.newFindings} | ${site.summary.resolvedFindings} | ${reportLink} |`;
   });
   const operational = report.sites
     .filter((site) => site.operationalError)
@@ -215,7 +219,7 @@ export function formatPortfolioMarkdownReport(report: PortfolioReport) {
 ## Portfolio summary
 
 - Sites: ${report.portfolio.sitesTotal} total · ${report.portfolio.sitesPassed} passed · ${report.portfolio.sitesFailed} failed · ${report.portfolio.sitesSkipped} skipped/disabled
-- Pages: ${report.portfolio.totalPages}
+- Pages: ${report.portfolio.totalPages}${report.portfolio.errorFreeUrlRate === undefined ? "" : ` · ${report.portfolio.errorFreeUrlRate}% error-free (${report.portfolio.urlsWithErrors} carry an error)`}
 - Findings: ${report.portfolio.totalFindings} total · ${report.portfolio.errors} errors · ${report.portfolio.warnings} warnings · ${report.portfolio.infos} info · ${report.portfolio.suppressedFindings} reviewed suppressions
 - Baseline delta: ${report.portfolio.newFindings} new · ${report.portfolio.resolvedFindings} resolved
 
@@ -227,8 +231,8 @@ ${gateFailures.join("\n")}
 
 ## Per-site status
 
-| Site | Status | Pages | Errors | Warnings | Suppressed | New | Resolved | Report |
-|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Site | Status | Pages | Error-free | Errors | Warnings | Suppressed | New | Resolved | Report |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
 ${rows.join("\n")}
 
 ## New findings by site

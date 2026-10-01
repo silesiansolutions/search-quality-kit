@@ -36,6 +36,7 @@ export const checkClassifications: Record<string, FindingClassification[]> = {
   hreflang: ["google-requirement", "google-recommendation", "local-heuristic"],
   redirects: ["google-recommendation", "local-heuristic"],
   assets: ["local-heuristic"],
+  duplicates: ["google-recommendation"],
 };
 
 export const classificationForCheck = (check: string) =>

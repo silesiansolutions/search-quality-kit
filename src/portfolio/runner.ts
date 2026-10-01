@@ -5,6 +5,7 @@ import {
   parseBaselineReport,
   withBaselineComparison,
 } from "../report/baseline.js";
+import { errorFreeUrlRate } from "../report/errorFreeUrlRate.js";
 import { formatJsonReport } from "../report/formatJsonReport.js";
 import { formatMarkdownReport } from "../report/formatMarkdownReport.js";
 import { formatSarifReport } from "../report/formatSarifReport.js";
@@ -379,6 +380,17 @@ export async function runPortfolio(
   ).length;
   const gateFailed = failures.length > 0 && !reportOnly;
   const operationalCount = sites.filter((site) => site.operationalError).length;
+  const rated = sites.filter(
+    (site) => site.summary.urlsWithErrors !== undefined,
+  );
+  const ratedPages = rated.reduce(
+    (total, site) => total + site.summary.checkedPages,
+    0,
+  );
+  const ratedErrors = rated.reduce(
+    (total, site) => total + site.summary.urlsWithErrors!,
+    0,
+  );
   const report: PortfolioReport = {
     schemaVersion: PORTFOLIO_REPORT_SCHEMA_VERSION,
     tool: {
@@ -415,6 +427,12 @@ export async function runPortfolio(
       warnings: sites.reduce((total, site) => total + site.summary.warnings, 0),
       infos: sites.reduce((total, site) => total + site.summary.info, 0),
       operationalErrors: operationalCount,
+      ...(ratedPages
+        ? {
+            urlsWithErrors: ratedErrors,
+            errorFreeUrlRate: errorFreeUrlRate(ratedPages, ratedErrors),
+          }
+        : {}),
     },
     sites,
     highlights: {

@@ -132,6 +132,7 @@ const baseConfigSchema = z.object({
       hreflang: z.boolean().default(true),
       redirects: z.boolean().default(true),
       assets: z.boolean().default(true),
+      duplicates: z.boolean().default(true),
     })
     .prefault({}),
   rules: z
@@ -153,7 +154,14 @@ const baseConfigSchema = z.object({
         .prefault({}),
       canonical: z.object({ required: z.boolean().default(true) }).prefault({}),
       robots: z
-        .object({ disallowAllInProduction: z.boolean().default(false) })
+        .object({
+          disallowAllInProduction: z.boolean().default(false),
+          aiCrawlers: z
+            .object({
+              blockedByPolicy: z.array(z.string().trim().min(1)).default([]),
+            })
+            .prefault({}),
+        })
         .prefault({}),
       structuredData: z
         .object({

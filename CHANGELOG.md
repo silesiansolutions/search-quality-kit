@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## [0.13.0] - 2026-10-01
+
+- Audit AI crawler access in the `robots` check. robots.txt rules are evaluated per agent against a vendored copy of the ai.robots.txt roster (180 agents, MIT, pinned commit `987266f`). Twelve tokens documented by their operators carry a category: answer engine, training crawler or user-triggered fetcher. New codes: `robots.ai-search-blocked` (warning) and `robots.ai-crawler-blocked` (info), classified `local-heuristic`. An unnamed token that follows `*` is evaluated only when Googlebot has its own group, so one `*` rule does not repeat as a dozen findings. Roster text stays out of the message, so a roster update does not reopen baselined findings. The kit reports the consequence of a block and never rates the policy.
+- Add `robots.named-group-ignores-wildcard` (info): a named `User-agent` group that does not repeat the Disallow rules of `*`, so that agent may fetch paths `*` blocks. A repeated rule counts by exact pattern, and an allow list after a root block is not reported.
+- Add `rules.robots.aiCrawlers.blockedByPolicy` to declare intended AI blocks once instead of renewing suppressions.
+- Add a default-on `duplicates` check: `duplicates.exact-without-canonical` and `duplicates.conflicting-canonicals` (both warning) for pages with identical normalized main text. Identical documents only, with no similarity threshold. Pages below `rules.renderedHtml.minTextLength` and regional variants linked by reciprocal hreflang are excluded.
+- Add `urlsWithErrors` and `errorFreeUrlRate` to the report summary, the console and Markdown summaries, and the portfolio report. The rate is rounded down, so 100 means no audited page carries an unsuppressed error. The portfolio rate comes from summed counts, and the per-site Markdown table gains an "Error-free" column. The gate does not read the rate.
+- Every new code is `warning` or `info`, so the default `ci.failOn: ["error"]` gate is unchanged. The contract schema moves to `0.13` for `checks.duplicates` and `rules.robots.aiCrawlers`. The JSON report schema stays `0.3` and the portfolio schema stays `0.7`, because the new fields are optional.
+- Ship `THIRD_PARTY_NOTICES.md` with the package for the roster license. `scripts/update-ai-roster.mjs` refreshes the roster in minor releases.
+- Add tests for a rate-limited robots.txt (`robots.unavailable`) and for deprecated but registered language subtags (`iw`, `in`), which `metadata.invalid-lang` accepts. Record the 0.12 crawler decisions in `docs/design/crawler-rework.md`.
+
 ## [0.12.0] - 2026-10-01
 
 - Follow redirects in the crawler instead of delegating to `fetch`, and keep every hop. A failed request now records why it failed: timeout, DNS, refused connection, TLS, redirect loop, a chain longer than the new `crawl.maxRedirects` (default 10), or an unclassified network error.
@@ -146,6 +157,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.13.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.3...v0.12.0
 [0.11.3]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.2...v0.11.3
 [0.11.2]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.1...v0.11.2

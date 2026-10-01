@@ -7,6 +7,7 @@ import { resolveProfile } from "../config/resolveProfile.js";
 import type { SearchQualityConfig } from "../config/schema.js";
 import { crawlHttp, crawlStatic } from "../crawler/crawlSite.js";
 import { runPluginChecks } from "../plugins/runPlugins.js";
+import { errorFreeUrlSummary } from "../report/errorFreeUrlRate.js";
 import {
   REPORT_SCHEMA_VERSION,
   type Finding,
@@ -136,6 +137,7 @@ export async function runVerification(
         ...(unmatched.length
           ? { unmatchedSuppressions: unmatched.length }
           : {}),
+        ...errorFreeUrlSummary(crawl.pages, reviewedFindings),
       },
       findings: reviewedFindings,
       pages: crawl.pages.map(({ url, initialUrl, finalUrl, status, file }) => {

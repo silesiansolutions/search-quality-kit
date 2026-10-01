@@ -50,6 +50,10 @@ export interface ReportSummary {
   info: number;
   suppressedFindings?: number;
   unmatchedSuppressions?: number;
+  /** Audited pages carrying at least one unsuppressed error finding. */
+  urlsWithErrors?: number;
+  /** floor((checkedPages - urlsWithErrors) / checkedPages * 100). */
+  errorFreeUrlRate?: number;
 }
 export interface SearchQualityReport {
   schemaVersion: typeof REPORT_SCHEMA_VERSION;

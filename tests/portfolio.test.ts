@@ -439,11 +439,25 @@ describe("portfolio runner", () => {
     );
     expect(parsed.sites).toHaveLength(3);
     expect(parsed.sites[0]).not.toHaveProperty("findings");
+    const rated = parsed.sites.filter(
+      (site) => site.summary.urlsWithErrors !== undefined,
+    );
+    expect(rated.length).toBeGreaterThan(0);
+    const pages = rated.reduce((n, site) => n + site.summary.checkedPages, 0);
+    const erroring = rated.reduce(
+      (n, site) => n + site.summary.urlsWithErrors!,
+      0,
+    );
+    expect(parsed.portfolio.urlsWithErrors).toBe(erroring);
+    expect(parsed.portfolio.errorFreeUrlRate).toBe(
+      Math.floor(((pages - erroring) / pages) * 100),
+    );
     const markdown = formatPortfolioMarkdownReport(parsed);
     [
       "Portfolio summary",
       "Gate status",
       "Per-site status",
+      "| Error-free |",
       "New findings by site",
       "Top errors",
       "Top warnings",

@@ -14,7 +14,7 @@ The loader discovers `search-quality.config.ts`, `.mts`, `.js`, `.mjs`, `.cjs`, 
 | `rules.title`          | min/max length, duplicate policy                                                 | 10 to 70, no duplicates              |
 | `rules.description`    | min/max, missing and duplicate policy                                            | 50 to 170, required, no duplicates   |
 | `rules.canonical`      | `required`                                                                       | true                                 |
-| `rules.robots`         | `disallowAllInProduction`                                                        | false                                |
+| `rules.robots`         | `disallowAllInProduction`, `aiCrawlers.blockedByPolicy`                          | false, no agents                     |
 | `rules.structuredData` | JSON and visible-content switches                                                | syntax validation on                 |
 | `rules.openGraph`      | `requireImage`                                                                   | false                                |
 | `rules.renderedHtml`   | main/H1 policy and minimum visible text                                          | main and H1 required, 80 chars       |
@@ -32,6 +32,8 @@ Paths in `include`, `exclude`, and `entrypoints` are URL paths. Exclusions apply
 `crawl.maxSitemaps` defaults to 50 and `crawl.maxSitemapDepth` defaults to 3. They bound recursive sitemap-index traversal in both static and HTTP modes. A truncated traversal produces `sitemap/fetch-limit`; raise the limits only when the site intentionally needs a larger sitemap tree.
 
 `crawl.maxRedirects` defaults to 10, the hop limit Googlebot follows, and accepts 0 to 20. HTTP crawls follow redirects themselves and record every hop; a longer chain ends as `indexability.unreachable` plus `redirects.broken`. `checks.redirects` and `checks.assets` enable the two checks added in 0.12. Disabling `checks.assets` also stops the HTTP resource requests. `crawl.maxResources` (default 500, up to 10000) caps those requests at one per unique same-origin resource; a truncated run reports `assets.request-limit`.
+
+`checks.duplicates` enables the exact-duplicate check added in 0.13. `rules.robots.aiCrawlers.blockedByPolicy` lists AI user agents whose robots.txt block is intended, for example `["GPTBot", "CCBot"]`. Tokens match case-insensitively. A listed agent produces no `robots.ai-search-blocked` or `robots.ai-crawler-blocked` finding. A reviewed suppression would do the same, but it expires by design, while a standing policy does not. The list does not silence `robots.named-group-ignores-wildcard`, which reports the structure of the file, not the policy.
 
 Baseline behavior is controlled by CLI flags rather than config: use `--baseline <report.json> --fail-on-new`. The gate still reads severity policy from `ci.failOn`, while `ci.warnOnly` and `--report-only` suppress finding-based failure. Report and SARIF output are presentation formats and do not alter finding identity or gate behavior.
 

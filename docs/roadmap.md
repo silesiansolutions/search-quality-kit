@@ -12,7 +12,7 @@ The kit competes on three properties, and every roadmap item must strengthen at 
 
 The kit is not a second Ahrefs and not a second Lighthouse: no backlink index, no rank tracking, no browser runtime (see [Non-goals](#non-goals)).
 
-## Where the project stands (v0.12)
+## Where the project stands (v0.13)
 
 - deterministic crawl of static output or an HTTP origin, including sitemap indexes, redirects, and orphan detection (v0.2);
 - portable finding baselines with `--fail-on-new` gating, schema-versioned JSON reports, Markdown artifacts, and dependency-free SARIF (v0.3);
@@ -24,18 +24,18 @@ The kit is not a second Ahrefs and not a second Lighthouse: no backlink index, n
 - reviewed suppressions with owner/reason/expiry, configurable policy packs, exported `contract` schemas, and handoff reports (v0.9);
 - a default-on agent-readiness check covering `llms.txt` and declarative WebMCP form annotations, kept out of the default error gate (v0.10);
 - a URL graph derived from every crawl, the hreflang check, and root-level Action metadata for the Marketplace (v0.11);
-- a crawler that follows redirects itself and classifies failed requests, redirect and asset integrity checks, canonical-target validation, robots rule matching, the `indexability.non-200` split behind finding code aliases, sitemap hreflang, and warnings for suppressions that match nothing (v0.12).
+- a crawler that follows redirects itself and classifies failed requests, redirect and asset integrity checks, canonical-target validation, robots rule matching, the `indexability.non-200` split behind finding code aliases, sitemap hreflang, and warnings for suppressions that match nothing (v0.12);
+- an AI crawler access audit against a vendored ai.robots.txt roster, exact-duplicate detection, and the `errorFreeUrlRate` summary metric (v0.13).
 
 ## Research inputs
 
-Three research passes informed this plan: a mapping of the Ahrefs Site Audit issue catalog onto the kit, a survey of free search-data sources, and a broad market scan of SEO/AEO tooling. Verified against v0.10, most market-scan proposals had already shipped (metadata/H1/alt/canonical checks, `init --detect`, `doctor`, policy packs, Astro/Next examples, handoff reports, `llms.txt`). The survey of external data sources confirmed the companion-package boundary rather than new core scope. The durable output is the catalog gaps scheduled below. All are implementable from data the crawler already collects or one bounded request away, and none requires a browser.
+Three research passes informed this plan: a mapping of the Ahrefs Site Audit issue catalog onto the kit, a survey of free search-data sources, and a broad market scan of SEO/AEO tooling. Verified against v0.10, most market-scan proposals had already shipped (metadata/H1/alt/canonical checks, `init --detect`, `doctor`, policy packs, Astro/Next examples, handoff reports, `llms.txt`). The survey of external data sources confirmed the companion-package boundary rather than new core scope. The catalog gaps it surfaced shipped in v0.12 and v0.13. All were implementable from data the crawler already collects or one bounded request away, and none required a browser.
 
-## v0.13: AI visibility and duplicate identity
+## Watched, not scheduled
 
-- AI crawler access audit (extends the robots check and the `aiVisibilitySafe` pack): evaluate robots.txt policy against a vendored copy of `ai-robots-txt/ai.robots.txt` (464 user agents, MIT licensed, updated weekly) instead of a hand-maintained roster. The audit distinguishes training bots (GPTBot, ClaudeBot, Google-Extended, CCBot), answer-engine bots (OAI-SearchBot, Claude-SearchBot, PerplexityBot), and user-triggered fetchers. Findings stay `info`/`warning` and report-only. Blocking may be deliberate policy, so the kit reports the consequence (invisibility to a given answer engine) and never prescribes the policy. The roster ships versioned in the package and updates in minor releases. See [ai-surface-review.md](design/ai-surface-review.md).
-- Agentic Resource Discovery (ARD): watched, not scheduled. `/.well-known/ai-catalog.json`, Linux Foundation AI Catalog Working Group, Apache 2.0. Adoption is near zero; the trigger to schedule it is observable adoption, not further announcements. See [ai-surface-review.md](design/ai-surface-review.md).
-- Exact-duplicate detection: a normalized main-content hash producing `duplicates.exact-without-canonical` and `duplicates.conflicting-canonicals`. Identical documents only; no similarity scoring.
-- `errorFreeUrlRate` summary metric in JSON, Markdown, and portfolio outputs: `ceil((auditedUrls − urlsWithErrors) / auditedUrls × 100)`, counting unique URLs carrying at least one error-severity finding. Global findings such as invalid sitemap XML are reported separately and never attributed to URLs. It is a transparent counting rule, not a weighted score, and never the primary CI gate. New-error baseline gating remains the gate.
+- Agentic Resource Discovery (ARD): `/.well-known/ai-catalog.json`, Linux Foundation AI Catalog Working Group, Apache 2.0. Adoption is near zero. The trigger to schedule it is measured adoption, not further announcements. See [ai-surface-review.md](design/ai-surface-review.md).
+- `aiVisibilitySafe` pack integration for the AI crawler audit: the v0.13 findings live in the core robots check only. A pack rule that raises `robots.ai-search-blocked` for sites whose policy requires answer-engine visibility needs its own design note.
+- More classified AI tokens: Meta documents `meta-webindexer` for Meta AI search and `meta-externalfetcher` for user-requested fetches. They stay "other AI agent" until a release adds them to the overlay. See [AI crawler access audit](design/ai-crawler-access.md).
 
 ## Toward 1.0
 
