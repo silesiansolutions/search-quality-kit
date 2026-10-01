@@ -199,7 +199,7 @@ jobs:
           summary: "true"
 ```
 
-The composite Action calls the repository's pinned local CLI and exposes the CLI options instead of replacing them. It writes JSON/Markdown reports first, then preserves the CLI exit code. Manual CLI workflows remain supported. See [CI usage](docs/ci.md).
+The composite Action runs the CLI installed in the repository and exposes the CLI options instead of replacing them. With `package-manager: npm` and no local install, it falls back to the latest release from npm. It writes JSON/Markdown reports first, then preserves the CLI exit code. Manual CLI workflows remain supported. See [CI usage](docs/ci.md).
 
 Set `mode: portfolio` and `portfolio-config` to upload the complete portfolio report directory and put `portfolio.md` in the workflow summary. Single-site mode remains the default.
 
