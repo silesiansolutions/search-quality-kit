@@ -30,7 +30,9 @@ audit spends time crawling.
 
 ## Official GitHub Action
 
-The official composite Action sets up Node and optionally runs explicit install/build commands. It invokes the pinned local `search-quality-kit` binary, creates JSON and Markdown reports, and then preserves the CLI exit code. It does not guess a package manager, build command, config, baseline, or deployment behavior.
+The official composite Action sets up Node and optionally runs explicit install/build commands. Then it runs the CLI installed in the project. With `package-manager: npm` and no local install, it runs the latest npm release instead. It writes JSON and Markdown reports and keeps the CLI exit code.
+
+It does not guess a package manager, build command, config, baseline, or deployment behavior.
 
 ### Basic workflow
 
@@ -73,7 +75,9 @@ Repositories that already pin Node in `.nvmrc`, `.node-version`, or another setu
 
 When `node-version-file` is set, it takes precedence over the default `node-version` input.
 
-`install-command` and `build-command` default to empty; the Action runs neither unless configured. When `build-command` is set, the Action passes `--skip-build` to the CLI so a `build.command` in config is not executed twice. `package-manager` selects how the Action runs the CLI. `pnpm` and `yarn` use `pnpm exec` and `yarn exec`, so the package must already be installed in the project. `npm` runs `npx --yes @silesiansolutions/search-quality-kit`: npx prefers a locally installed CLI and otherwise downloads the latest release from npm. For reproducible runs, pin the package in `devDependencies` and install dependencies before the Action runs, or through `install-command`.
+`install-command` and `build-command` default to empty; the Action runs neither unless configured. When `build-command` is set, the Action passes `--skip-build` to the CLI so a `build.command` in config is not executed twice.
+
+`package-manager` selects how the Action runs the CLI. `pnpm` and `yarn` use `pnpm exec` and `yarn exec`, so the package must already be installed in the project. `npm` runs `npx --yes @silesiansolutions/search-quality-kit`: npx prefers a locally installed CLI and otherwise downloads the latest release from npm. For reproducible runs, pin the package in `devDependencies` and install dependencies before the Action runs, or through `install-command`.
 
 The default artifact contains `search-quality-report.json` and `search-quality-report.md`. Set `sarif: "true"` to add `search-quality-report.sarif`; uploading SARIF to GitHub Code Scanning remains an explicit workflow decision because it requires repository permissions.
 
