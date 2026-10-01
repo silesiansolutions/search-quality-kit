@@ -1,3 +1,6 @@
+import { aiCrawlerCategories } from "../data/aiCrawlerCategories.js";
+import type { AiCrawlerCategory } from "../data/aiCrawlerCategories.js";
+import { aiRoster } from "../data/aiRobotsRoster.js";
 import { loadHtml, metaContent } from "../utils/html.js";
 import { isHttpUrl, isLocalOrStaging, sameOrigin } from "../utils/urls.js";
 import type { CheckContext, CheckDefinition } from "./types.js";
@@ -36,11 +39,18 @@ function parseGroups(content: string) {
   return groups;
 }
 
-function googlebotRules(groups: ReturnType<typeof parseGroups>) {
-  const own = groups.filter((g) => g.agents.includes("googlebot"));
-  return (
-    own.length ? own : groups.filter((g) => g.agents.includes("*"))
-  ).flatMap((g) => g.rules);
+type Groups = ReturnType<typeof parseGroups>;
+
+function rulesForAgent(groups: Groups, token: string) {
+  const agent = token.toLowerCase();
+  const own = groups.filter((g) => g.agents.includes(agent));
+  return {
+    named: own.length > 0,
+    rules: (own.length
+      ? own
+      : groups.filter((g) => g.agents.includes("*"))
+    ).flatMap((g) => g.rules),
+  };
 }
 
 function ruleMatches(pattern: string, path: string) {
@@ -95,11 +105,22 @@ function pathOf(url: string) {
   }
 }
 
+function indexablePages(crawl: CheckContext["crawl"]) {
+  return crawl.pages.filter(
+    (page) =>
+      page.status === 200 &&
+      sameOrigin(page.url, crawl.publicBaseUrl) &&
+      pathOf(page.url) !== undefined &&
+      !pageNoindex(page),
+  );
+}
+
 function blockedUrlFindings(
   crawl: CheckContext["crawl"],
-  groups: ReturnType<typeof parseGroups>,
+  groups: Groups,
+  indexable: CheckContext["crawl"]["pages"],
 ) {
-  const rules = googlebotRules(groups);
+  const { rules } = rulesForAgent(groups, "googlebot");
   if (!rules.length || !robotsAllows(rules, "/")) return [];
   const blocked = (url: string) => {
     if (!sameOrigin(url, crawl.publicBaseUrl)) return false;
@@ -107,8 +128,8 @@ function blockedUrlFindings(
     return p !== undefined && !robotsAllows(rules, p);
   };
   const out = [];
-  for (const page of crawl.pages)
-    if (page.status === 200 && !pageNoindex(page) && blocked(page.url))
+  for (const page of indexable)
+    if (blocked(page.url))
       out.push(
         finding(
           "robots",
@@ -135,6 +156,139 @@ function blockedUrlFindings(
           { url, googleDocs: G },
         ),
       );
+  return out;
+}
+
+const RELATED_LIMIT = 10;
+const categoryLabel: Record<AiCrawlerCategory | "other", string> = {
+  "answer-engine": "answer engine",
+  training: "training crawler",
+  "user-fetcher": "user-triggered fetcher",
+  other: "AI agent",
+};
+const rosterByToken = new Map(
+  Object.keys(aiRoster).map((token) => [token.toLowerCase(), token]),
+);
+
+function aiAgentsToEvaluate(groups: Groups) {
+  const tokens = new Map(
+    Object.keys(aiCrawlerCategories).map((token) => [
+      token.toLowerCase(),
+      token,
+    ]),
+  );
+  for (const group of groups)
+    for (const agent of group.agents) {
+      const token = rosterByToken.get(agent);
+      if (token && !tokens.has(agent)) tokens.set(agent, token);
+    }
+  return [...tokens.values()];
+}
+
+function aiAccessFindings(
+  crawl: CheckContext["crawl"],
+  config: CheckContext["config"],
+  groups: Groups,
+  indexable: CheckContext["crawl"]["pages"],
+  o: { url: string; file?: string; googleDocs: string },
+) {
+  const byPolicy = new Set(
+    config.rules.robots.aiCrawlers.blockedByPolicy.map((token) =>
+      token.toLowerCase(),
+    ),
+  );
+  const wildcardBlocksSite = !robotsAllows(
+    rulesForAgent(groups, "*").rules,
+    "/",
+  );
+  const rootUrl = new URL("/", crawl.publicBaseUrl).toString();
+  const out = [];
+  for (const token of aiAgentsToEvaluate(groups)) {
+    if (byPolicy.has(token.toLowerCase())) continue;
+    const { named, rules } = rulesForAgent(groups, token);
+    if (!rules.length || (!named && wildcardBlocksSite)) continue;
+    const rootBlocked = !robotsAllows(rules, "/");
+    const blockedPages = indexable
+      .filter((page) => !robotsAllows(rules, pathOf(page.url)!))
+      .map((page) => page.url)
+      .sort();
+    if (!rootBlocked && !blockedPages.length) continue;
+    const whole = rootBlocked && blockedPages.length === indexable.length;
+    const category = aiCrawlerCategories[token]?.category ?? "other";
+    const roster = aiRoster[token];
+    const operator =
+      roster && !/^unclear/i.test(roster.operator) ? roster.operator : "";
+    const subject = `${token} (${categoryLabel[category]}${operator ? `, ${operator}` : ""})`;
+    const ignores =
+      roster?.respect === "no"
+        ? " The ai.robots.txt roster marks this agent as not honoring robots.txt, so the block is a request it may ignore."
+        : "";
+    const consequence =
+      category === "answer-engine"
+        ? " Blocked pages cannot be fetched for, or cited in, that answer engine."
+        : "";
+    out.push(
+      finding(
+        "robots",
+        category === "answer-engine"
+          ? "ai-search-blocked"
+          : "ai-crawler-blocked",
+        category === "answer-engine" ? "warning" : "info",
+        `robots.txt blocks ${subject} from ${whole ? "every crawled indexable page" : "some crawled indexable pages"}.${consequence}${ignores}`,
+        `If this block is intended, list ${token} in rules.robots.aiCrawlers.blockedByPolicy. Otherwise allow it in robots.txt.`,
+        {
+          ...o,
+          relatedUrls: (blockedPages.length ? blockedPages : [rootUrl]).slice(
+            0,
+            RELATED_LIMIT,
+          ),
+        },
+      ),
+    );
+  }
+  return out;
+}
+
+function samplePath(pattern: string) {
+  const end = pattern.search(/[*$]/);
+  return end < 0 ? pattern : pattern.slice(0, end);
+}
+
+function namedGroupFindings(
+  groups: Groups,
+  o: { url: string; file?: string; googleDocs: string },
+) {
+  const wildcard = rulesForAgent(groups, "*");
+  if (!wildcard.named) return [];
+  const disallows = wildcard.rules.filter(
+    (rule) => !rule.allow && samplePath(rule.path) !== "",
+  );
+  if (!disallows.length || disallows.some((rule) => rule.path === "/"))
+    return [];
+  const out = [],
+    seen = new Set<string>();
+  for (const group of groups) {
+    const agents = group.agents.filter((agent) => agent !== "*");
+    if (!agents.length || agents.length !== group.agents.length) continue;
+    const key = agents.join(",");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const { rules } = rulesForAgent(groups, agents[0]!);
+    const exempt = disallows
+      .filter((rule) => robotsAllows(rules, samplePath(rule.path)))
+      .map((rule) => rule.path);
+    if (!exempt.length) continue;
+    out.push(
+      finding(
+        "robots",
+        "named-group-ignores-wildcard",
+        "info",
+        `The robots.txt group for ${agents.join(", ")} does not inherit Disallow rules from the * group, so it may fetch ${exempt.slice(0, 3).join(", ")}${exempt.length > 3 ? " and more" : ""}.`,
+        "A named group replaces the * group for that agent. Repeat the * Disallow rules in the named group, or remove the named group if it only restates *.",
+        o,
+      ),
+    );
+  }
   return out;
 }
 
@@ -275,7 +429,13 @@ export const robotsCheck: CheckDefinition = {
           o,
         ),
       );
-    out.push(...blockedUrlFindings(crawl, parseGroups(crawl.robots.content)));
+    const groups = parseGroups(crawl.robots.content),
+      indexable = indexablePages(crawl);
+    out.push(
+      ...blockedUrlFindings(crawl, groups, indexable),
+      ...aiAccessFindings(crawl, config, groups, indexable, o),
+      ...namedGroupFindings(groups, o),
+    );
     return out;
   },
 };
