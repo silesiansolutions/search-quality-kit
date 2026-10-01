@@ -1,5 +1,6 @@
 import pc from "picocolors";
 import { displayUrl } from "../utils/urls.js";
+import { errorFreeUrlLine } from "./errorFreeUrlRate.js";
 import type { Finding, SearchQualityReport } from "./types.js";
 const label = (f: Finding) =>
   f.severity === "error"
@@ -18,6 +19,7 @@ export function formatConsoleReport(r: SearchQualityReport) {
     `Errors: ${r.summary.errors}`,
     `Warnings: ${r.summary.warnings}`,
     `Info: ${r.summary.info}`,
+    ...[errorFreeUrlLine(r.summary)].filter((line) => line !== undefined),
     `Reviewed suppressions: ${r.findings.filter((finding) => finding.suppressed).length}`,
     ...(r.baseline
       ? [

@@ -1,5 +1,6 @@
 import { classificationForCheck } from "../checks/types.js";
 import { withoutFindings } from "./baseline.js";
+import { errorFreeUrlLine } from "./errorFreeUrlRate.js";
 import type { Finding, SearchQualityReport, Severity } from "./types.js";
 
 const RESOLVED_LIMIT = 20;
@@ -144,6 +145,9 @@ export function formatMarkdownReport(report: SearchQualityReport) {
     `- Errors: ${report.summary.errors}`,
     `- Warnings: ${report.summary.warnings}`,
     `- Info: ${report.summary.info}`,
+    ...[errorFreeUrlLine(report.summary)]
+      .filter((line) => line !== undefined)
+      .map((line) => `- ${line}`),
     `- Reviewed suppressions: ${suppressed.length}`,
   ];
 

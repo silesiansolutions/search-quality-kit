@@ -59,6 +59,8 @@ export interface PortfolioReport {
     warnings: number;
     infos: number;
     operationalErrors: number;
+    urlsWithErrors?: number;
+    errorFreeUrlRate?: number;
   };
   sites: PortfolioSiteReport[];
   highlights: {
