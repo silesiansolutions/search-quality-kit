@@ -36,7 +36,7 @@ The check also matches URLs against the rules that apply to Googlebot: the `Goog
 
 Since 0.13 the check evaluates the same rules for AI user agents. Group selection is identical: the groups that name the agent, otherwise the `*` groups. A named group does not inherit anything from `*`. The kit reports the consequence of the policy and never says whether blocking is right. Blocking training crawlers is a legitimate policy.
 
-The agent list comes from a vendored copy of [ai.robots.txt](https://github.com/ai-robots-txt/ai.robots.txt) (MIT, 180 agents at the pinned commit). Twelve tokens carry a category, each from the operator's own documentation:
+The agent list comes from a vendored copy of [ai.robots.txt](https://github.com/ai-robots-txt/ai.robots.txt) (MIT, 181 agents at the pinned commit). Twelve tokens carry a category, each from the operator's own documentation:
 
 - answer engine: `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot`;
 - training: `GPTBot`, `ClaudeBot`, `Google-Extended`, `Applebot-Extended`, `CCBot`, `meta-externalagent`;
