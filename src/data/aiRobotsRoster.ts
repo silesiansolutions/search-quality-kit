@@ -6,8 +6,8 @@ export interface AiRosterEntry {
 
 export const aiRosterSource = {
   repository: "https://github.com/ai-robots-txt/ai.robots.txt",
-  commit: "987266f3c581bc6bb71aa075051731188ab2a075",
-  committedAt: "2026-09-26T02:41:07Z",
+  commit: "9ad8a47e23f7689ec3ea2423a47569d0bb91bdaf",
+  committedAt: "2026-10-03T03:02:07Z",
   license: "MIT",
   copyright: "Copyright (c) 2024 ai.robots.txt",
 } as const;
@@ -509,6 +509,11 @@ export const aiRoster: Readonly<Record<string, AiRosterEntry>> = {
     operator: "Unclear at this time.",
     respect: "unclear",
     function: "AI Data Scrapers",
+  },
+  KeenableBot: {
+    operator: "Keenable",
+    respect: "unclear",
+    function: "AI Search Crawlers",
   },
   "Kimi-Agent": {
     operator:

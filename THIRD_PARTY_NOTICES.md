@@ -6,7 +6,7 @@ The published package includes data from the projects below.
 
 - Source: https://github.com/ai-robots-txt/ai.robots.txt
 - Used in: `src/data/aiRobotsRoster.ts` (bundled in `dist`)
-- Commit: `987266f3c581bc6bb71aa075051731188ab2a075`
+- Commit: `9ad8a47e23f7689ec3ea2423a47569d0bb91bdaf`
 - License: MIT
 
 ```text

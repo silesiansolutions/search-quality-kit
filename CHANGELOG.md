@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-10-08
+
 - Require Node.js 24 or newer. `engines.node` moves from `>=20.11` to `>=24`. The old floor was already wrong: `commander` 15 (since 0.11.3) needs Node 22.12, and `doctor` reported Node 20 as supported. On Node 22 the CLI still starts, the package manager warns about the unsupported engine and `doctor` exits with an error.
 - The GitHub Action defaults `node-version` to `"24"`. The default also sets the Node that runs `install-command` and `build-command`. A workflow that passes `node-version` or `node-version-file` keeps its own version, so a pin to 22 must move to 24. The CI workflows, the `docs/ci.md` snippets and the files in `examples/ci/` use Node 24.
 - Correct the docs for the Action's `package-manager` input. `docs/ci.md` still described `npx --no-install`, which 0.11.1 replaced with `npx --yes @silesiansolutions/search-quality-kit`. With npm and no local install, the Action runs the latest release from npm. The README and the input description say so too.
@@ -11,6 +13,7 @@ All notable changes to this project are documented here.
 - Keep non-HTML responses out of the page checks in HTTP crawls. A linked PDF, Keynote or PowerPoint file, robots.txt or a sitemap was audited as a page and got `metadata.missing-title`, `rendered-html.thin-html-shell` and similar errors. A 2xx response whose `content-type` is neither `text/html` nor `application/xhtml+xml` now goes to the new optional `crawl.documents` list instead of `crawl.pages`, so redirect chains to it, an `X-Robots-Tag: noindex` on it and broken links to it are still checked. Documents count against `crawl.maxPages` as before. A response without a `content-type` is still treated as HTML.
 - Count extensionless links to flat `<route>.html` output as incoming links in static crawls. Quartz-style builds link `../tags/AWS` to `tags/AWS.html`, so every such page was reported as `internal-links.orphan-page`. The link now resolves through the same route aliases `missing-static-route` uses.
 - Add `tests/node-floor.test.ts`. It checks that the lockfile root repeats `engines.node`. It also checks that every Node version in the Action default, the workflows, `examples/`, the README and `docs/` has the same major as that range. So do the README requirement line and the tsup build target.
+- Refresh the AI crawler roster to ai.robots.txt commit `9ad8a47` (181 agents). The one new token, `KeenableBot`, has no operator documentation, so it stays an unclassified AI agent.
 
 ## [0.13.1] - 2026-10-01
 
@@ -171,6 +174,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.14.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.11.3...v0.12.0
