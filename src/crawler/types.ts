@@ -59,6 +59,8 @@ export interface CrawlResult {
   target: string;
   publicBaseUrl: string;
   pages: PageArtifact[];
+  /** Non-HTML 2xx responses reached by an HTTP crawl, kept out of the page checks. Their html is empty. */
+  documents?: PageArtifact[];
   robots: TextArtifact;
   llmsTxt: TextArtifact;
   sitemap: TextArtifact;

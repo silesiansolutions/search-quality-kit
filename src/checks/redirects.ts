@@ -29,7 +29,7 @@ export const redirectsCheck: CheckDefinition = {
     if (crawl.mode !== "http") return [];
     const out = [];
     const redirecting = new Map<string, PageArtifact>();
-    for (const p of crawl.pages) {
+    for (const p of [...crawl.pages, ...(crawl.documents ?? [])]) {
       const hops = p.redirects ?? [];
       if (!hops.length) continue;
       for (const hop of hops) {

@@ -115,7 +115,8 @@ Suppressions require a stable finding code, narrow route pattern, reason, and
 owner. Expired suppressions stop affecting the gate. Broad suppression patterns
 are rejected unless `allowBroadSuppressions` is enabled intentionally. JSON,
 Markdown, portfolio, handoff, and contract outputs keep suppressed findings
-visible as reviewed decisions.
+visible as reviewed decisions. The summary fields `errors`, `warnings`, and
+`info` leave them out; `suppressedFindings` counts them instead.
 
 ## Commands
 

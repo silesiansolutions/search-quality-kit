@@ -6,6 +6,7 @@ import { indexabilityCheck } from "../src/checks/indexability.js";
 import { internalLinksCheck } from "../src/checks/internalLinks.js";
 import { metadataCheck } from "../src/checks/metadata.js";
 import { redirectsCheck } from "../src/checks/redirects.js";
+import { renderedHtmlCheck } from "../src/checks/renderedHtml.js";
 import { robotsAllows, robotsCheck } from "../src/checks/robots.js";
 import { sitemapCheck } from "../src/checks/sitemap.js";
 import { configSchema } from "../src/config/schema.js";
@@ -229,6 +230,132 @@ describe("HTTP crawl redirect rework", () => {
     const crawl = await crawlHttp("https://example.com", config);
     expect(calls).not.toContain("/a.png");
     expect(crawl.resources).toBeUndefined();
+  });
+});
+
+describe("HTTP crawl non-HTML responses", () => {
+  it("keeps documents, robots.txt and sitemaps out of the page checks", async () => {
+    stubFetch({
+      "/": {
+        status: 200,
+        body: html(
+          '<a href="/talk.pdf">Slides</a><a href="/deck.key">Keynote</a><a href="/robots.txt">Robots</a><a href="/sitemap.xml">Sitemap</a>',
+        ),
+      },
+      "/talk.pdf": {
+        status: 200,
+        body: "%PDF-1.7",
+        headers: { "content-type": "application/pdf" },
+      },
+      "/deck.key": {
+        status: 200,
+        body: "PK",
+        headers: { "content-type": "application/octet-stream" },
+      },
+      "/robots.txt": {
+        status: 200,
+        body: "User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml\n",
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      },
+      "/sitemap.xml": {
+        status: 200,
+        body: '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/</loc></url></urlset>',
+        headers: { "content-type": "application/xml" },
+      },
+    });
+    const config = httpConfig();
+    const crawl = await crawlHttp("https://example.com", config);
+    const findings = [
+      ...(await metadataCheck.run(context(crawl, config))),
+      ...(await internalLinksCheck.run(context(crawl, config))),
+      ...(await renderedHtmlCheck.run(context(crawl, config))),
+    ];
+
+    expect(crawl.pages.map((p) => p.url)).toEqual(["https://example.com/"]);
+    expect(crawl.assets.has("https://example.com/talk.pdf")).toBe(true);
+    expect(findings.filter((f) => f.url !== "https://example.com/")).toEqual(
+      [],
+    );
+  });
+  it("still checks redirects, noindex headers and broken links of documents", async () => {
+    stubFetch({
+      "/": {
+        status: 200,
+        body: html(
+          '<a href="/old-slides">Slides</a><a href="/gone.pdf">Gone</a><a href="/page.xhtml">XHTML</a>',
+        ),
+      },
+      "/old-slides": { status: 301, headers: { location: "/slides" } },
+      "/slides": { status: 301, headers: { location: "/talk.pdf" } },
+      "/talk.pdf": {
+        status: 200,
+        body: "%PDF-1.7",
+        headers: {
+          "content-type": "application/pdf",
+          "x-robots-tag": "noindex",
+        },
+      },
+      "/gone.pdf": {
+        status: 404,
+        body: "missing",
+        headers: { "content-type": "application/pdf" },
+      },
+      "/page.xhtml": {
+        status: 200,
+        body: html("<main>XHTML page</main>"),
+        headers: { "content-type": "application/xhtml+xml; charset=utf-8" },
+      },
+      "/sitemap.xml": {
+        status: 200,
+        body: '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/</loc></url><url><loc>https://example.com/talk.pdf</loc></url></urlset>',
+        headers: { "content-type": "application/xml" },
+      },
+    });
+    const config = httpConfig();
+    const crawl = await crawlHttp("https://example.com", config);
+    const findings = [
+      ...(await redirectsCheck.run(context(crawl, config))),
+      ...(await sitemapCheck.run(context(crawl, config))),
+      ...(await internalLinksCheck.run(context(crawl, config))),
+    ];
+
+    expect(crawl.pages.map((p) => p.url)).toEqual([
+      "https://example.com/",
+      "https://example.com/gone.pdf",
+      "https://example.com/page.xhtml",
+    ]);
+    expect(crawl.documents?.map((p) => p.url)).toEqual([
+      "https://example.com/talk.pdf",
+    ]);
+    expect(codes(findings)).toEqual(
+      expect.arrayContaining([
+        "internal-links.broken-route",
+        "redirects.chain",
+        "redirects.internal-link-to-redirect",
+        "sitemap.url-noindex",
+      ]),
+    );
+  });
+
+  it("counts documents against crawl.maxPages", async () => {
+    const calls = stubFetch({
+      "/": {
+        status: 200,
+        body: html(
+          '<a href="/a.pdf">A</a><a href="/b.pdf">B</a><a href="/c">C</a>',
+        ),
+      },
+      "/a.pdf": { status: 200, headers: { "content-type": "application/pdf" } },
+      "/b.pdf": { status: 200, headers: { "content-type": "application/pdf" } },
+      "/c": { status: 200, body: html("<main>C</main>") },
+    });
+    const crawl = await crawlHttp(
+      "https://example.com",
+      httpConfig({ maxPages: 3 }),
+    );
+
+    expect(crawl.pages.map((p) => p.url)).toEqual(["https://example.com/"]);
+    expect(calls).not.toContain("/c");
   });
 });
 
