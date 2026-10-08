@@ -43,7 +43,7 @@ export const sitemapCheck: CheckDefinition = {
       );
 
     const noindexPages = new Map<string, string>();
-    for (const page of crawl.pages) {
+    for (const page of [...crawl.pages, ...(crawl.documents ?? [])]) {
       const $ = loadHtml(page.html);
       const directives =
         `${metaContent($, "robots") ?? ""},${metaContent($, "googlebot") ?? ""},${page.headers["x-robots-tag"] ?? ""}`.toLowerCase();

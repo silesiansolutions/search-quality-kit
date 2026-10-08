@@ -347,8 +347,11 @@ export async function crawlHttp(
     queue = config.crawl.entrypoints.map((e) => new URL(e, base).toString()),
     seen = new Set<string>(),
     pages: PageArtifact[] = [],
-    documents = new Map<string, AssetArtifact>();
-  while (queue.length && pages.length < config.crawl.maxPages) {
+    documents: PageArtifact[] = [];
+  while (
+    queue.length &&
+    pages.length + documents.length < config.crawl.maxPages
+  ) {
     const initial = new URL(queue.shift()!);
     initial.hash = "";
     const initialUrl = initial.toString();
@@ -376,11 +379,7 @@ export async function crawlHttp(
     seen.add(normalizeUrl(finalUrl));
     for (const hop of redirects)
       if (sameOrigin(hop.url, base)) seen.add(normalizeUrl(hop.url));
-    if (f.status >= 200 && f.status < 300 && !isHtmlResponse(f.headers)) {
-      documents.set(normalizeUrl(finalUrl), { url: finalUrl });
-      continue;
-    }
-    pages.push({
+    const response: PageArtifact = {
       initialUrl,
       finalUrl,
       url: finalUrl,
@@ -391,7 +390,12 @@ export async function crawlHttp(
       bytes: Buffer.byteLength(html),
       ...(redirects.length ? { redirects } : {}),
       ...(f.failure ? { failure: f.failure } : {}),
-    });
+    };
+    if (f.status >= 200 && f.status < 300 && !isHtmlResponse(f.headers)) {
+      documents.push({ ...response, html: "" });
+      continue;
+    }
+    pages.push(response);
     if (f.status < 200 || f.status >= 400) continue;
     for (const link of discoverLinks(
       html,
@@ -452,15 +456,18 @@ export async function crawlHttp(
     target: target.origin,
     publicBaseUrl: base,
     pages,
+    ...(documents.length ? { documents } : {}),
     robots,
     llmsTxt,
     sitemap,
     sitemaps: collected.sitemaps,
     sitemapUrls: sitemapPageUrls(collected.sitemaps),
     sitemapTruncated: collected.truncated,
-    assets: new Map([
-      ...documents,
-      ...pages.map((p) => [normalizeUrl(p.url), { url: p.url }] as const),
-    ]),
+    assets: new Map(
+      [...documents, ...pages].map((p) => [
+        normalizeUrl(p.url),
+        { url: p.url },
+      ]),
+    ),
   };
 }

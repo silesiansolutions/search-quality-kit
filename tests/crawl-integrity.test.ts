@@ -277,6 +277,86 @@ describe("HTTP crawl non-HTML responses", () => {
       [],
     );
   });
+  it("still checks redirects, noindex headers and broken links of documents", async () => {
+    stubFetch({
+      "/": {
+        status: 200,
+        body: html(
+          '<a href="/old-slides">Slides</a><a href="/gone.pdf">Gone</a><a href="/page.xhtml">XHTML</a>',
+        ),
+      },
+      "/old-slides": { status: 301, headers: { location: "/slides" } },
+      "/slides": { status: 301, headers: { location: "/talk.pdf" } },
+      "/talk.pdf": {
+        status: 200,
+        body: "%PDF-1.7",
+        headers: {
+          "content-type": "application/pdf",
+          "x-robots-tag": "noindex",
+        },
+      },
+      "/gone.pdf": {
+        status: 404,
+        body: "missing",
+        headers: { "content-type": "application/pdf" },
+      },
+      "/page.xhtml": {
+        status: 200,
+        body: html("<main>XHTML page</main>"),
+        headers: { "content-type": "application/xhtml+xml; charset=utf-8" },
+      },
+      "/sitemap.xml": {
+        status: 200,
+        body: '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/</loc></url><url><loc>https://example.com/talk.pdf</loc></url></urlset>',
+        headers: { "content-type": "application/xml" },
+      },
+    });
+    const config = httpConfig();
+    const crawl = await crawlHttp("https://example.com", config);
+    const findings = [
+      ...(await redirectsCheck.run(context(crawl, config))),
+      ...(await sitemapCheck.run(context(crawl, config))),
+      ...(await internalLinksCheck.run(context(crawl, config))),
+    ];
+
+    expect(crawl.pages.map((p) => p.url)).toEqual([
+      "https://example.com/",
+      "https://example.com/gone.pdf",
+      "https://example.com/page.xhtml",
+    ]);
+    expect(crawl.documents?.map((p) => p.url)).toEqual([
+      "https://example.com/talk.pdf",
+    ]);
+    expect(codes(findings)).toEqual(
+      expect.arrayContaining([
+        "internal-links.broken-route",
+        "redirects.chain",
+        "redirects.internal-link-to-redirect",
+        "sitemap.url-noindex",
+      ]),
+    );
+  });
+
+  it("counts documents against crawl.maxPages", async () => {
+    const calls = stubFetch({
+      "/": {
+        status: 200,
+        body: html(
+          '<a href="/a.pdf">A</a><a href="/b.pdf">B</a><a href="/c">C</a>',
+        ),
+      },
+      "/a.pdf": { status: 200, headers: { "content-type": "application/pdf" } },
+      "/b.pdf": { status: 200, headers: { "content-type": "application/pdf" } },
+      "/c": { status: 200, body: html("<main>C</main>") },
+    });
+    const crawl = await crawlHttp(
+      "https://example.com",
+      httpConfig({ maxPages: 3 }),
+    );
+
+    expect(crawl.pages.map((p) => p.url)).toEqual(["https://example.com/"]);
+    expect(calls).not.toContain("/c");
+  });
 });
 
 describe("finding code aliases", () => {
