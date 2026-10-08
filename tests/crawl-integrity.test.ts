@@ -6,6 +6,7 @@ import { indexabilityCheck } from "../src/checks/indexability.js";
 import { internalLinksCheck } from "../src/checks/internalLinks.js";
 import { metadataCheck } from "../src/checks/metadata.js";
 import { redirectsCheck } from "../src/checks/redirects.js";
+import { renderedHtmlCheck } from "../src/checks/renderedHtml.js";
 import { robotsAllows, robotsCheck } from "../src/checks/robots.js";
 import { sitemapCheck } from "../src/checks/sitemap.js";
 import { configSchema } from "../src/config/schema.js";
@@ -229,6 +230,52 @@ describe("HTTP crawl redirect rework", () => {
     const crawl = await crawlHttp("https://example.com", config);
     expect(calls).not.toContain("/a.png");
     expect(crawl.resources).toBeUndefined();
+  });
+});
+
+describe("HTTP crawl non-HTML responses", () => {
+  it("keeps documents, robots.txt and sitemaps out of the page checks", async () => {
+    stubFetch({
+      "/": {
+        status: 200,
+        body: html(
+          '<a href="/talk.pdf">Slides</a><a href="/deck.key">Keynote</a><a href="/robots.txt">Robots</a><a href="/sitemap.xml">Sitemap</a>',
+        ),
+      },
+      "/talk.pdf": {
+        status: 200,
+        body: "%PDF-1.7",
+        headers: { "content-type": "application/pdf" },
+      },
+      "/deck.key": {
+        status: 200,
+        body: "PK",
+        headers: { "content-type": "application/octet-stream" },
+      },
+      "/robots.txt": {
+        status: 200,
+        body: "User-agent: *\nAllow: /\nSitemap: https://example.com/sitemap.xml\n",
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      },
+      "/sitemap.xml": {
+        status: 200,
+        body: '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://example.com/</loc></url></urlset>',
+        headers: { "content-type": "application/xml" },
+      },
+    });
+    const config = httpConfig();
+    const crawl = await crawlHttp("https://example.com", config);
+    const findings = [
+      ...(await metadataCheck.run(context(crawl, config))),
+      ...(await internalLinksCheck.run(context(crawl, config))),
+      ...(await renderedHtmlCheck.run(context(crawl, config))),
+    ];
+
+    expect(crawl.pages.map((p) => p.url)).toEqual(["https://example.com/"]);
+    expect(crawl.assets.has("https://example.com/talk.pdf")).toBe(true);
+    expect(findings.filter((f) => f.url !== "https://example.com/")).toEqual(
+      [],
+    );
   });
 });
 

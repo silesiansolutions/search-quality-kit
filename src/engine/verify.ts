@@ -7,7 +7,7 @@ import { resolveProfile } from "../config/resolveProfile.js";
 import type { SearchQualityConfig } from "../config/schema.js";
 import { crawlHttp, crawlStatic } from "../crawler/crawlSite.js";
 import { runPluginChecks } from "../plugins/runPlugins.js";
-import { errorFreeUrlSummary } from "../report/errorFreeUrlRate.js";
+import { reportSummary } from "../report/summary.js";
 import {
   REPORT_SCHEMA_VERSION,
   type Finding,
@@ -128,17 +128,7 @@ export async function runVerification(
       generatedAt: new Date().toISOString(),
       mode: crawl.mode,
       target: crawl.target,
-      summary: {
-        checkedPages: crawl.pages.length,
-        errors: findings.filter((f) => f.severity === "error").length,
-        warnings: findings.filter((f) => f.severity === "warning").length,
-        info: findings.filter((f) => f.severity === "info").length,
-        suppressedFindings: reviewedFindings.filter((f) => f.suppressed).length,
-        ...(unmatched.length
-          ? { unmatchedSuppressions: unmatched.length }
-          : {}),
-        ...errorFreeUrlSummary(crawl.pages, reviewedFindings),
-      },
+      summary: reportSummary(crawl.pages, reviewedFindings, unmatched.length),
       findings: reviewedFindings,
       pages: crawl.pages.map(({ url, initialUrl, finalUrl, status, file }) => {
         const resolved = resolveProfile(url, config);

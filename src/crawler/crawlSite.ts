@@ -328,6 +328,11 @@ async function requestResources(
   return { resources, truncated };
 }
 
+function isHtmlResponse(headers: Record<string, string>) {
+  const type = headers["content-type"]?.split(";")[0]?.trim().toLowerCase();
+  return !type || type === "text/html" || type === "application/xhtml+xml";
+}
+
 function publicResponseUrl(responseUrl: string, target: URL, base: string) {
   const response = new URL(responseUrl);
   if (response.origin !== target.origin) return response.toString();
@@ -341,7 +346,8 @@ export async function crawlHttp(
     base = config.site.baseUrl ?? target.origin,
     queue = config.crawl.entrypoints.map((e) => new URL(e, base).toString()),
     seen = new Set<string>(),
-    pages: PageArtifact[] = [];
+    pages: PageArtifact[] = [],
+    documents = new Map<string, AssetArtifact>();
   while (queue.length && pages.length < config.crawl.maxPages) {
     const initial = new URL(queue.shift()!);
     initial.hash = "";
@@ -370,6 +376,10 @@ export async function crawlHttp(
     seen.add(normalizeUrl(finalUrl));
     for (const hop of redirects)
       if (sameOrigin(hop.url, base)) seen.add(normalizeUrl(hop.url));
+    if (f.status >= 200 && f.status < 300 && !isHtmlResponse(f.headers)) {
+      documents.set(normalizeUrl(finalUrl), { url: finalUrl });
+      continue;
+    }
     pages.push({
       initialUrl,
       finalUrl,
@@ -448,6 +458,9 @@ export async function crawlHttp(
     sitemaps: collected.sitemaps,
     sitemapUrls: sitemapPageUrls(collected.sitemaps),
     sitemapTruncated: collected.truncated,
-    assets: new Map(pages.map((p) => [normalizeUrl(p.url), { url: p.url }])),
+    assets: new Map([
+      ...documents,
+      ...pages.map((p) => [normalizeUrl(p.url), { url: p.url }] as const),
+    ]),
   };
 }

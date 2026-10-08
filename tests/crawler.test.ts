@@ -163,6 +163,52 @@ describe("static crawl route inventory", () => {
   });
 });
 
+describe("static crawl orphan detection", () => {
+  it("counts extensionless relative links as incoming links to flat HTML pages", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "search-quality-kit-flat-"));
+    const dist = path.join(root, "dist");
+
+    try {
+      await mkdir(path.join(dist, "tags"), { recursive: true });
+      await mkdir(path.join(dist, "notes"), { recursive: true });
+      await writeFile(
+        path.join(dist, "index.html"),
+        '<html><body><a href="./notes/first">First</a></body></html>',
+      );
+      await writeFile(
+        path.join(dist, "notes", "first.html"),
+        '<html><body><a href="../tags/AWS">AWS</a><a href="..">Home</a></body></html>',
+      );
+      await writeFile(
+        path.join(dist, "tags", "AWS.html"),
+        '<html><body><a href="../notes/first">First</a></body></html>',
+      );
+      await writeFile(
+        path.join(dist, "lonely.html"),
+        '<html><body><a href="./">Home</a></body></html>',
+      );
+
+      const config = {
+        ...defaultConfig,
+        site: { ...defaultConfig.site, baseUrl: "https://example.com" },
+      };
+      const crawl = await crawlStatic(root, config);
+      const findings = await internalLinksCheck.run({ config, crawl });
+
+      expect(crawl.pages.map((page) => page.url)).toContain(
+        "https://example.com/tags/AWS.html",
+      );
+      expect(
+        findings
+          .filter((finding) => finding.code === "orphan-page")
+          .map((finding) => finding.url),
+      ).toEqual(["https://example.com/lonely.html"]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("static crawl llms.txt artifact", () => {
   it("reads llms.txt content when present", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "search-quality-kit-llms-"));

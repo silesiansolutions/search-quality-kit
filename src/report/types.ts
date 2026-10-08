@@ -45,6 +45,7 @@ export interface Finding {
 }
 export interface ReportSummary {
   checkedPages: number;
+  /** Unsuppressed findings per severity; reviewed suppressions count only in suppressedFindings. */
   errors: number;
   warnings: number;
   info: number;

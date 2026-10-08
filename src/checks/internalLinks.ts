@@ -34,6 +34,16 @@ export const internalLinksCheck: CheckDefinition = {
     const incoming = new Map(
       [...orphanCandidates.keys()].map((url) => [url, 0]),
     );
+    const pageByFile = new Map(
+      crawl.pages.flatMap((p) =>
+        p.file ? [[p.file, normalizeUrl(p.url)]] : [],
+      ),
+    );
+    const incomingKey = (routeKey: string) => {
+      if (crawl.mode !== "static" || incoming.has(routeKey)) return routeKey;
+      const file = crawl.assets.get(routeKey)?.file;
+      return (file && pageByFile.get(file)) ?? routeKey;
+    };
     for (const p of crawl.pages) {
       const $ = loadHtml(p.html);
       let internalTargets = 0;
@@ -101,8 +111,9 @@ export const internalLinksCheck: CheckDefinition = {
         const n = normalizeUrl(u.toString());
         const routeKey =
           crawl.mode === "static" ? normalizeUrlWithoutQuery(u.toString()) : n;
-        if (incoming.has(routeKey))
-          incoming.set(routeKey, (incoming.get(routeKey) ?? 0) + 1);
+        const linked = incomingKey(routeKey);
+        if (incoming.has(linked))
+          incoming.set(linked, (incoming.get(linked) ?? 0) + 1);
         const target = pages.get(n);
         if (target && target.status >= 400)
           out.push(
