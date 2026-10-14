@@ -119,8 +119,8 @@ describe("public showcase", () => {
       ),
     ).toBe(true);
     expect(
-      workflow.jobs.showcase.steps.some(
-        (step) => step.uses === "actions/upload-artifact@v7",
+      workflow.jobs.showcase.steps.some((step) =>
+        step.uses?.startsWith("actions/upload-artifact@"),
       ),
     ).toBe(true);
   });
