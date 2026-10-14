@@ -3,9 +3,16 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const root = path.resolve(import.meta.dirname, ".."),
-  reference = /uses:\s+["']?(actions\/[\w.-]+)@([^\s"']+)/g;
+  reference =
+    /^[ \t]*(?:-[ \t]+)?uses:[ \t]+["']?([\w-]+\/[\w.-]+)(?:\/[\w./-]+)?@([^\s"'#]+)["']?(?:[ \t]+#[ \t]*(\S+))?/gm,
+  pinned = /^[0-9a-f]{40}$/;
 
-type Reference = { file: string; action: string; ref: string };
+type Reference = {
+  file: string;
+  action: string;
+  ref: string;
+  version?: string;
+};
 
 async function filesUnder(
   relative: string,
@@ -30,9 +37,9 @@ async function referencesIn(files: string[]): Promise<Reference[]> {
   const collected: Reference[] = [];
   for (const file of files) {
     const source = await readFile(path.join(root, file), "utf8");
-    for (const [, action, ref] of source.matchAll(reference)) {
+    for (const [, action, ref, version] of source.matchAll(reference)) {
       if (action && ref) {
-        collected.push({ file, action, ref });
+        collected.push({ file, action, ref, version });
       }
     }
   }
@@ -40,56 +47,76 @@ async function referencesIn(files: string[]): Promise<Reference[]> {
 }
 
 async function documentedReferences(): Promise<Reference[]> {
+  return (
+    await referencesIn([
+      "README.md",
+      ...(await filesUnder("docs", [".md"])),
+      ...(await filesUnder("examples", [".yml", ".yaml"])),
+    ])
+  ).filter(({ action }) => action.startsWith("actions/"));
+}
+
+async function runtimeReferences(): Promise<Reference[]> {
   return referencesIn([
-    "README.md",
-    ...(await filesUnder("docs", [".md"])),
-    ...(await filesUnder("examples", [".yml", ".yaml"])),
+    ...(await filesUnder(".github/workflows", [".yml", ".yaml"])),
+    "action.yml",
+    "action/action.yml",
   ]);
 }
 
+const pinOf = ({ ref, version }: Reference) => `${ref} # ${version}`;
+
 describe("third-party action references", () => {
-  it("teaches the same major versions the repository itself runs", async () => {
-    const workflows = await referencesIn(
-        await filesUnder(".github/workflows", [".yml", ".yaml"]),
-      ),
-      documented = await documentedReferences(),
-      expected = new Map(
-        workflows.map(({ action, ref }) => [action, ref] as const),
+  it("pins workflows and shipped metadata to commit SHAs with a version comment", async () => {
+    const runtime = await runtimeReferences();
+
+    expect(runtime.length).toBeGreaterThan(0);
+
+    for (const { file, action, ref, version } of runtime) {
+      expect(ref, `${file} does not pin ${action} to a commit SHA`).toMatch(
+        pinned,
       );
-
-    expect(workflows.length).toBeGreaterThan(0);
-    expect(documented.length).toBeGreaterThan(0);
-
-    expect(
-      workflows.map(({ file, action, ref }) => `${file}: ${action}@${ref}`),
-    ).toEqual(
-      workflows.map(
-        ({ file, action }) => `${file}: ${action}@${expected.get(action)}`,
-      ),
-    );
-
-    expect(
-      documented.map(({ file, action, ref }) => `${file}: ${action}@${ref}`),
-    ).toEqual(
-      documented.map(
-        ({ file, action }) => `${file}: ${action}@${expected.get(action)}`,
-      ),
-    );
+      expect(
+        version,
+        `${file} pins ${action} without a "# vX.Y.Z" comment`,
+      ).toMatch(/^v\d+\.\d+\.\d+$/);
+    }
   });
 
-  it("keeps documentation on movable major tags and shipped metadata on commit SHAs", async () => {
-    const documented = await documentedReferences(),
-      shipped = await referencesIn(["action.yml", "action/action.yml"]);
+  it("uses one pin per action across workflows and both action metadata files", async () => {
+    const runtime = await runtimeReferences(),
+      expected = new Map(
+        runtime.map(
+          (reference) => [reference.action, pinOf(reference)] as const,
+        ),
+      );
 
-    expect(shipped.length).toBeGreaterThan(0);
+    for (const reference of runtime) {
+      expect(
+        pinOf(reference),
+        `${reference.file} pins ${reference.action} differently from another runtime file`,
+      ).toBe(expected.get(reference.action));
+    }
+  });
+
+  it("teaches the major versions the repository itself runs on movable tags", async () => {
+    const runtime = await runtimeReferences(),
+      documented = await documentedReferences(),
+      expected = new Map(
+        runtime.map(
+          ({ action, version }) => [action, version?.split(".")[0]] as const,
+        ),
+      );
+
+    expect(documented.length).toBeGreaterThan(0);
 
     for (const { file, action, ref } of documented) {
-      expect(ref, `${file} pins ${action} to a non-major ref`).toMatch(/^v\d+$/);
-    }
-
-    for (const { file, action, ref } of shipped) {
-      expect(ref, `${file} does not pin ${action} to a commit SHA`).toMatch(
-        /^[0-9a-f]{40}$/,
+      expect(
+        expected.has(action),
+        `${file} documents ${action}, which no workflow or action metadata runs`,
+      ).toBe(true);
+      expect(ref, `${file} teaches ${action} on a different major`).toBe(
+        expected.get(action),
       );
     }
   });
