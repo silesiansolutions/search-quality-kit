@@ -51,6 +51,8 @@ export type {
   Finding,
   FindingClassification,
   FindingSuppression,
+  LegacySearchQualityReport,
+  ReportSummary,
   SearchQualityReport,
   Severity,
 } from "./report/types.js";

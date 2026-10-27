@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- Export the `ReportSummary` and `LegacySearchQualityReport` types from the package entry. `SearchQualityReport.summary` and the return type of `parseBaselineReport` already referenced them, but they were not exported, and tsup 9 warned that `index.d.ts` points at private types. A consumer whose declaration emit infers one of these types could hit TS2742. `tests/public-types.test.ts` fails typecheck when either export goes missing.
+
 ## [0.14.0] - 2026-10-08
 
 - Require Node.js 24 or newer. `engines.node` moves from `>=20.11` to `>=24`. The old floor was already wrong: `commander` 15 (since 0.11.3) needs Node 22.12, and `doctor` reported Node 20 as supported. On Node 22 the CLI still starts, the package manager warns about the unsupported engine and `doctor` exits with an error.
