@@ -64,7 +64,7 @@
   "bugs": {
     "url": "https://github.com/silesiansolutions/search-quality-kit/issues"
   },
-  "homepage": "https://www.npmjs.com/package/@silesiansolutions/search-quality-kit",
+  "homepage": "https://silesiansolutions.com/",
   "publishConfig": {
     "access": "public"
   },
