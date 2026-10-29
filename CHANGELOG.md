@@ -2,9 +2,13 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.14.1] - 2026-10-29
 
 - Export the `ReportSummary` and `LegacySearchQualityReport` types from the package entry. `SearchQualityReport.summary` and the return type of `parseBaselineReport` already referenced them, but they were not exported, and tsup 9 warned that `index.d.ts` points at private types. A consumer whose declaration emit infers one of these types could hit TS2742. `tests/public-types.test.ts` fails typecheck when either export goes missing.
+- Update the lockfile to `undici` 7.30.1, which fixes GHSA-4qv8-2p9j-2685, GHSA-f72v-6w45-q472 and GHSA-xjj6-f33q-929c. `undici` is a transitive dependency of `cheerio`, not a direct one, so the published package declares no new range; an install resolves it from `cheerio`'s own range. Also refresh `@types/node` and `typescript-eslint` to their latest patch releases.
+- Build with `tsup` 9 (a dev dependency). The emitted JavaScript is the same; `index.d.ts` now writes `export type { ... }` as a separate statement and the shared declaration chunk has a new file name. No exported name changed.
+- Bump `actions/setup-node` from 7.0.0 to 7.1.0 and `actions/upload-artifact` from 7.0.1 to 7.0.2 in `action.yml`. The inputs are unchanged. `setup-node` 7.1.0 adds `mise.toml` support, absolute paths in `node-version-file`, validation of the Node version and a retry when fetching the version manifest, so a consumer of `@v0` gets those once the `v0` tag moves. The workflows in this repository now pin their actions to commit shas as well.
+- Point the `homepage` field at silesiansolutions.com and credit Silesian Solutions as maintainer in the README.
 
 ## [0.14.0] - 2026-10-08
 
@@ -176,6 +180,7 @@ All notable changes to this project are documented here.
 - Add eleven technical search-quality checks, typed configuration, console/JSON/Markdown reports, and CI exit codes.
 - Validate the tool against `SilesianSolutions/silesiansolutions.com` and `dawidrylko/dawidrylko.com`.
 
+[0.14.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.13.1...v0.14.0
 [0.13.1]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/silesiansolutions/search-quality-kit/compare/v0.12.0...v0.13.0
