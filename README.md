@@ -279,4 +279,4 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE) fil
 
 ## Author
 
-Developed and maintained by [Dawid Ryłko](https://dawidrylko.com) at [Silesian Solutions](https://silesiansolutions.com/).
+Developed and maintained by [Silesian Solutions](https://silesiansolutions.com/).
